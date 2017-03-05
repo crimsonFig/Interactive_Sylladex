@@ -209,10 +209,14 @@ int push(PFModus pfModus, Card folder[], char item)
         printf("%s\n", "you've named said object too long, max is 12 letters.");
         return FALSE;
     }
-    strcpy(card.item, item); //save the item to temp card
+    //prior prep for the soon to be pushed card
+    strcpy(card.item, item);
     strcpy(card.captchaCode, "example"); //use a hash function to create a random captcha code for the item based on name.
     card.inUse = TRUE;
 
+    //push the card to the folder
+    if (folder[4].inUse) //if folder is full, dump folder and then push the card
+        forceEject(folder);
     for (i = 0; i < 5; i++)  //search for the first empty slot and push to that, then set that slot to filled
     {
         if (folder[i].inUse) //if true, skip to the next index
@@ -220,7 +224,7 @@ int push(PFModus pfModus, Card folder[], char item)
         folder[i] = card;
         return SUCCESS;
     }
-    printf("%s\n", "unable to push card");
+    printf("%s\n", "uh oh, unable to push card for some reason.");
     break;
 }
 
