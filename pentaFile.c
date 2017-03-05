@@ -77,8 +77,6 @@ typedef struct
 } Hand;
 ////functions
 
->>"replace all pfModus->index with pfModus->card.inUse, and recode those bits"
->>"replace all pfModus->card or 'card' with pfModus->card.item or 'card.item'"
 >>"include an eject all function"
 >>"rename functions to include a pf- prefix"
 
@@ -215,7 +213,7 @@ int push(PFModus pfModus, Card folder[], char item)
     card.inUse = TRUE;
 
     //push the card to the folder
-    if (folder[4].inUse) //if folder is full, dump folder and then push the card
+    if (isFull(folder)) //if folder is full, dump folder and then push the card
         forceEject(folder);
     for (i = 0; i < 5; i++)  //search for the first empty slot and push to that, then set that slot to filled
     {
@@ -229,22 +227,27 @@ int push(PFModus pfModus, Card folder[], char item)
 }
 
 /*************************** isFull ********************************///done
-int isFull(Card card[])
+int isFull(Card folder[])
 {
-    char empty = EMPTY;
-    return abs(strcmp(card[4],empty)); //if it equals EMPTY, then it will return 0(FALSE), otherwise it will return TRUE
+    int i;
+    //quickly goes through the folder to test if it's used. if it finds one that is not in use, it returns FALSE. Returns true otherwise.
+    for (i = 0; i < 5; i++)
+    {
+        if (folder[i].inUse == FALSE)
+            return FALSE;
+    }
+    return TRUE;
 }
 
 /*************************** forceEject ****************************///done
 int forceEject(Card card[])
 {
     int i;
-    char empty = EMPTY;
-    Card toEject;
+    Card toEject = newCard();
     for (i = 0; i < 5; i++) //dumps the entire contents of the card array/folder
     {
         toEject = card[i];
-        strcpy(card[i], empty);
+        card[i] = newCard();
         //toEject now releases the card to the world from the pfModus.
     }
 }
@@ -257,31 +260,31 @@ void drawInventory(PFModus pfModus)
 
     for (card = 0; card < 5; card++)
     {
-        printf("| %12s ", pfModus->weapons[card]);
+        printf("| %12s ", pfModus->weapons[card].item);
     }
     printf("|\n");
 
     for (card = 0; card < 5; card++)
     {
-        printf("| %12s ", pfModus->food[card]);
+        printf("| %12s ", pfModus->food[card].item);
     }
     printf("|\n");
 
     for (card = 0; card < 5; card++)
     {
-        printf("| %12s ", pfModus->misc[card]);
+        printf("| %12s ", pfModus->misc[card].item);
     }
     printf("|\n");
 
     for (card = 0; card < 5; card++)
     {
-        printf("| %12i ", pfModus->info[card]);
+        printf("| %12i ", pfModus->info[card].item);
     }
     printf("|\n");
 
     for (card = 0; card < 5; card++)
     {
-        printf("| %12s ", pfModus->keyCritical[card]);
+        printf("| %12s ", pfModus->keyCritical[card.item]);
     }
     printf("|\n");
 
