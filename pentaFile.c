@@ -250,6 +250,18 @@ int forceEject(Card card[])
         card[i] = newCard();
         //toEject now releases the card to the world from the pfModus.
     }
+    return SUCCESS;
+}
+/*************************** forceEjectAll ****************************///done
+int forceEjectAll(PFModus modus)
+{
+    int i;
+    forceEject(modus.weapons);
+    forceEject(modus.info);
+    forceEject(modus.survival);
+    forceEject(modus.keyCritical);
+    forceEject(modus.misc);
+    return SUCCESS;
 }
 
 /*************************** drawInventory *************************///done
