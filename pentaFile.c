@@ -179,44 +179,22 @@ Card takeOutByName(PFModus pfModus, Card folder[], char fileIndex)
 {
     Card card = newCard();
     int bFound = FALSE;
-    int index;
     //search for value
     for (i = 0, i < 5, i++)
     {
-        if (strcmp(type[i], value) == 0) //card found!
+        if (strcmp(fodler[i].item, value) == 0) //card found!
         {
-            strcpy(card, type[i]);
-            strcpy(type[i], empty);
+            card = folder[i];
+            type[i] = newCard();
             bFound = TRUE;
-            index = i;
             printf("%s %s\n","found the requested card: ", card);
             break;
         }
     }
-    if (!bFound)
+    if (!bFound) //if not found
     {
         printf("%s\n", "Could not find requested card, Returned an EMPTY card");
         return card;
-    }
-    //figure out which type "type[]" is so that the pfModus index can be set to FALSE
-    //compare the address of the passed type to one of the defined types
-    if ((pfModus->weapons) == type){
-        pfModus->index[0 + index] = FALSE;
-    }
-    else if ((pfModus->survival) == type){
-        pfModus->index[5 + index] = FALSE;
-    }
-    else if ((pfModus->misc) == type){
-        pfModus->index[10 + index] = FALSE;
-    }
-    else if ((pfModus->info) == type){
-        pfModus->index[15 + index] = FALSE;
-    }
-    else if ((pfModus->keyCritical) == type){
-        pfModus->index[20 + index] = FALSE;
-    }
-    else{
-        printf("%s\n", "An error occured in setting the index to FALSE");
     }
     return card;
 }
