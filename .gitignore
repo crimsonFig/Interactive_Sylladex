@@ -1,0 +1,8 @@
+#outputs
+*.exe
+*.out
+*.txt
+
+#non_Source_Code
+*.o
+*.map
