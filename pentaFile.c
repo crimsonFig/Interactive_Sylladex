@@ -38,18 +38,8 @@ Notes:
 #define FALSE 0
 #define NAMESIZE 12
 #define EMPTY "55555"
-/////Prototypes
-PFModus newPFModus()                                            ;
-void save(PFModus pfModus)                                      ;
-PFModus load(char fileName)                                     ;
-Card takeOutByIndex(PFModus pfModus, Card type[], int index)    ;
-Card takeOutByName(PFModus pfModus, Card type[], char value)    ;
-int push(PFModus pfModus, char type, char card)                 ;
-int isFull(Card card[])                                         ;
-int forceEject(Card card[])                                     ;
-void drawInventory(PFModus pfModus)                             ;
 /////structs and typedefs
-typedef int Data;                   //simply renamed
+typedef int Data;               //simply renamed
 typedef struct
 {
     char item[NAMESIZE + 1];    //12 for an card name. item title
@@ -72,61 +62,74 @@ typedef struct
 typedef PFModusImp *PFModus;//a pointer to the pfModus implementation
 typedef struct
 {
-    int isEmpty = TRUE;
+    int isEmpty;
     Card heldItem;
 } Hand;
+/////Prototypes
+Card newCard()                                      ;
+PFModus newPFModus()                                ;
+void save(PFModus pfModus)                          ;
+PFModus load(char fileName[])                       ;
+Card takeOutByIndex(Card folder[], int fileIndex)   ;
+Card takeOutByName(Card folder[], char value[])     ;
+int push(Card folder[], char item[])                ;
+int isFull(Card folder[])                           ;
+int forceEject(Card card[])                         ;
+int forceEjectAll(PFModus modus)                    ;
+void drawInventory(PFModus pfModus)                 ;
 ////functions
 
->>"include an eject all function"
->>"rename functions to include a pf- prefix"
+//>>"rename functions to include a pf- prefix"
 
 /*************************** main ***********************************
 ********************************************************************/
 int main(int argc, char *argv[])
 {
     PFModus pfModus = newPFModus();
-    Hand hand;
-    push(pfModus, "weapons", "Dmnd Staff");
-    push(pfModus, "weapons", "Wand");
-    push(pfModus, "weapons", "Blade");
-    push(pfModus, "weapons", "Marbles");
+    Card hand;
+    push(pfModus->weapons, "Dmnd Staff");
+    push(pfModus->weapons, "Wand");
+    push(pfModus->weapons, "Blade");
+    push(pfModus->weapons, "Marbles");
     drawInventory(pfModus);
-    push(pfModus, "misc", "Incense");
-    push(pfModus, "info", "101101010");
-    push(pfModus, "survival", "Gem");
+    push(pfModus->misc, "Incense");
+    push(pfModus->info, "101101010");
+    push(pfModus->survival, "Gem");
     drawInventory(pfModus);
-    push(pfModus, "weapons", "SynOrb");
-    push(pfModus, "weapons", "Lotus Blade");
+    push(pfModus->weapons, "SynOrb");
+    push(pfModus->weapons, "Lotus Blade");
     drawInventory(pfModus);
-    strcpy(hand.heldItem, takeOutByName(pfModus, pfModus.weapons, "Lotus Blade"));
-    printf("%s\n", hand.heldItem);
-    strcpy(hand.heldItem, takeOutByName(pfModus, pfModus.survival, 1));
-    printf("%s\n", hand.heldItem);
+    hand = takeOutByName(pfModus->weapons, "Lotus Blade");
+    printf("%s\n", hand.item);
+    hand = takeOutByIndex(pfModus->survival, 1);
+    printf("%s\n", hand.item);
     drawInventory(pfModus);
 }
 
 /*************************** newCard *********************************///done
 Card newCard()
 {
-    char empty = EMPTY;
-    Card card = {empty, "0000000", FALSE};
+    //Card card = {EMPTY, "0000000", FALSE}; can only do this if i leave the array size undefined
+    Card card;
+    strcpy(card.item, EMPTY);
+    strcpy(card.captchaCode, "0000000");
+    card.inUse = FALSE;
     return card;
 }
 /*************************** newPFModus ******************************///done
 PFModus newPFModus()
 {
     int i;
-    char empty = EMPTY;
-    Card newCard = newCard();
+    Card card = newCard();
     PFModus pfModus = (PFModus) malloc(sizeof(PFModusImp));
 
     for (i = 0; i < 5; i++)
     {
-        pfModus.weapons[i] = newCard;
-        pfModus.survival[i] = newCard;
-        pfModus.misc[i] = newCard;
-        pfModus.info[i] = newCard;
-        pfModus.keyCritical[i] = newCard;
+        pfModus->weapons[i] = card;
+        pfModus->survival[i] = card;
+        pfModus->misc[i] = card;
+        pfModus->info[i] = card;
+        pfModus->keyCritical[i] = card;
     }
     return pfModus;
 }
@@ -150,14 +153,15 @@ void save(PFModus pfModus)
 
 /*************************** load ***********************************
 ********************************************************************/
-PFModus load(char fileName)
+PFModus load(char fileName[])
 {
-
+PFModus pfModus;
+return pfModus;
 }
 
 /*************************** takeOutByIndex *************************
 ********************************************************************/
-Card takeOutByIndex(PFModus pfModus, Card folder[], int fileIndex)
+Card takeOutByIndex(Card folder[], int fileIndex)
 {
     Card card = newCard();
     if (fileIndex < 0 || fileIndex > 5)
@@ -173,19 +177,20 @@ Card takeOutByIndex(PFModus pfModus, Card folder[], int fileIndex)
 
 /*************************** takeOutByName **************************
 ********************************************************************/
-Card takeOutByName(PFModus pfModus, Card folder[], char value)
+Card takeOutByName(Card folder[], char value[])
 {
     Card card = newCard();
     int bFound = FALSE;
+    int i;
     //search for value
-    for (i = 0, i < 5, i++)
+    for (i = 0; i < 5; i++)
     {
-        if (strcmp(fodler[i].item, value) == 0) //card found!
+        if (strcmp(folder[i].item, value) == 0) //card found!
         {
             card = folder[i];
-            type[i] = newCard();
+            folder[i] = newCard();
             bFound = TRUE;
-            printf("%s %s\n","found the requested card: ", card);
+            printf("%s %s\n","found the requested card: ", card.item);
             break;
         }
     }
@@ -198,15 +203,15 @@ Card takeOutByName(PFModus pfModus, Card folder[], char value)
 }
 
 /*************************** push **********************************///done
-int push(PFModus pfModus, Card folder[], char item)
+int push(Card folder[], char item[])
 {
     int i;
     Card card = newCard();
-    if (sizeof(item) > (NAMESIZE + 1))
+    /*if (sizeof(item) > (NAMESIZE + 1)) //need to figure out length of item[]!!!!!!!!!
     {
         printf("%s\n", "you've named said object too long, max is 12 letters.");
         return FALSE;
-    }
+    }*/
     //prior prep for the soon to be pushed card
     strcpy(card.item, item);
     strcpy(card.captchaCode, "example"); //use a hash function to create a random captcha code for the item based on name.
@@ -223,7 +228,7 @@ int push(PFModus pfModus, Card folder[], char item)
         return SUCCESS;
     }
     printf("%s\n", "uh oh, unable to push card for some reason.");
-    break;
+    return FALSE;
 }
 
 /*************************** isFull ********************************///done
@@ -256,11 +261,11 @@ int forceEject(Card card[])
 int forceEjectAll(PFModus modus)
 {
     int i;
-    forceEject(modus.weapons);
-    forceEject(modus.info);
-    forceEject(modus.survival);
-    forceEject(modus.keyCritical);
-    forceEject(modus.misc);
+    forceEject(modus->weapons);
+    forceEject(modus->info);
+    forceEject(modus->survival);
+    forceEject(modus->keyCritical);
+    forceEject(modus->misc);
     return SUCCESS;
 }
 
@@ -278,7 +283,7 @@ void drawInventory(PFModus pfModus)
 
     for (card = 0; card < 5; card++)
     {
-        printf("| %12s ", pfModus->food[card].item);
+        printf("| %12s ", pfModus->survival[card].item);
     }
     printf("|\n");
 
@@ -290,13 +295,13 @@ void drawInventory(PFModus pfModus)
 
     for (card = 0; card < 5; card++)
     {
-        printf("| %12i ", pfModus->info[card].item);
+        printf("| %12s ", pfModus->info[card].item);
     }
     printf("|\n");
 
     for (card = 0; card < 5; card++)
     {
-        printf("| %12s ", pfModus->keyCritical[card.item]);
+        printf("| %12s ", pfModus->keyCritical[card].item);
     }
     printf("|\n");
 
