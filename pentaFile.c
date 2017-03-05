@@ -175,7 +175,7 @@ Card takeOutByIndex(PFModus pfModus, Card folder[], int fileIndex)
 
 /*************************** takeOutByName **************************
 ********************************************************************/
-Card takeOutByName(PFModus pfModus, Card folder[], char fileIndex)
+Card takeOutByName(PFModus pfModus, Card folder[], char value)
 {
     Card card = newCard();
     int bFound = FALSE;
@@ -200,115 +200,28 @@ Card takeOutByName(PFModus pfModus, Card folder[], char fileIndex)
 }
 
 /*************************** push **********************************///done
-int push(PFModus pfModus, char type, char card)
+int push(PFModus pfModus, Card folder[], char item)
 {
     int i;
-    if (sizeof(card) > (NAMESIZE + 1))
+    Card card = newCard();
+    if (sizeof(item) > (NAMESIZE + 1))
     {
         printf("%s\n", "you've named said object too long, max is 12 letters.");
         return FALSE;
     }
-    //using the first letter of the type as a key, we insert the card into the pfModus
-    switch (type[0]) {
-        case 'w'/*eapons*/:
-            i = 0;
-            if (pfModus->index[i+4] == TRUE)  //if the 5th object in the array is filled, dump the array and push to 1st element
-            {
-                forceEject(pfModus->weapons);
-                pfModus->index[i] = TRUE;
-                strcpy(pfModus->weapons[i], card);
-                return SUCCESS;
-            }
-            for (i = 0; i < 5; i++)         //search for the first empty slot and push to that, then set that slot to filled
-            {
-                if (pfModus->index[i]) //if true, skip to the next index
-                    continue;
-                pfModus->index[i] = TRUE; //found a slot with FALSE, pushing card to that slot
-                strcpy(pfModus->weapons[i], card);
-                return SUCCESS;
-            }
-            printf("%s\n", "unable to push card");
-            break;
-        case 's'/*urvival*/:
-            i = 5;
-            if (pfModus->index[i+4] == TRUE)  //if the 5th object in the array is filled, dump the array and push to 1st element
-            {
-                forceEject(pfModus->survival);
-                pfModus->index[i] = TRUE;
-                strcpy(pfModus->survival[i%5], card);
-                return SUCCESS;
-            }
-            for (i = 5; i < 10; i++)         //search for the first empty slot and push to that, then set that slot to filled
-            {
-                if (pfModus->index[i]) //if true, skip to the next index
-                    continue;
-                pfModus->index[i] = TRUE; //found a slot with FALSE, pushing card to that slot
-                strcpy(pfModus->survival[i%5], card);
-                return SUCCESS;
-            }
-            printf("%s\n", "unable to push card");
-            break;
-        case 'm'/*isc*/:
-            i = 10;
-            if (pfModus->index[i+4] == TRUE)  //if the 5th object in the array is filled, dump the array and push to 1st element
-            {
-                forceEject(pfModus->misc);
-                pfModus->index[i] = TRUE;
-                strcpy(pfModus->misc[i%5], card);
-                return SUCCESS;
-            }
-            for (i = 10; i < 15; i++)         //search for the first empty slot and push to that, then set that slot to filled
-            {
-                if (pfModus->index[i]) //if true, skip to the next index
-                    continue;
-                pfModus->index[i] = TRUE; //found a slot with FALSE, pushing card to that slot
-                strcpy(pfModus->misc[i%5], card);
-                return SUCCESS;
-            }
-            printf("%s\n", "unable to push card");
-            break;
-        case 'i'/*nfo*/:
-            i = 15;
-            if (pfModus->index[i+4] == TRUE)  //if the 5th object in the array is filled, dump the array and push to 1st element
-            {
-                forceEject(pfModus->info);
-                pfModus->index[i] = TRUE;
-                strcpy(pfModus->info[i%5], card);
-                return SUCCESS;
-            }
-            for (i = 15; i < 20; i++)         //search for the first empty slot and push to that, then set that slot to filled
-            {
-                if (pfModus->index[i]) //if true, skip to the next index
-                    continue;
-                pfModus->index[i] = TRUE; //found a slot with FALSE, pushing card to that slot
-                strcpy(pfModus->info[i%5], card);
-                return SUCCESS;
-            }
-            printf("%s\n", "unable to push card");
-            break;
-        case 'k'/*ey card*/:
-            i = 20;
-            if (pfModus->index[i+4] == TRUE)  //if the 5th object in the array is filled, dump the array and push to 1st element
-            {
-                forceEject(pfModus->keyCritical);
-                pfModus->index[i] = TRUE;
-                strcpy(pfModus->keyCritical[i%5], card);
-                return SUCCESS;
-            }
-            for (i = 20; i < 25; i++)         //search for the first empty slot and push to that, then set that slot to filled
-            {
-                if (pfModus->index[i]) //if true, skip to the next index
-                    continue;
-                pfModus->index[i] = TRUE; //found a slot with FALSE, pushing card to that slot
-                strcpy(pfModus->keyCritical[i%5], card);
-                return SUCCESS;
-            }
-            printf("%s\n", "unable to push card");
-            break;
-        default:
-            printf("%s\n", "Not a valid card type");
-            return FALSE;
+    strcpy(card.item, item); //save the item to temp card
+    strcpy(card.captchaCode, "example"); //use a hash function to create a random captcha code for the item based on name.
+    card.inUse = TRUE;
+
+    for (i = 0; i < 5; i++)  //search for the first empty slot and push to that, then set that slot to filled
+    {
+        if (folder[i].inUse) //if true, skip to the next index
+            continue;
+        folder[i] = card;
+        return SUCCESS;
     }
+    printf("%s\n", "unable to push card");
+    break;
 }
 
 /*************************** isFull ********************************///done

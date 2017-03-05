@@ -30,3 +30,4 @@ Notes:
 #include "timeBox.h"
 #include "tarotDeck.h"
 */
+//create a function that can create a card item based on it's captcha code
