@@ -68,18 +68,16 @@ typedef struct
 /////Prototypes
 Card newCard()                                      ;
 PFModus newPFModus()                                ;
-void save(PFModus pfModus)                          ;
-PFModus load(char fileName[])                       ;
-Card takeOutByIndex(Card folder[], int fileIndex)   ;
-Card takeOutByName(Card folder[], char value[])     ;
-int push(Card folder[], char item[])                ;
-int isFull(Card folder[])                           ;
-int forceEject(Card card[])                         ;
-int forceEjectAll(PFModus modus)                    ;
-void drawInventory(PFModus pfModus)                 ;
+void PFsave(PFModus pfModus)                        ;
+PFModus PFload(char fileName[])                     ;
+Card PFtakeOutByIndex(Card folder[], int fileIndex) ;
+Card PFtakeOutByName(Card folder[], char value[])   ;
+int PFpush(Card folder[], char item[])              ;
+int PFisFull(Card folder[])                         ;
+int PFforceEject(Card card[])                       ;
+int PFforceEjectAll(PFModus modus)                  ;
+void PFdrawInventory(PFModus pfModus)               ;
 ////functions
-
-//>>"rename functions to include a pf- prefix"
 
 /*************************** main ***********************************
 ********************************************************************/
@@ -88,23 +86,23 @@ int main(int argc, char *argv[])
     PFModus pfModus = newPFModus();
     Card hand;
     printf("Running Modus \"PentaFile\".\n");
-    push(pfModus->weapons, "Dmnd Staff");
-    push(pfModus->weapons, "Wand");
-    push(pfModus->weapons, "Blade");
-    push(pfModus->weapons, "Marbles");
-    drawInventory(pfModus);
-    push(pfModus->misc, "Incense");
-    push(pfModus->info, "101101010");
-    push(pfModus->survival, "Gem");
-    drawInventory(pfModus);
-    push(pfModus->weapons, "SynOrb");
-    push(pfModus->weapons, "Lotus Blade");
-    drawInventory(pfModus);
-    hand = takeOutByName(pfModus->weapons, "Lotus Blade");
+    PFpush(pfModus->weapons, "Dmnd Staff");
+    PFpush(pfModus->weapons, "Wand");
+    PFpush(pfModus->weapons, "Blade");
+    PFpush(pfModus->weapons, "Marbles");
+    PFdrawInventory(pfModus);
+    PFpush(pfModus->misc, "Incense");
+    PFpush(pfModus->info, "101101010");
+    PFpush(pfModus->survival, "Gem");
+    PFdrawInventory(pfModus);
+    PFpush(pfModus->weapons, "SynOrb");
+    PFpush(pfModus->weapons, "Lotus Blade");
+    PFdrawInventory(pfModus);
+    hand = PFtakeOutByName(pfModus->weapons, "Lotus Blade");
     printf("hand now holds: %s\n", hand.item);
-    hand = takeOutByIndex(pfModus->survival, 1);
+    hand = PFtakeOutByIndex(pfModus->survival, 1);
     printf("hand now holds: %s\n", hand.item);
-    drawInventory(pfModus);
+    PFdrawInventory(pfModus);
 }
 
 /*************************** newCard *********************************///done
@@ -147,14 +145,14 @@ standard, and then since they'd be a common code functions, i can put them in an
 include header file and have each modus be able to utilize those functions to
 process it's current set of cards. >>fgets.713 overview of c for stdin.
 ********************************************************************/
-void save(PFModus pfModus)
+void PFsave(PFModus pfModus)
 {
 
 }
 
 /*************************** load ***********************************
 ********************************************************************/
-PFModus load(char fileName[])
+PFModus PFload(char fileName[])
 {
 PFModus pfModus;
 return pfModus;
@@ -162,7 +160,7 @@ return pfModus;
 
 /*************************** takeOutByIndex *************************
 ********************************************************************/
-Card takeOutByIndex(Card folder[], int fileIndex)
+Card PFtakeOutByIndex(Card folder[], int fileIndex)
 {
     Card card = newCard();
     printf("Retrieving item from slot %d.\n", fileIndex);
@@ -180,7 +178,7 @@ Card takeOutByIndex(Card folder[], int fileIndex)
 
 /*************************** takeOutByName **************************
 ********************************************************************/
-Card takeOutByName(Card folder[], char value[])
+Card PFtakeOutByName(Card folder[], char value[])
 {
     Card card = newCard();
     int bFound = FALSE;
@@ -207,7 +205,7 @@ Card takeOutByName(Card folder[], char value[])
 }
 
 /*************************** push **********************************///done
-int push(Card folder[], char item[])
+int PFpush(Card folder[], char item[])
 {
     int i;
     Card card = newCard();
@@ -223,9 +221,9 @@ int push(Card folder[], char item[])
     card.inUse = TRUE;
 
     //push the card to the folder
-    if (isFull(folder)) //if folder is full, dump folder and then push the card
+    if (PFisFull(folder)) //if folder is full, dump folder and then push the card
     {
-        forceEject(folder);
+        PFforceEject(folder);
         printf("The folder was full. Ejected all cards from folder.\n");
     }
     for (i = 0; i < 5; i++)  //search for the first empty slot and push to that, then set that slot to filled
@@ -241,7 +239,7 @@ int push(Card folder[], char item[])
 }
 
 /*************************** isFull ********************************///done
-int isFull(Card folder[])
+int PFisFull(Card folder[])
 {
     int i;
     //quickly goes through the folder to test if it's used. if it finds one that is not in use, it returns FALSE. Returns true otherwise.
@@ -254,7 +252,7 @@ int isFull(Card folder[])
 }
 
 /*************************** forceEject ****************************///done
-int forceEject(Card card[])
+int PFforceEject(Card card[])
 {
     int i;
     Card toEject = newCard();
@@ -267,22 +265,22 @@ int forceEject(Card card[])
     return SUCCESS;
 }
 /*************************** forceEjectAll ****************************///done
-int forceEjectAll(PFModus modus)
+int PFforceEjectAll(PFModus modus)
 {
     int i;
-    forceEject(modus->weapons);
-    forceEject(modus->info);
-    forceEject(modus->survival);
-    forceEject(modus->keyCritical);
-    forceEject(modus->misc);
+    PFforceEject(modus->weapons);
+    PFforceEject(modus->info);
+    PFforceEject(modus->survival);
+    PFforceEject(modus->keyCritical);
+    PFforceEject(modus->misc);
     return SUCCESS;
 }
 
 /*************************** drawInventory *************************///done
-void drawInventory(PFModus pfModus)
+void PFdrawInventory(PFModus pfModus)
 {
     int card;
-    printf("******|Slot 1--------|Slot 2--------|Slot 3--------|Slot 4--------|Slot 5--------\n");
+    printf("\n******|Slot 1--------|Slot 2--------|Slot 3--------|Slot 4--------|Slot 5--------\n");
 
     printf("Weapns");
     for (card = 0; card < 5; card++)
