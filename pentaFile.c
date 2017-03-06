@@ -37,7 +37,7 @@ Notes:
 #define SUCCESS 5
 #define FALSE 0
 #define NAMESIZE 12
-#define EMPTY "55555"
+#define EMPTY "EMPTY"
 /////structs and typedefs
 typedef int Data;               //simply renamed
 typedef struct
@@ -100,9 +100,9 @@ int main(int argc, char *argv[])
     push(pfModus->weapons, "Lotus Blade");
     drawInventory(pfModus);
     hand = takeOutByName(pfModus->weapons, "Lotus Blade");
-    printf("%s\n", hand.item);
+    printf("hand now holds: %s\n", hand.item);
     hand = takeOutByIndex(pfModus->survival, 1);
-    printf("%s\n", hand.item);
+    printf("hand now holds: %s\n", hand.item);
     drawInventory(pfModus);
 }
 
@@ -164,6 +164,7 @@ return pfModus;
 Card takeOutByIndex(Card folder[], int fileIndex)
 {
     Card card = newCard();
+    printf("Retrieving item from slot %d.\n", fileIndex);
     if (fileIndex < 0 || fileIndex > 5)
     {
         printf("%s\n", "requested index out of bound. Returned an EMPTY card");
@@ -172,6 +173,7 @@ Card takeOutByIndex(Card folder[], int fileIndex)
     //Pass the card out of the array so that it is now empty, and return said card to user
     card = folder[fileIndex];           //set card = to specified card
     folder[fileIndex] = newCard();      //replace the card in inv with an empty card
+    printf("Retrieved %s from slot %d.\n", card.item, fileIndex);
     return card;
 }
 
@@ -182,6 +184,7 @@ Card takeOutByName(Card folder[], char value[])
     Card card = newCard();
     int bFound = FALSE;
     int i;
+    printf("attempting to retrieve item: %s\n", value);
     //search for value
     for (i = 0; i < 5; i++)
     {
@@ -207,6 +210,7 @@ int push(Card folder[], char item[])
 {
     int i;
     Card card = newCard();
+    printf("Attempting to add \"%s\" to the inventory.\n", item);
     /*if (sizeof(item) > (NAMESIZE + 1)) //need to figure out length of item[]!!!!!!!!!
     {
         printf("%s\n", "you've named said object too long, max is 12 letters.");
@@ -219,15 +223,19 @@ int push(Card folder[], char item[])
 
     //push the card to the folder
     if (isFull(folder)) //if folder is full, dump folder and then push the card
+    {
         forceEject(folder);
+        printf("The folder was full. Ejected all cards from folder.\n");
+    }
     for (i = 0; i < 5; i++)  //search for the first empty slot and push to that, then set that slot to filled
     {
         if (folder[i].inUse) //if true, skip to the next index
             continue;
         folder[i] = card;
+        printf("Added %s successfully.\n", card.item);
         return SUCCESS;
     }
-    printf("%s\n", "uh oh, unable to push card for some reason.");
+    printf("%s\n", "uh oh, unable to add the item into a card for some reason.");
     return FALSE;
 }
 
@@ -273,37 +281,42 @@ int forceEjectAll(PFModus modus)
 void drawInventory(PFModus pfModus)
 {
     int card;
-    printf("----------------------------------------------------------------------------\n");
+    printf("------|Slot 1--------|Slot 2--------|Slot 3--------|Slot 4--------|Slot 5--------\n");
 
+    printf("Weapns");
     for (card = 0; card < 5; card++)
     {
         printf("| %12s ", pfModus->weapons[card].item);
     }
     printf("|\n");
 
+    printf("Srvivl");
     for (card = 0; card < 5; card++)
     {
         printf("| %12s ", pfModus->survival[card].item);
     }
     printf("|\n");
 
+    printf("Misc  ");
     for (card = 0; card < 5; card++)
     {
         printf("| %12s ", pfModus->misc[card].item);
     }
     printf("|\n");
 
+    printf("Info  ");
     for (card = 0; card < 5; card++)
     {
         printf("| %12s ", pfModus->info[card].item);
     }
     printf("|\n");
 
+    printf("KeyCrt");
     for (card = 0; card < 5; card++)
     {
         printf("| %12s ", pfModus->keyCritical[card].item);
     }
     printf("|\n");
 
-    printf("----------------------------------------------------------------------------\n\n");
+    printf("---------------------------------------------------------------------------------\n\n");
 }
