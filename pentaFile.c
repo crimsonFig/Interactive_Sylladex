@@ -87,6 +87,7 @@ int main(int argc, char *argv[])
 {
     PFModus pfModus = newPFModus();
     Card hand;
+    printf("Running Modus \"PentaFile\".\n");
     push(pfModus->weapons, "Dmnd Staff");
     push(pfModus->weapons, "Wand");
     push(pfModus->weapons, "Blade");
@@ -281,7 +282,7 @@ int forceEjectAll(PFModus modus)
 void drawInventory(PFModus pfModus)
 {
     int card;
-    printf("------|Slot 1--------|Slot 2--------|Slot 3--------|Slot 4--------|Slot 5--------\n");
+    printf("******|Slot 1--------|Slot 2--------|Slot 3--------|Slot 4--------|Slot 5--------\n");
 
     printf("Weapns");
     for (card = 0; card < 5; card++)
