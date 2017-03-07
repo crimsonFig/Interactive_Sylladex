@@ -1,11 +1,13 @@
 # The sylladex and modi files
-OBJECTS = sylladexFile.o pentaFile.o
+OBJECTS = sylladexFramework.o pentaFile.o
 # Header files
-HEADERS = pentaFile.h
+HEADERS = sylladexFramework.h pentaFile.h
 
-p3: ${OBJECTS}
-	gcc -g -o SylladexTest ${OBJECTS}
+sylladexTest: ${OBJECTS}
+	gcc -g -o sylladexTest ${OBJECTS}
+
 %.o: %.c ${HEADERS}
 	gcc -g -c $<
+
 clean:
 	rm -f ${OBJECTS}

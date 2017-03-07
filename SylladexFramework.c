@@ -23,6 +23,8 @@ Notes:
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include "sylladexFramework.h"
+#include "pentaFile.h"
 
 /*/Fetch Modus Files to include
 #include "PentaFile.h"
