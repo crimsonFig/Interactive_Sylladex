@@ -3,6 +3,7 @@
 *.out
 *.txt
 *Test
+*.inv
 
 #non_Source_Code
 *.o

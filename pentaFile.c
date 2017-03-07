@@ -30,58 +30,12 @@ Notes:
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
-//#include "cs2123p0.h"
+#include "pentaFile.h"
 
-/////Defined constants
-#define TRUE 1
-#define SUCCESS 5
-#define FALSE 0
-#define NAMESIZE 12
-#define EMPTY "EMPTY"
-/////structs and typedefs
-typedef int Data;               //simply renamed
-typedef struct
-{
-    char item[NAMESIZE + 1];    //12 for an card name. item title
-    char captchaCode[8];        //7 long captcha code. Code for w/e
-    int  inUse;                 //used to track if the card is empty or filled
-} Card;
-typedef struct
-{
- //char note[64];      //personal note. NOT NEEDED.
- //Data stats[25];     //stats to be tracked go here, might output on save. might move this to the sylladex instead.
- //Data index[25];     //boolean index of the inventory, TRUE if filled, FALSE if that slot is empty. replaced by card->inUse
-    //the next 5 array's can hold card of a certain kind. These are 5 arrays of the Card type, a card is a defined string.
-    //consider a 2d array.
-    Card weapons[5]    ;
-    Card survival[5]   ;
-    Card misc[5]       ;
-    Card info[5]       ;
-    Card keyCritical[5];
-} PFModusImp;             //the actual inventory structure pfModus
-typedef PFModusImp *PFModus;//a pointer to the pfModus implementation
-typedef struct
-{
-    int isEmpty;
-    Card heldItem;
-} Hand;
-/////Prototypes
-Card newCard()                                      ;
-PFModus newPFModus()                                ;
-void PFsave(PFModus pfModus)                        ;
-PFModus PFload(char fileName[])                     ;
-Card PFtakeOutByIndex(Card folder[], int fileIndex) ;
-Card PFtakeOutByName(Card folder[], char value[])   ;
-int PFpush(Card folder[], char item[])              ;
-int PFisFull(Card folder[])                         ;
-int PFforceEject(Card card[])                       ;
-int PFforceEjectAll(PFModus modus)                  ;
-void PFdrawInventory(PFModus pfModus)               ;
-////functions
 
-/*************************** main ***********************************
-********************************************************************/
-int main(int argc, char *argv[])
+
+
+int main(int argc, char *argv[]) //test and debug. Will move #main to sylladex later.
 {
     PFModus pfModus = newPFModus();
     Card hand;
@@ -103,6 +57,12 @@ int main(int argc, char *argv[])
     hand = PFtakeOutByIndex(pfModus->survival, 1);
     printf("hand now holds: %s\n", hand.item);
     PFdrawInventory(pfModus);
+    PFsave(pfModus);
+    PFforceEjectAll(pfModus);
+    PFdrawInventory(pfModus);
+    pfModus = PFload();
+    PFdrawInventory(pfModus);
+    free(pfModus);
 }
 
 /*************************** newCard *********************************///done
@@ -144,18 +104,119 @@ create functions for save and load and see if i can modularize them to my given
 standard, and then since they'd be a common code functions, i can put them in an
 include header file and have each modus be able to utilize those functions to
 process it's current set of cards. >>fgets.713 overview of c for stdin.
+Currently output will be a "card entry per line"
 ********************************************************************/
 void PFsave(PFModus pfModus)
 {
-
+    FILE *pFile;
+    pFile = fopen("inventory.txt", "w"); //attempt to write this code as a binary instead.
+    int i;
+    if (pFile == NULL)
+    {
+        printf("%s\n", "Error in creating/opening a file to save.");
+        exit(-1);
+    }
+    //Possible save stats in this part of the code. delimit the sections somehow.
+    for (i = 0; i < 5; i++)
+    {
+        fprintf(pFile, "%s %s %d \n"            \
+            , pfModus->weapons[i].item          \
+            , pfModus->weapons[i].captchaCode   \
+            , pfModus->weapons[i].inUse         );
+    }
+    for (i = 0; i < 5; i++)
+    {
+        fprintf(pFile, "%s %s %d \n"            \
+            , pfModus->survival[i].item         \
+            , pfModus->survival[i].captchaCode  \
+            , pfModus->survival[i].inUse        );
+    }
+    for (i = 0; i < 5; i++)
+    {
+        fprintf(pFile, "%s %s %d \n"            \
+            , pfModus->misc[i].item             \
+            , pfModus->misc[i].captchaCode      \
+            , pfModus->misc[i].inUse            );
+    }
+    for (i = 0; i < 5; i++)
+    {
+        fprintf(pFile, "%s %s %d \n"            \
+            , pfModus->info[i].item             \
+            , pfModus->info[i].captchaCode      \
+            , pfModus->info[i].inUse            );
+    }
+    for (i = 0; i < 5; i++)
+    {
+        fprintf(pFile, "%s %s %d \n"            \
+            , pfModus->keyCritical[i].item      \
+            , pfModus->keyCritical[i].captchaCode   \
+            , pfModus->keyCritical[i].inUse     );
+    }
+    fclose(pFile);
 }
 
 /*************************** load ***********************************
 ********************************************************************/
-PFModus PFload(char fileName[])
+PFModus PFload()
 {
-PFModus pfModus;
-return pfModus;
+    PFModus pfModus = newPFModus();
+    FILE *pFile = fopen("inventory.txt", "r");
+    if (pFile == NULL)      //if file doesnt exist, return an empty pfModus
+        return pfModus;
+    char szInputBuffer[50]; //a given card entry should only be 50 chars long
+    int iLineCount = 0;
+
+    //current mode: automatic sort
+    while (fgets(szInputBuffer, 50, (FILE*) pFile) != NULL)
+    {
+        if (iLineCount >= 0 && iLineCount < 5)
+        {
+            sscanf(szInputBuffer, "%s %s %d \n"                  \
+                , pfModus->weapons[iLineCount % 5].item          \
+                , pfModus->weapons[iLineCount % 5].captchaCode   \
+                , &pfModus->weapons[iLineCount % 5].inUse        );
+        }
+        if (iLineCount >= 5 && iLineCount < 10)
+        {
+            sscanf(szInputBuffer, "%s %s %d \n"                  \
+                , pfModus->survival[iLineCount % 5].item         \
+                , pfModus->survival[iLineCount % 5].captchaCode  \
+                , &pfModus->survival[iLineCount % 5].inUse       );
+        }
+        if (iLineCount >= 10 && iLineCount < 15)
+        {
+            sscanf(szInputBuffer, "%s %s %d \n"                  \
+                , pfModus->misc[iLineCount % 5].item             \
+                , pfModus->misc[iLineCount % 5].captchaCode      \
+                , &pfModus->misc[iLineCount % 5].inUse           );
+        }
+        if (iLineCount >= 15 && iLineCount < 20)
+        {
+            sscanf(szInputBuffer, "%s %s %d \n"                  \
+                , pfModus->info[iLineCount % 5].item             \
+                , pfModus->info[iLineCount % 5].captchaCode      \
+                , &pfModus->info[iLineCount % 5].inUse           );
+        }
+        if (iLineCount >= 20 && iLineCount < 25)
+        {
+            sscanf(szInputBuffer, "%s %s %d \n"                  \
+                , pfModus->keyCritical[iLineCount % 5].item      \
+                , pfModus->keyCritical[iLineCount % 5].captchaCode   \
+                , &pfModus->keyCritical[iLineCount % 5].inUse    );
+        }
+        iLineCount++;
+        //everything else is considered ejected. Possiby recode to follow "overfill" quirk if more than 25 cards in save file.
+    }
+
+    //Alternative mode: Manual sort
+    /*
+        Loops through fgets and asks which folder they want the given item to into,
+        then uses a switch to first assign the file data to a Card and then push the card
+        to the desired folder.
+    */
+
+    fclose(pFile);
+    return pfModus;
 }
 
 /*************************** takeOutByIndex *************************
