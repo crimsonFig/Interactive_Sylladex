@@ -3,7 +3,7 @@
 *.out
 *.txt
 *Test
-*.inv
+*.MSF
 
 #non_Source_Code
 *.o

@@ -110,14 +110,26 @@ Currently output will be a "card entry per line"
 void PFsave(PFModus pfModus)
 {
     FILE *pFile;
-    pFile = fopen("inventory.txt", "w"); //attempt to write this code as a binary instead.
+    pFile = fopen("inventory.MSF", "wb"); //attempt to write this code as a binary instead.
     int i;
     if (pFile == NULL)
     {
         printf("%s\n", "Error in creating/opening a file to save.");
-        exit(-1);
+        exit(1);
     }
     //Possible save stats in this part of the code. delimit the sections somehow.
+    for (i = 0; i < 5; i++)
+        fwrite(&pfModus->weapons[i], sizeof(Card), 1, pFile);
+    for (i = 0; i < 5; i++)
+        fwrite(&pfModus->survival[i], sizeof(Card), 1, pFile);
+    for (i = 0; i < 5; i++)
+        fwrite(&pfModus->misc[i], sizeof(Card), 1, pFile);
+    for (i = 0; i < 5; i++)
+        fwrite(&pfModus->info[i], sizeof(Card), 1, pFile);
+    for (i = 0; i < 5; i++)
+        fwrite(&pfModus->keyCritical[i], sizeof(Card), 1, pFile);
+
+    /* Normal Txt Save
     for (i = 0; i < 5; i++)
     {
         fprintf(pFile, "%s %s %d \n"            \
@@ -153,6 +165,8 @@ void PFsave(PFModus pfModus)
             , pfModus->keyCritical[i].captchaCode   \
             , pfModus->keyCritical[i].inUse     );
     }
+    */
+
     fclose(pFile);
 }
 
@@ -161,13 +175,70 @@ void PFsave(PFModus pfModus)
 PFModus PFload()
 {
     PFModus pfModus = newPFModus();
-    FILE *pFile = fopen("inventory.txt", "r");
+    FILE *pFile = fopen("inventory.MSF", "rb");
     if (pFile == NULL)      //if file doesnt exist, return an empty pfModus
         return pfModus;
-    char szInputBuffer[50]; //a given card entry should only be 50 chars long
-    int iLineCount = 0;
+    int i;
+    char szResponse[NAMESIZE + 1];
+    //char szInputBuffer[50]; //a given card entry should only be 50 chars long
+    //int iLineCount = 0;
+    printf("Do you want to load (a)uto or (m)anually?: ");
+    fgets(szResponse, NAMESIZE, stdin);
 
-    //current mode: automatic sort
+    if (szResponse[0] == 'a')//Automatic mode
+    {
+    for (i = 0; i < 5; i++)
+        fread(&pfModus->weapons[i], sizeof(Card), 1, pFile);
+    for (i = 0; i < 5; i++)
+        fread(&pfModus->survival[i], sizeof(Card), 1, pFile);
+    for (i = 0; i < 5; i++)
+        fread(&pfModus->misc[i], sizeof(Card), 1, pFile);
+    for (i = 0; i < 5; i++)
+        fread(&pfModus->info[i], sizeof(Card), 1, pFile);
+    for (i = 0; i < 5; i++)
+        fread(&pfModus->keyCritical[i], sizeof(Card), 1, pFile);
+    }
+
+    else if (szResponse[0] == 'm')/***** Alternative mode: Manual sort
+        Loops through records and asks which folder they want the given item to
+        into, then uses a switch to first assign the file data to a Card and
+        then push the card to the desired folder.                           */
+    {
+    Card tempCard = newCard();
+    while (!feof(pFile))
+    {
+        fread(&tempCard, sizeof(Card), 1, pFile);
+        if (tempCard.inUse == FALSE) //if empty card, go to the next record
+            continue;
+        printf("Which folder do you want to put %s into?\n", tempCard.item);
+        printf("Folders- (w)eapons, (s)urvival, (m)isc, (i)nfo, (k)eyCritical:");
+        fgets(szResponse, NAMESIZE, stdin);
+        switch (szResponse[0])
+        {
+            case 'w':
+                PFpush(pfModus->weapons,tempCard.item);
+                break;
+            case 's':
+                PFpush(pfModus->survival,tempCard.item);
+                break;
+            case 'm':
+                PFpush(pfModus->misc,tempCard.item);
+                break;
+            case 'i':
+                PFpush(pfModus->info,tempCard.item);
+                break;
+            case 'k':
+                PFpush(pfModus->keyCritical,tempCard.item);
+                break;
+            default:
+                printf("%s was not a valid option. Nothing pushed\n", szResponse);
+        }
+    }
+    }
+
+    else
+        printf("%s\n", "Bad input. Not 'a' or 'm' was found");
+    /* Txt file mode: automatic sort
     while (fgets(szInputBuffer, 50, (FILE*) pFile) != NULL)
     {
         if (iLineCount >= 0 && iLineCount < 5)
@@ -208,13 +279,7 @@ PFModus PFload()
         iLineCount++;
         //everything else is considered ejected. Possiby recode to follow "overfill" quirk if more than 25 cards in save file.
     }
-
-    //Alternative mode: Manual sort
-    /*
-        Loops through fgets and asks which folder they want the given item to into,
-        then uses a switch to first assign the file data to a Card and then push the card
-        to the desired folder.
-    */
+*/
 
     fclose(pFile);
     return pfModus;
