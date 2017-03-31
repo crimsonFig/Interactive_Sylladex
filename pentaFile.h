@@ -22,6 +22,7 @@ typedef struct
 
 /////Prototypes
 //initializations
+    void PFentry()                                      ;
     Card newCard()                                      ;
     PFModus newPFModus()                                ;
 //Save and Load
@@ -37,3 +38,4 @@ typedef struct
 //Utility
     int PFisFull(Card folder[])                         ;
     void PFdrawInventory(PFModus pfModus)               ;
+    Card *findFolder(char szFolderName[], PFModus pfModus);

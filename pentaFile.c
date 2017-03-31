@@ -34,9 +34,14 @@ Notes:
 #include "pentaFile.h"
 
 
+//create an entry point here using the sylladex, upon entry, create an interactive
+//user input loop to determine what functions the use wants to execute.
+//when ready to leave, simply set the userinput While loop to FALSE so that it
+//reaches the end of the entry function and returns to the sylladex.
 
 
-int main(int argc, char *argv[]) //test and debug. Will move #main to sylladex later.
+/* A SET OF TEST AND DEBUG INSTRUCTIONS THAT GOES THROUGH ALL FUNCTIONS.
+int main(int argc, char *argv[])
 {
     PFModus pfModus = newPFModus();
     Card hand;
@@ -57,6 +62,8 @@ int main(int argc, char *argv[]) //test and debug. Will move #main to sylladex l
     printf("hand now holds: %s\n", hand.item);
     hand = PFtakeOutByIndex(pfModus->survival, 1);
     printf("hand now holds: %s\n", hand.item);
+    PFpush(pfModus->weapons, "Blade");
+    PFpush(pfModus->weapons, "Marbles");
     PFdrawInventory(pfModus);
     PFsave(pfModus);
     PFforceEjectAll(pfModus);
@@ -64,9 +71,82 @@ int main(int argc, char *argv[]) //test and debug. Will move #main to sylladex l
     pfModus = PFload();
     PFdrawInventory(pfModus);
     free(pfModus);
+}*/
+
+void PFentry()
+{
+    PFModus pfModus = newPFModus();
+    int userQuit = FALSE;
+    Card *folder;
+    char itemInput[NAMESIZE + 1];
+    char folderInput[NAMESIZE + 1];
+    char indexInput;
+    char userInput[31]; //max input should be 30ish characters
+    printf("PentaFile fetch modus has successfully started.\n");
+    while (!userQuit)
+    {
+        printf("Please input the letter of one of the following options: \n");
+        printf("(l)oad, (s)ave, (a)dd a new item, retrieve by (n)ame,\n");
+        printf("\tretrieve by (i)ndex, (d)isplay current inventory,\n");
+        printf("(e)ject the entire modus contents, or (q)uit.\n");
+        printf("==> ");
+        fgets(userInput, 30, stdin);
+        puts("\n");
+        //AND SO BEGINS THE GREAT SWITCH LOOP
+
+        switch (userInput[0])
+        {
+            case 'l':
+                pfModus = PFload();
+                printf("The inventory has been reverted back to a previous state of time.\n");
+                break;
+            case 's':
+                PFsave(pfModus);
+                printf("Current inventory has been 'saved'. You can reload back to this current state of time at a future point.\n");
+                break;
+            case 'a':
+                printf("What item would you like to captalogue? >> ");
+                fgets(itemInput, NAMESIZE, stdin);
+                printf("What folder do you want to place into? (w,s,m,i,k) >>");
+                fgets(folderInput, NAMESIZE, stdin);
+                folder = findFolder(folderInput, pfModus);
+                PFpush(folder, itemInput);
+                break;
+            case 'n':
+                printf("What item would you like to retrieve? >> ");
+                fgets(itemInput, NAMESIZE, stdin);
+                printf("What folder do you want to pull from? (w,s,m,i,k) >>");
+                fgets(folderInput, NAMESIZE, stdin);
+                folder = findFolder(folderInput, pfModus);
+                PFtakeOutByName(folder, itemInput);
+                break;
+            case 'i':
+                printf("which card index do you want to retrieve from? >> ");
+                indexInput = fgetc(stdin);
+                printf("What folder do you want to pull from? (w,s,m,i,k) >> ");
+                fgets(folderInput, NAMESIZE, stdin);
+                folder = findFolder(folderInput, pfModus);
+                PFtakeOutByIndex(folder, indexInput - '0'); //converts the char to its implied int and not it's ASCII value.
+                break;
+            case 'd':
+                PFdrawInventory(pfModus);
+                break;
+            case 'e':
+                PFforceEjectAll(pfModus);
+                printf("Ejection of all inventory has been successfull.\n");
+                break;
+            case 'q':
+                userQuit = TRUE; //the while loop will now be able to stop.
+                break;
+            default:
+                printf("Was unable to understand what '%s' means.\n\n", userInput);
+        }
+    }
+
+    //the function ends and should return back to the sylladexFramework from here.
 }
 
-/*************************** newCard *********************************///done
+/*************************** newCard *********************************/
 Card newCard()
 {
     //Card card = {EMPTY, "0000000", FALSE}; can only do this if i leave the array size undefined
@@ -76,7 +156,7 @@ Card newCard()
     card.inUse = FALSE;
     return card;
 }
-/*************************** newPFModus ******************************///done
+/*************************** newPFModus ******************************/
 PFModus newPFModus()
 {
     int i;
@@ -237,7 +317,8 @@ PFModus PFload()
     }
 
     else
-        printf("%s\n", "Bad input. Not 'a' or 'm' was found");
+        printf("%s\n", "Bad input. Not 'a' or 'm' was found. Empty load returned.");
+
     /* Txt file mode: automatic sort
     while (fgets(szInputBuffer, 50, (FILE*) pFile) != NULL)
     {
@@ -331,7 +412,7 @@ Card PFtakeOutByName(Card folder[], char value[])
     return card;
 }
 
-/*************************** push **********************************///done
+/*************************** push **********************************/
 int PFpush(Card folder[], char item[])
 {
     int i;
@@ -365,7 +446,7 @@ int PFpush(Card folder[], char item[])
     return FALSE;
 }
 
-/*************************** isFull ********************************///done
+/*************************** isFull ********************************/
 int PFisFull(Card folder[])
 {
     int i;
@@ -377,8 +458,34 @@ int PFisFull(Card folder[])
     }
     return TRUE;
 }
+/*************************** findFolder *********************************
+Takes a string input of what the name of a folder should be. returns the
+closest match for the array based on the first letter.
+************************************************************************/
+Card* findFolder(char szFolderName[], PFModus pfModus)
+{
+    Card *folder;
+    switch (szFolderName[0]) {
+        case 'w':
+            folder = pfModus->weapons;
+            break;
+        case 's':
+            folder = pfModus->survival;
+            break;
+        case 'm':
+            folder = pfModus->misc;
+            break;
+        case 'i':
+            folder = pfModus->info;
+            break;
+        case 'k':
+            folder = pfModus->keyCritical;
+            break;
+    }
+    return folder;
+}
 
-/*************************** forceEject ****************************///done
+/*************************** forceEject ****************************/
 int PFforceEject(Card card[])
 {
     int i;
@@ -391,7 +498,7 @@ int PFforceEject(Card card[])
     }
     return SUCCESS;
 }
-/*************************** forceEjectAll ****************************///done
+/*************************** forceEjectAll ****************************/
 int PFforceEjectAll(PFModus modus)
 {
     int i;
@@ -403,7 +510,7 @@ int PFforceEjectAll(PFModus modus)
     return SUCCESS;
 }
 
-/*************************** drawInventory *************************///done
+/*************************** drawInventory *************************/
 void PFdrawInventory(PFModus pfModus)
 {
     int card;
