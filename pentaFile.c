@@ -137,6 +137,7 @@ void PFentry()
                 break;
             case 'q':
                 userQuit = TRUE; //the while loop will now be able to stop.
+                free(pfModus);
                 break;
             default:
                 printf("Was unable to understand what '%s' means.\n\n", userInput);
