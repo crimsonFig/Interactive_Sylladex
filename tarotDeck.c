@@ -23,50 +23,112 @@ Notes:
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <time.h>
 #include "sylladexFramework.h"
 #include "tarotDeck.h"
 
 void TDentry()
 {
+    time_t t;
+    TDModus tdModus = newTDModus();
+    srand((unsigned int) time(&t)); //seed the rng
     freeDeck(tdModus);
 }
 
 //------------------------- initializations ------------------------
 
-Card newCard()
-{
-    //Card card = {EMPTY, "0000000", FALSE}; can only do this if i leave the array size undefined
-    Card card;
-    strcpy(card.item, EMPTY);
-    strcpy(card.captchaCode, "0000000");
-    card.inUse = FALSE;
-    return card;
-}
-
 TDModus newTDModus()
 {
-    TDModus tdModus = (TDModus) malloc(sizeof(TDModusImp));
-    tdModus->deckHead = NULL        //initually EMPTY
-    return tdModus;
+    TDModus deck = (TDModus) malloc(sizeof(TDModusImp));
+    deck->deckSize = 0;
+    deck->deckTop = NULL;       //initually EMPTY
+    return deck;
 }
 
 //-------------------------- Save and Load -------------------------
 
-void TDsave(TDModus tdModus)
+void TDsave(TDModus deck)
 {
-
+    FILE *pFile;
+    pFile = fopen("inventory.MSF", "wb");
+    int i;
+    Node *p = deck->deckTop;
+    if (pFile == NULL)
+    {
+        printf("%s\n", "Error in creating/opening a file to save.");
+        exit(1);
+    }
+    for (i = 0; i < deck->deckSize; i++)
+    {
+        fwrite(&p->card, sizeof(Card), 1, pFile);
+        p = p->pNext;
+    }
+    fclose(pFile);
 }
 
-TDModus TDload()
+void TDload(TDModus deck) //expects a deck, empty or filled, to be filled
 {
+    FILE *pFile = fopen("inventory.MSF", "rb");
+    if (pFile == NULL)
+    {
+        printf("%s\n", "Error in loading/opening a file, nothing happened.");
+        return;
+    }
+    freeDeck(deck); //free the deck, since its a pointer to deck, we dont need to return the deck back to us
+    int i;
+    Node *pNew;
+    //figure out how many cards are in the save file
+    while(fread(&pNew->card, sizeof(Card), 1, pFile))
+    {
+        if(pNew->card.item[NAMESIZE] != 0) //if null terminator is not there, PANIC
+        {
+            printf("%s\n", "unexpected data! HaCF!");
+            return;
+        }
+        if(pNew->card.captchaCode[7] != 0)
+        {
+            printf("%s\n", "unexpected data! HaCF!");
+            return;
+        }
+        addCard(deck, pNew);
+        pNew = pNew->pNext;
+    }
+    if(feof(pFile))
+    {
+        printf("%s\n", "successfully created deck.");
+        fclose(pFile);
+        return;
+    }
+    else if(ferror(pFile))
+    {
+        printf("%s\n", "Error encountered! deck may be partial or empty.");
+        fclose(pFile);
+        return;
+    }
 
 }
 
 //-------------------------- Inventory IO --------------------------
 
-Card TDtakeOutByIndex(TDModus deck, int fileIndex)
+Card TDtakeOutByIndex(TDModus deck, int cardIndex)
 {
+    int i;
+    Node *p;
+    Node *toRelease;
+    Card card;
 
+    //roll through the stack until it lands just before the desired card
+    p = deck->deckTop;
+    for(i = 0; i < cardIndex - 1; i++)
+    {
+        p = p->pNext;
+    }
+    card = p->pNext->card;
+    //rethread the LL around the to-be ejected card and free the old node
+    toRelease = p->pNext;
+    p->pNext = p->pNext->pNext;
+    free(toRelease);
+    return card;
 }
 
 Card TDdrawFromTop(TDModus deck)
@@ -74,26 +136,31 @@ Card TDdrawFromTop(TDModus deck)
     Card card;
     Node *pRemove;
     if (isEmpty(deck))
-        printf("The deck doesn't exist yet to draw from.\n");
-    card = deck->deckHead->card;
-    pRemove = deck->deckHead;
-    deck->deckHead = deck->deckHead->pNext;
+    {
+        printf("The deck doesn't exist to draw from. Giving a blank card. \n");
+        card = newCard();
+        return card;
+    }
+    card = deck->deckTop->card;
+    pRemove = deck->deckTop;
+    deck->deckTop = deck->deckTop->pNext;
+    deck->deckSize -= 1;
     free(pRemove);
     return card;
 }
 
-int TDcapture(TDModus deck, char item[])
+void TDcapture(TDModus deck, char item[])
 {
-    Node *pNew = (Node *) malloc(sizeof(NODE));
+    Node *pNew = (Node *) malloc(sizeof(Node));
     if (pNew == NULL)
         printf("ERROR IN TRYING TO CREATE NEW CARD \n");
     pNew->card = newCard();
     strcpy(pNew->card.item, item);
-    pNew->pNext = deck->deckHead;
-    deck->deckHead = pNew;
+
+    addCard(deck, pNew);
 }
 
-int TDforceEjectAll(TDModus tdModus)
+void TDforceEjectAll(TDModus tdModus)
 {
 
 }
@@ -105,14 +172,69 @@ void TDdrawInventory(TDModus tdModus)
 
 }
 
-Card TDshuffle(TDModus deck)
+void TDshuffle(TDModus deck)
 {
+    //split the deck into two sides, then randomly restack from the top of either side. shuffle 9 times.
+    TDModus LeftSide = newTDModus();
+    TDModus RightSide = newTDModus();
+    int i; //index
+    int r; //rng int of either 0 or 1
+    Node *p;    //simple temp node pointer
+    int a = (deck->deckSize / 2); //split the deck in half
+    int b = deck->deckSize - a; //give the rest to RightSide
 
+    //shuffle the deck 9 times
+    for(i = 0; i < 9; i++)
+    {
+
+        LeftSide->deckTop = deck->deckTop; //leftside now is the entire deck
+        LeftSide->deckSize = a;
+
+        p = deck->deckTop;
+        //roll the pointer to the halfway point of LL
+        for(i = 0; i < (a - 1); i++)
+        {
+            p = p->pNext;
+        }
+        //break up the link list
+        RightSide->deckTop = p->pNext;
+        p->pNext = NULL; //LeftSide; set end to null
+        p = NULL; //this node will be for shifting cards
+        deck->deckTop = NULL; //clear the original deck
+
+
+        while(!isEmpty(LeftSide) || !isEmpty(RightSide))//run until both decks are empty
+        {
+            //randomly take from the top of the two decks and push to the new deck.
+            r = rand() % 1; //random int of either 0 or 1
+            if(r == 0 || isEmpty(RightSide))//pull from LeftSide
+            {
+                p = LeftSide->deckTop; //allows us to pop this node later
+                addCard(deck, p);
+
+                //pop and free the LeftSide card
+                LeftSide->deckTop = LeftSide->deckTop->pNext;
+                free(p);
+                LeftSide->deckSize -= 1;
+            }
+            else //pull from RightSide
+            {
+                p = RightSide->deckTop;
+                addCard(deck, p);
+
+                //pop and free the RightSide card
+                RightSide->deckTop = RightSide->deckTop->pNext;
+                free(p);
+                RightSide->deckSize -= 1;
+            }
+        }
+
+    }
 }
 
-int isEmpty(TDModus tdModus)
+int isEmpty(TDModus deck)
 {
-    return deck->deckHead == NULL;
+    return deck->deckTop == NULL;
 }
 
 //-------------------------- Node/Stack Functions --------------------
@@ -121,11 +243,20 @@ void freeDeck(TDModus tdModus)
 {
     Node *p;
     Node *pRemove;
-    for (p = tdModus->deckHead; p != NULL;)
+    for (p = tdModus->deckTop; p != NULL;)
     {
         pRemove = p;
         p = p->pNext;
         free(pRemove);
     }
     free(tdModus);
+}
+
+void addCard(TDModus deck, Node *pNew)
+{
+    //pNew is expected to have a card inside
+    //if empty, LL will autmatically have a NULL termination.
+    pNew->pNext = deck->deckTop;
+    deck->deckTop = pNew;
+    deck->deckSize++;
 }

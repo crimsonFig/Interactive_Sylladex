@@ -14,3 +14,4 @@ typedef struct
 } Card;
 
 /////Prototypes
+Card newCard();

@@ -1,7 +1,7 @@
 # The sylladex and modi files
-OBJECTS = sylladexFramework.o pentaFile.o
+OBJECTS = sylladexFramework.o pentaFile.o tarotDeck.o
 # Header files
-HEADERS = sylladexFramework.h pentaFile.h
+HEADERS = sylladexFramework.h pentaFile.h tarotDeck.h
 
 sylladexTest: ${OBJECTS}
 	gcc -g -o sylladexTest ${OBJECTS}

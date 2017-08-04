@@ -147,16 +147,6 @@ void PFentry()
     //the function ends and should return back to the sylladexFramework from here.
 }
 
-/*************************** newCard *********************************/
-Card newCard()
-{
-    //Card card = {EMPTY, "0000000", FALSE}; can only do this if i leave the array size undefined
-    Card card;
-    strcpy(card.item, EMPTY);
-    strcpy(card.captchaCode, "0000000");
-    card.inUse = FALSE;
-    return card;
-}
 /*************************** newPFModus ******************************/
 PFModus newPFModus()
 {
@@ -278,6 +268,10 @@ PFModus PFload()
         fread(&pfModus->info[i], sizeof(Card), 1, pFile);
     for (i = 0; i < 5; i++)
         fread(&pfModus->keyCritical[i], sizeof(Card), 1, pFile);
+    if(feof(pFile))
+        printf("%s\n", "Load successfull.");
+    else
+        printf("%s\n", "error encountered.");
     }
 
     else if (szResponse[0] == 'm')/***** Alternative mode: Manual sort

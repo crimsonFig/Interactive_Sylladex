@@ -55,3 +55,19 @@ int main(int argc, char const *argv[]) {
     printf("Sylladex is now closed.\n");
     return 0;
 }
+
+/*************************** newCard *********************************/
+Card newCard()
+{
+    //Card card = {EMPTY, "0000000", FALSE}; can only do this if i leave the array size undefined
+    Card card;
+    int i;
+    for(i = 0; i < NAMESIZE + 1; i++) //fully initialize item
+    {
+        card.item[i] = 0;
+    }
+    strcpy(card.item, EMPTY);
+    strcpy(card.captchaCode, "0000000");
+    card.inUse = FALSE;
+    return card;
+}

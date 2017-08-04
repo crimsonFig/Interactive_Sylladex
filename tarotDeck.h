@@ -11,7 +11,8 @@ typedef struct Node
 typedef struct
 {
     //The deck structure is a linked list "stack"
-    Node *deckHead
+    int deckSize;
+    Node *deckTop;
 } TDModusImp;             //the actual inventory structure pfModus
 typedef TDModusImp *TDModus;
 
@@ -22,13 +23,17 @@ typedef TDModusImp *TDModus;
     TDModus newTDModus()                                ;
 //Save and Load
     void TDsave(TDModus tdModus)                        ;
-    TDModus TDload()                                    ;
+    void TDload()                                       ;
 //Inventory IO
     Card TDtakeOutByIndex(TDModus deck, int fileIndex)  ;
     Card TDdrawFromTop(TDModus deck)                    ;
-    int TDcapture(TDModus deck, char item[])            ;
+    void TDcapture(TDModus deck, char item[])           ;
 
-    int TDforceEjectAll(TDModus tdModus)                ;
+    void TDforceEjectAll(TDModus tdModus)               ;
 //Utility
     void TDdrawInventory(TDModus tdModus)               ;
-    Card TDshuffle(TDModus deck)                        ;
+    void TDshuffle(TDModus deck)                        ;
+    int isEmpty(TDModus deck)                           ;
+//Node/Stack Functions
+    void freeDeck(TDModus tdModus)                      ;
+    void addCard(TDModus deck, Node *pNew)              ;
