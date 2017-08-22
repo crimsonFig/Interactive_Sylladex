@@ -30,9 +30,9 @@ Notes:
 void TDentry()
 {
     time_t t;
-    TDModus tdModus = newTDModus();
+    TDModus deck = newTDModus();
     srand((unsigned int) time(&t)); //seed the rng
-    freeDeck(tdModus);
+    TDfreeDeck(deck);
 }
 
 //------------------------- initializations ------------------------
@@ -74,7 +74,7 @@ void TDload(TDModus deck) //expects a deck, empty or filled, to be filled
         printf("%s\n", "Error in loading/opening a file, nothing happened.");
         return;
     }
-    freeDeck(deck); //free the deck, since its a pointer to deck, we dont need to return the deck back to us
+    TDfreeDeck(deck); //free the deck, since its a pointer to deck, we dont need to return the deck back to us
     int i;
     Node *pNew;
     //figure out how many cards are in the save file
@@ -90,7 +90,7 @@ void TDload(TDModus deck) //expects a deck, empty or filled, to be filled
             printf("%s\n", "unexpected data! HaCF!");
             return;
         }
-        addCard(deck, pNew);
+        TDaddCard(deck, pNew);
         pNew = pNew->pNext;
     }
     if(feof(pFile))
@@ -191,7 +191,7 @@ void TDcapture(TDModus deck, char item[])
     pNew->card = newCard();
     strcpy(pNew->card.item, item);
 
-    addCard(deck, pNew);
+    TDaddCard(deck, pNew);
 }
 
 //-------------------------- Utility ---------------------------------
@@ -246,7 +246,7 @@ void TDshuffle(TDModus deck)
             r = rand() % 2; //random int of either 0 or 1
             if((r == 0 && isEmpty(LeftSide)) || isEmpty(RightSide))//pull from LeftSide
             {
-                addCard(deck, LeftSide->deckTop);
+                TDaddCard(deck, LeftSide->deckTop);
                 printf("/");
                 //iterate through the stack
                 LeftSide->deckTop = LeftSide->deckTop->pNext;
@@ -254,7 +254,7 @@ void TDshuffle(TDModus deck)
             }
             else //pull from RightSide
             {
-                addCard(deck, RightSide->deckTop);
+                TDaddCard(deck, RightSide->deckTop);
                 printf("\\");
                 //iterate through the stack
                 RightSide->deckTop = RightSide->deckTop->pNext;
@@ -273,20 +273,20 @@ int isEmpty(TDModus deck)
 
 //-------------------------- Node/Stack Functions --------------------
 
-void freeDeck(TDModus tdModus)
+void TDfreeDeck(TDModus deck)
 {
     Node *p;
     Node *pRemove;
-    for (p = tdModus->deckTop; p != NULL;)
+    for (p = deck->deckTop; p != NULL;)
     {
         pRemove = p;
         p = p->pNext;
         free(pRemove);
     }
-    free(tdModus);
+    free(deck);
 }
 
-void addCard(TDModus deck, Node *pNew)
+void TDaddCard(TDModus deck, Node *pNew)
 {
     //pNew is expected to have a card inside
     //if empty, LL will autmatically have a NULL termination.

@@ -19,19 +19,18 @@ typedef TDModusImp *TDModus;
 /////Prototypes
 //initializations
     void TDentry()                                      ;
-    Card newCard()                                      ;
     TDModus newTDModus()                                ;
 //Save and Load
-    void TDsave(TDModus tdModus)                        ;
-    void TDload()                                       ;
+    void TDsave(TDModus deck)                           ;
+    void TDload(TDModus deck)                           ;
 //Inventory IO
     Card TDtakeOutByIndex(TDModus deck, int fileIndex)  ;
     Card TDdrawFromTop(TDModus deck)                    ;
     void TDcapture(TDModus deck, char item[])           ;
 //Utility
-    void TDdrawInventory(TDModus tdModus)               ;
+    void TDdrawInventory(TDModus deck)                  ;
     void TDshuffle(TDModus deck)                        ;
-    int isEmpty(TDModus deck)                           ;
+    int TDisEmpty(TDModus deck)                         ;
 //Node/Stack Functions
-    void freeDeck(TDModus tdModus)                      ;
-    void addCard(TDModus deck, Node *pNew)              ;
+    void TDfreeDeck(TDModus deck)                       ;
+    void TDaddCard(TDModus deck, Node *pNew)            ;
