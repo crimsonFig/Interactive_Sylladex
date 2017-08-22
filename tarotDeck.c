@@ -110,13 +110,47 @@ void TDload(TDModus deck) //expects a deck, empty or filled, to be filled
 
 //-------------------------- Inventory IO --------------------------
 
+Card TDtakeOutByItem(TDModus deck, char item[])
+{
+    Node *p;
+    Node *pLast;
+    Card card = newCard();
+
+    for(p = deck->deckTop; p != NULL; p = p->pNext)
+    {
+        if(strstr(p->card.item, item) != NULL) //if substring is found
+        {
+            printf("found card: %s\n", p->card.item);
+
+            pLast->pNext = p->pNext;
+            card = p->card;
+            free(p);
+            return card;
+        }
+        pLast = p; //keeps track of the previous card.
+    }
+    printf("Could not find card. Returning a blank card.");
+    return card;
+}
+
 Card TDtakeOutByIndex(TDModus deck, int cardIndex)
 {
     int i;
     Node *p;
-    Node *toRelease;
-    Card card;
+    Node *pRemove;
+    Card card = newCard();
 
+    //safety checks
+    if(cardIndex < 0 || cardIndex > (deck->deckSize - 1))
+    {
+        printf("%s\n", "The index you asked for doesn't exist. Returning a blank card.");
+        return card;
+    }
+    else if(deck->deckTop == NULL)
+    {
+        printf("%s\n", "Deck ERROR, returning a blank card.");
+        return card;
+    }
     //roll through the stack until it lands just before the desired card
     p = deck->deckTop;
     for(i = 0; i < cardIndex - 1; i++)
@@ -125,9 +159,9 @@ Card TDtakeOutByIndex(TDModus deck, int cardIndex)
     }
     card = p->pNext->card;
     //rethread the LL around the to-be ejected card and free the old node
-    toRelease = p->pNext;
+    pRemove = p->pNext;
     p->pNext = p->pNext->pNext;
-    free(toRelease);
+    free(pRemove);
     return card;
 }
 
@@ -160,16 +194,19 @@ void TDcapture(TDModus deck, char item[])
     addCard(deck, pNew);
 }
 
-void TDforceEjectAll(TDModus tdModus)
-{
-
-}
-
 //-------------------------- Utility ---------------------------------
 
-void TDdrawInventory(TDModus tdModus)
+void TDdrawInventory(TDModus deck)
 {
-
+    Node *p = deck->deckTop;;
+    int i;
+    printf("The deck contains: ");
+    for (i = 0; i < deck->deckSize; i++)
+    {
+        printf("%d:%s, ", i, p->card.item);
+        p = p->pNext;
+    }
+    printf("-END-.\n");
 }
 
 void TDshuffle(TDModus deck)
@@ -206,30 +243,27 @@ void TDshuffle(TDModus deck)
         while(!isEmpty(LeftSide) || !isEmpty(RightSide))//run until both decks are empty
         {
             //randomly take from the top of the two decks and push to the new deck.
-            r = rand() % 1; //random int of either 0 or 1
-            if(r == 0 || isEmpty(RightSide))//pull from LeftSide
+            r = rand() % 2; //random int of either 0 or 1
+            if((r == 0 && isEmpty(LeftSide)) || isEmpty(RightSide))//pull from LeftSide
             {
-                p = LeftSide->deckTop; //allows us to pop this node later
-                addCard(deck, p);
-
-                //pop and free the LeftSide card
+                addCard(deck, LeftSide->deckTop);
+                printf("/");
+                //iterate through the stack
                 LeftSide->deckTop = LeftSide->deckTop->pNext;
-                free(p);
                 LeftSide->deckSize -= 1;
             }
             else //pull from RightSide
             {
-                p = RightSide->deckTop;
-                addCard(deck, p);
-
-                //pop and free the RightSide card
+                addCard(deck, RightSide->deckTop);
+                printf("\\");
+                //iterate through the stack
                 RightSide->deckTop = RightSide->deckTop->pNext;
-                free(p);
                 RightSide->deckSize -= 1;
             }
         }
-
+        printf("\n");
     }
+    printf("%s\n", "Shuffle is complete.");
 }
 
 int isEmpty(TDModus deck)
@@ -256,6 +290,7 @@ void addCard(TDModus deck, Node *pNew)
 {
     //pNew is expected to have a card inside
     //if empty, LL will autmatically have a NULL termination.
+    //adds a card to the top of the stack
     pNew->pNext = deck->deckTop;
     deck->deckTop = pNew;
     deck->deckSize++;

@@ -28,8 +28,6 @@ typedef TDModusImp *TDModus;
     Card TDtakeOutByIndex(TDModus deck, int fileIndex)  ;
     Card TDdrawFromTop(TDModus deck)                    ;
     void TDcapture(TDModus deck, char item[])           ;
-
-    void TDforceEjectAll(TDModus tdModus)               ;
 //Utility
     void TDdrawInventory(TDModus tdModus)               ;
     void TDshuffle(TDModus deck)                        ;
