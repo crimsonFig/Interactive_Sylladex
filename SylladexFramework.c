@@ -25,12 +25,13 @@ Notes:
 #include <stdarg.h>
 #include "sylladexFramework.h"
 #include "pentaFile.h"
+#include "tarotDeck.h"
 
 /*/Fetch Modus Files to include
-#include "PentaFile.h"
+#include "PentaFile.h" DONE
 #include "NodeMap.h"
 #include "timeBox.h"
-#include "tarotDeck.h"
+#include "tarotDeck.h" DONE
 */
 //create a function that can create a card item based on it's captcha code
 int main(int argc, char const *argv[]) {
@@ -44,6 +45,8 @@ int main(int argc, char const *argv[]) {
             PFentry();
             break;
         case 'T':
+        		printf("Booting up the TarotDeck Modus\n");
+        		TDentry();
             break;
         case 'N':
             break;

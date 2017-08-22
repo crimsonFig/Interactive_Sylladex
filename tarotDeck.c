@@ -169,7 +169,7 @@ Card TDdrawFromTop(TDModus deck)
 {
     Card card;
     Node *pRemove;
-    if (isEmpty(deck))
+    if (TDisEmpty(deck))
     {
         printf("The deck doesn't exist to draw from. Giving a blank card. \n");
         card = newCard();
@@ -240,11 +240,11 @@ void TDshuffle(TDModus deck)
         deck->deckTop = NULL; //clear the original deck
 
 
-        while(!isEmpty(LeftSide) || !isEmpty(RightSide))//run until both decks are empty
+        while(!TDisEmpty(LeftSide) || !TDisEmpty(RightSide))//run until both decks are empty
         {
             //randomly take from the top of the two decks and push to the new deck.
             r = rand() % 2; //random int of either 0 or 1
-            if((r == 0 && isEmpty(LeftSide)) || isEmpty(RightSide))//pull from LeftSide
+            if((r == 0 && TDisEmpty(LeftSide)) || TDisEmpty(RightSide))//pull from LeftSide
             {
                 TDaddCard(deck, LeftSide->deckTop);
                 printf("/");
@@ -266,7 +266,7 @@ void TDshuffle(TDModus deck)
     printf("%s\n", "Shuffle is complete.");
 }
 
-int isEmpty(TDModus deck)
+int TDisEmpty(TDModus deck)
 {
     return deck->deckTop == NULL;
 }
