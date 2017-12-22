@@ -3,7 +3,7 @@ OBJECTS = sylladexFramework.o pentaFile.o tarotDeck.o
 # Header files
 HEADERS = sylladexFramework.h pentaFile.h tarotDeck.h
 
-sylladexTest: ${OBJECTS}
+all: ${OBJECTS}
 	gcc -g -o sylladexTest ${OBJECTS}
 
 %.o: %.c ${HEADERS}

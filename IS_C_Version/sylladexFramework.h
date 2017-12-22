@@ -13,5 +13,7 @@ typedef struct
     int  inUse;                 //used to track if the card is empty or filled
 } Card;
 
+//ADD A STRUCTURE TO ACT AS A GROUND FOR NON INVENTORY ITEMS. base off of arrayList?
+
 /////Prototypes
 Card newCard();

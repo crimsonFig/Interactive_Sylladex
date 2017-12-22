@@ -32,6 +32,72 @@ void TDentry()
     time_t t;
     TDModus deck = newTDModus();
     srand((unsigned int) time(&t)); //seed the rng
+    int userQuit = FALSE;
+    char userInput[31]; //max input should be 30ish characters
+    printf("TarotDeck fetch modus has successfully started.\n");
+
+    while (!userQuit)
+    {
+        printf("Please input the letter of one of the following options: \n");
+        printf("(l)oad, (s)ave, (a)dd a new item, retrieve by (n)ame,\n");
+        printf("\tretrieve by (i)ndex, (d)isplay current inventory,\n");
+        printf("(e)ject the entire modus contents, or (q)uit.\n");
+        printf("==> ");
+        fgets(userInput, 30, stdin);
+        puts("\n");
+        //AND SO BEGINS THE GREAT SWITCH LOOP
+
+        switch (userInput[0])
+        {
+            case 'l':
+                pfModus = PFload();
+                printf("The inventory has been reverted back to a previous state of time.\n");
+                break;
+            case 's':
+                PFsave(pfModus);
+                printf("Current inventory has been 'saved'. You can reload back to this current state of time at a future point.\n");
+                break;
+            case 'a':
+                printf("What item would you like to captalogue? >> ");
+                fgets(itemInput, NAMESIZE, stdin);
+                printf("What folder do you want to place into? (w,s,m,i,k) >>");
+                fgets(folderInput, NAMESIZE, stdin);
+                folder = findFolder(folderInput, pfModus);
+                PFpush(folder, itemInput);
+                break;
+            case 'n':
+                printf("What item would you like to retrieve? >> ");
+                fgets(itemInput, NAMESIZE, stdin);
+                printf("What folder do you want to pull from? (w,s,m,i,k) >>");
+                fgets(folderInput, NAMESIZE, stdin);
+                folder = findFolder(folderInput, pfModus);
+                PFtakeOutByName(folder, itemInput);
+                break;
+            case 'i':
+                printf("which card index do you want to retrieve from? >> ");
+                indexInput = fgetc(stdin);
+                printf("What folder do you want to pull from? (w,s,m,i,k) >> ");
+                fgets(folderInput, NAMESIZE, stdin);
+                folder = findFolder(folderInput, pfModus);
+                PFtakeOutByIndex(folder, indexInput - '0'); //converts the char to its implied int and not it's ASCII value.
+                break;
+            case 'd':
+                PFdrawInventory(pfModus);
+                break;
+            case 'e':
+                PFforceEjectAll(pfModus);
+                printf("Ejection of all inventory has been successfull.\n");
+                break;
+            case 'q':
+                userQuit = TRUE; //the while loop will now be able to stop.
+                free(pfModus);
+                break;
+            default:
+                printf("Was unable to understand what '%s' means.\n\n", userInput);
+        }
+    }
+
+    //the function ends and should return back to the sylladexFramework from here.
     TDfreeDeck(deck);
 }
 

@@ -109,6 +109,7 @@ void PFentry()
                 fgets(itemInput, NAMESIZE, stdin);
                 printf("What folder do you want to place into? (w,s,m,i,k) >>");
                 fgets(folderInput, NAMESIZE, stdin);
+    //scrub the \n from folderInput
                 folder = findFolder(folderInput, pfModus);
                 PFpush(folder, itemInput);
                 break;
@@ -485,11 +486,12 @@ int PFforceEject(Card card[])
 {
     int i;
     Card toEject = newCard();
+    printf("%s\n", "Ejecting Cards");
     for (i = 0; i < 5; i++) //dumps the entire contents of the card array/folder
     {
         toEject = card[i];
+        printf("%s: %s\n", card[i].item, card[i].captchaCode);
         card[i] = newCard();
-        //toEject now releases the card to the world from the pfModus.
     }
     return SUCCESS;
 }

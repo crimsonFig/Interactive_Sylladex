@@ -6,7 +6,13 @@ Purpose:
     Homestuck webcomic inventory modi. Meant to be controlled through
     a console.
     --Time Box--
-    The time box is a safe-like container with an inside that has no anchor to the current time, allowing items placed inside to shift back and forth through time. From the user's perception, opening the safe causes the inside to present whatever item now exists at that time. items may appear before they were placed in, or appear a long time after it was placed within, if the safe is opened and nothing is inside then it is at a state when all items were removed and nothing was ever put in.
+    The time box is a safe-like container with an inside that has no anchor to
+     the current time, allowing items placed inside to shift back and forth
+     through time. From the user's perception, opening the safe causes the
+     inside to present whatever item now exists at that time. items may appear
+     before they were placed in, or appear a long time after it was placed
+     within, if the safe is opened and nothing is inside then it is at a state
+     when all items were removed and nothing was ever put in.
 
     ---
 Command Parameters:
@@ -60,6 +66,27 @@ Notes:
         convergence will continue until all accessable items are within the
         safe's threshold. The largeness of items will be tagged in the nodes,
         with the nodes always belonging to a given entity.
+    This paragragh will briefly describe the properties and nature of the
+        temoral dimension within the safe. Each entity will exist on its own
+        temporal timeline, so two seperate entities will be independent in
+        their relativeTime shifts. the temporal dimension within the safe is
+        also about the number of entities within the safe, about n * 5 hours,
+        so that opening the safe usually results in a 1/5 chance of finding
+        something within the safe, changing this number will change the
+        chances. this gives n*5 hours of time for the items within to shift
+        within relatively, as in, even if the absolute time of an item is 20
+        hours ago, it's relative time will always land it somewhere in the n*5
+        hours boundry (and the center of this boundry is the present time, so
+        e.g. 2.5 hours into the past, 2.5 hours into the future, with the
+        entitiy appearing in the present if it exists in our safe within .5
+        hour of the past or .5 hour of the future). Lore wise, if an item's
+        relative shift lands it in the future or the past when the safe door
+        is open, it is considered to be true at that time in some given
+        universe/dimension, not specifically our universe/dimension. it is
+        only in our universe for certain if the time shift lands it in our
+        temporally present window of conciousness (which leads to various
+        phylosophical ideas about conciousness over time when compared to
+        other's perspectives.)
 *******************************************************************************/
 // If compiling using visual studio, tell the compiler not to give its warnings
 // about the safety of scanf and printf
