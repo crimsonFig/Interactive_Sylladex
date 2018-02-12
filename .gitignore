@@ -8,3 +8,15 @@
 #non_Source_Code
 *.o
 *.map
+
+*.prefs
+
+IS_Java_Version/.project
+
+IS_C_Version/.project
+
+*.xml
+
+IS_Java_Version/.classpath
+
+IS_C_Version/.cproject
