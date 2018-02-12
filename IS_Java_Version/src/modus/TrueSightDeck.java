@@ -1,5 +1,6 @@
 package modus;
 
+import java.util.LinkedHashMap;
 import java.util.ListIterator;
 
 import app.controller.Sylladex;
@@ -9,28 +10,47 @@ import app.model.Card;
  * @author Triston Scallan
  *
  */
-public class TrueSightDeck extends TarotDeck implements Modus {
+public class TrueSightDeck extends TarotDeck {
 
 	//inherited Sylladex sylladexReference = null;
-	//inherited List<Card> deck = new Stack<Card>(); 
-		
-		
-	/**
+	//inherited List<Card> deck = new Stack<Card>(); 	
+	//inherited final static int SHUFFLE_VAL;
+	
+	//***************************** INITIALIZE ***********************************/		
+	/**	
+	 * Constructor for the TrueSightDeck
 	 * @param sylladexReference
-	 * 
 	 */
 	public TrueSightDeck(Sylladex sylladexReference) {
 		super(sylladexReference);
 	}
 	
 	/* (non-Javadoc)
+	 * @see modus.Modus#createFunctionMap()
+	 */
+	@Override
+	public LinkedHashMap<String, Integer> createFunctionMap() {
+		LinkedHashMap<String, Integer> functionMap = new LinkedHashMap<String, Integer>();
+		functionMap.put("save", 0);
+		functionMap.put("load #", 1); //mode = 0, 1, 2
+		functionMap.put("capture", 2);
+		functionMap.put("takeOutCard", 3);
+		functionMap.put("takeOutCardByIndex", 4);
+		functionMap.put("takeOutCardByName", 5);
+		functionMap.put("findCardIndexByName", 6);
+		return functionMap;
+	}
+	
+	//***************************** ACCESS *************************************/	
+	/* (non-Javadoc)
 	 * @see modus.Modus#entry()
 	 */
 	@Override
-	public int entry(int functionCode, Object...objects) {
-		return -1;
+	public String entry(int functionCode, Object...objects) {
+		return "0";
 	}
 	
+	//********************************** IO ***************************************/
 	/**
 	 * Draws the index'th card from the deck.
 	 * @param index the desired index
@@ -61,6 +81,7 @@ public class TrueSightDeck extends TarotDeck implements Modus {
 		return new Card();
 	}
 	
+	//****************************** UTILITY ************************************/	
 	/**
 	 * given an item's name, finds the index location within the deck of a card that matches the name.
 	 * @param itemName the given name to find
@@ -77,4 +98,10 @@ public class TrueSightDeck extends TarotDeck implements Modus {
 		return -1;
 	}
 
+	/* (non-Javadoc)
+	 * @see modus.Modus#drawToDisplay()
+	 */
+	@Override
+	public void drawToDisplay() {
+	}
 }

@@ -1,17 +1,24 @@
 package app.model;
 
+import java.io.Serializable;
+
 /**
+ * The Card class is a data structure designed to hold information about a given item.
+ * 	<br> This class provides functionality to manipulate item information and whether
+ * 	or not this object is currently holding an actual item.
  * @author Triston Scallan
  *
  */
-public class Card {
+public class Card implements Serializable {
+	private static final long serialVersionUID = 1L;
+	
 	///// Variables
 	/** item name, max size should be 16 */
-	private String item;			
+	private final String item;			
 	/** 7 alphanumeric code */
-	private String captchaCode; 
+	private final String captchaCode; 
 	/** track if this card is empty or not */
-	private Boolean inUse;
+	private final Boolean inUse;
 	
 	///// Constructors
 	/** Constructor for empty card */
@@ -30,19 +37,12 @@ public class Card {
 		this.inUse = true;
 	}
 	
-	///// Getters & Setters
+	///// Getters 
 	/**
 	 * @return the item
 	 */
 	public String getItem() {
 		return item;
-	}
-
-	/**
-	 * @param item the item to set
-	 */
-	public void setItem(String item) {
-		this.item = item;
 	}
 
 	/**
@@ -52,12 +52,6 @@ public class Card {
 		return captchaCode;
 	}
 
-	/**
-	 * @param captchaCode the captchaCode to set
-	 */
-	public void setCaptchaCode(String captchaCode) {
-		this.captchaCode = captchaCode;
-	}
 
 	/**
 	 * @return the inUse
@@ -65,20 +59,13 @@ public class Card {
 	public Boolean getInUse() {
 		return inUse;
 	}
-
-	/**
-	 * @param inUse the inUse to set
-	 */
-	public void setInUse(Boolean inUse) {
-		this.inUse = inUse;
-	}
 	
 	///// Methods
 
 	/**
 	 * Validates the card to make sure it doesn't have bad data
 	 * @param card the card to validate
-	 * @return the validity of the card
+	 * @return true if valid, false otherwise
 	 */
 	public Boolean validateCard() {
 		if(this.item.length() <= 16 && this.captchaCode.matches("^[\\w\\d]{,7}$"))  
@@ -94,4 +81,17 @@ public class Card {
 	public String captchaHash(String item) {
 		return "0000000"; //TODO: add hashing function
 	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("Card [item=").append(item).append(", captchaCode=").append(captchaCode).append(", inUse=")
+				.append(inUse).append("]");
+		return builder.toString();
+	}
+	
+	
 }

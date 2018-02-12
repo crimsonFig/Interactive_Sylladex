@@ -2,10 +2,12 @@ package modus;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import app.controller.Sylladex;
 import app.model.Card;
+import app.model.CardNode;
+import javafx.scene.layout.StackPane;
 
 /**
  * This fetch modus is the PentaFile pfModus, a modus designed for use with a sylladex.
@@ -28,7 +30,7 @@ public class PentaFile implements Modus {
 	/**
 	 * provides information about this modus
 	 */
-	public final Metadata METADATA;
+	protected final Metadata METADATA;
 	
 	//5 arrays, each with 5 elements
 	private Card[] weapons = new Card[5];
@@ -37,7 +39,7 @@ public class PentaFile implements Modus {
 	private Card[] info = new Card[5];
 	private Card[] keyCritical = new Card[5];
 	
-	///// INITIALIZE
+	//***************************** INITIALIZE ***********************************/
 	/**
 	 * The constructor of a fetch Modus should save the reference to the sylladex
 	 * 	so that it can functionally return a list of the Modus' functionality to
@@ -48,17 +50,7 @@ public class PentaFile implements Modus {
 		this.sylladexReference = sylladex;
 		
 		//initialize the METADATA
-		HashMap<String, Integer> functionMap = new HashMap<String, Integer>();
-		functionMap.put("save", 0);
-		functionMap.put("load 0", 1); //mode = 0
-		functionMap.put("load 1", 2); //mode = 1
-		functionMap.put("load 2", 3); //mode = 2
-		functionMap.put("capture", 4);
-		functionMap.put("addCard", 5);
-		functionMap.put("addCardByFolder", 6);
-		functionMap.put("takeOutCard", 7);
-		functionMap.put("takeOutCardByName", 8);
-		this.METADATA = new Metadata("PentaFile", functionMap, this);
+		this.METADATA = new Metadata(this.getClass().getSimpleName(), this.createFunctionMap(), this);
 		
 		//attempt to initialize the modus space
 		Card card = new Card();	//empty card
@@ -69,35 +61,105 @@ public class PentaFile implements Modus {
 		Arrays.fill(keyCritical, card);
 	}
 	
+	/** Creates a HashMap of the functions associated to this specific class. 
+	 *  Subclasses need to override this method and reassign the functions associated
+	 *  with the new class.
+	 * @return a HashMap of the function name and the entry code
+	 */
+	public LinkedHashMap<String, Integer> createFunctionMap() {
+		LinkedHashMap<String, Integer> functionMap = new LinkedHashMap<String, Integer>();
+		functionMap.put("save", 1);
+		functionMap.put("load #", 2); //mode = 0, 1, 2, or 3
+		functionMap.put("capture", 3);
+		functionMap.put("captureByFolder", 4);
+		functionMap.put("takeOutCard", 5);
+		functionMap.put("takeOutCardByName", 6);
+		return functionMap;
+	}
+	
+	//***************************** ACCESS *************************************/
 	/* (non-Javadoc)
 	 * @see modus.Modus#entry()
 	 */
 	@Override
-	public int entry(int functionCode, Object...objects) {
+	public String entry(int functionCode, Object...objects) {
 		switch (functionCode) {
-		case 0: //save
+		case 1: //save
+			save();
 			break;
-		case 1: //load 1
+		case 2: //load <mode>
+			//based on mode as objects[0], use that load mode. if doesn't match 0, 1, 2, or 3 then invoke entry(-1, "command name") to display help to the output
+			if (objects.length == 1 && objects[0] instanceof String) {
+				switch ((String) objects[0]) {
+				case "0":
+					load(0);
+					drawToDisplay();
+					break;
+				case "1":
+					load(1);
+					drawToDisplay();
+					break;
+				case "2":
+					load(2);
+					drawToDisplay();
+					break;
+				case "3":
+					load(3);
+					drawToDisplay();
+					break;
+				default:
+					entry(-1, "help load");
+					return "-1";
+				}
+			} else {
+				entry(-1, "help load");
+				return "-1";
+			}
 			break;
-		case 2: //load 2
+		case 3: //capture
+			if (objects.length == 1 && objects[0] instanceof String) {
+				if(! capture((String) objects[0])) return "-1";
+				save();
+				drawToDisplay();
+			} else {
+				entry(-1, "help capture");
+				return "-1";
+			}
 			break;
-		case 3: //load 3
+		case 4: //captureByFolder
+			if (objects.length == 2 && objects[0] instanceof String && objects[1] instanceof String) {
+				Card[] folder = findFolderByName((String) objects[1]);
+				if(! captureByFolder((String) objects[0], folder)) return "-1";
+				save();
+				drawToDisplay();
+			} else {
+				entry(-1, "help captureByFolder");
+				return "-1";
+			}
 			break;
-		case 4: //capture
+		case 5: //takeOutCard
+			//TODO finish the entry function
 			break;
-		case 5: //addCard
-			break;
-		case 6: //addCardByFolder
-			break;
-		case 7: //takeOutCard
-			break;
-		case 8: //takeOutCardByName
+		case 6: //takeOutCardByName
 			break;	
+		default: //help <commandName> <isReturnString(optional)>
+			//TODO: attempt to parse command name and select that help description. `help load` should display info about all modes
+			//	if a "1" is present as the second argument after the commandName then return the description as a string instead of
+			//	printing to output. if 1 is not present, then simply print to textOutput.
+			//if no commandName matches then print "command provided was not understood."
+			break;
 		}
-		return 0;
+		return "0";
+	}
+	
+	/**
+	 * @return the METADATA
+	 */
+	public Metadata getMETADATA() {
+		return METADATA;
 	}
 
-	///// SAVE & LOAD
+	//**************************** SAVE & LOAD ********************************/
 	/* (non-Javadoc)
 	 * @see modus.Modus#save()
 	 */
@@ -139,16 +201,9 @@ public class PentaFile implements Modus {
 						
 					//ask which folder to place the card in (or none at all)
 					String givenFolder = null; //TODO: prompt the user for input
-					List<String> folderList = new ArrayList<String>();
-					Object[] result = Sylladex.fuzzyStringSearch(folderList, givenFolder);
-					int i = (int) result[0];
-					Card[] folder = (
-							(i == 0) ? weapons : 
-							((i == 1) ? survival : 
-							((i == 2) ? misc : 
-							((i == 3) ? info : keyCritical))));
+					Card[] folder = findFolderByName(givenFolder);
 					//place it in the folder
-					if (addCardByFolder(card, folder)) throw new IllegalStateException();
+					if (! captureByFolder(card.getItem(), folder)) throw new IllegalStateException();
 				}
 			}
 		///// fast loading
@@ -161,7 +216,8 @@ public class PentaFile implements Modus {
 		
 	}
 	
-	///// IO
+	//********************************** IO ***************************************/
+
 	/* (non-Javadoc)
 	 * @see modus.Modus#capture(java.lang.String)
 	 */
@@ -201,12 +257,17 @@ public class PentaFile implements Modus {
 	}
 
 	/**
-	 * @param card the Card to be added
+	 * adds the card to the modus through a specific folder
+	 * @param item the item to be added
 	 * @param folder the Card array to be inserted into
 	 * @return {@code true} if successful, {@code false} otherwise
 	 */
-	public Boolean addCardByFolder(Card card, Card[] folder) {
+	public Boolean captureByFolder(String item, Card[] folder) {
 		int index = 0;
+		Card card = new Card(item);
+		//if invalid card
+		if (! card.validateCard()) return false;
+		
 		if ((index = findFolderSpace(folder)) == -1) {
 			List<Card> tempDeck = explodeFolder(folder);
 			folder[0] = card;
@@ -256,7 +317,7 @@ public class PentaFile implements Modus {
 		return new Card();
 	}
 
-	///// UTILITY
+	//****************************** UTILITY ************************************/
 	/*
 	 * (non-Javadoc)
 	 * @see modus.Modus#getSylladexReference()
@@ -341,10 +402,36 @@ public class PentaFile implements Modus {
 		for (Card card : folder) {
 			tempDeck.add(card);
 			card = new Card();
-			if (card.getInUse()) //if for some reason the card is in use, set it to false.
-				card.setInUse(false);
 		}
 		return tempDeck;
+	}
+	
+	/**
+	 * retrieves the folder Card array based on a string name given to search with.
+	 * <p>identical to calling {@link app.controller.Sylladex#fuzzyStringSearch(List, String) fuzzyStringSearch} using a list of the folder names and the
+	 * input, respectively.
+	 * @param givenFolder the name of the folder to obtain
+	 * @return the Card array "folder" based on given folder name
+	 */
+	private Card[] findFolderByName(String givenFolder) {
+		List<String> folderList = new ArrayList<String>();
+		folderList.add("weapons");
+		folderList.add("survival");
+		folderList.add("misc");
+		folderList.add("info");
+		folderList.add("keyCritical");
+		
+		Object[] result = Sylladex.fuzzyStringSearch(folderList, givenFolder);
+		int i = (int) result[0];
+		if (i == -1) {
+			return weapons;
+		}
+		Card[] folder = (
+				(i == 0) ? weapons : 
+				((i == 1) ? survival : 
+				((i == 2) ? misc : 
+				((i == 3) ? info : keyCritical))));
+		return folder;
 	}
 	
 	/* (non-Javadoc)
@@ -377,4 +464,49 @@ public class PentaFile implements Modus {
 		return omniFolder;
 	}
 
+	/* (non-Javadoc)
+	 * @see modus.Modus#drawToDisplay()
+	 */
+	@Override
+	public void drawToDisplay() {
+		//variable data constants
+		StackPane display = sylladexReference.getDisplay();
+		double dWidth = display.getWidth();
+		double dHeight = display.getHeight();
+		CardNode tCardNode = Sylladex.createCardNode(new Card());
+		double X_OFFSET = tCardNode.cardFace.getWidth() + dWidth/6; //card width + padding
+		double X_MARGIN = 5;
+		double Y_OFFSET = tCardNode.cardFace.getHeight() + dHeight/20; //card height + padding
+		double Y_MARGIN = 5;
+		Card[] omnifolder = createOmniFolder();
+		
+		//loop of 5 folders within the modus
+		for (int i = 0; i < 5; i++) { 
+			//loop of 5 cards within a folder
+			for (int j = 0; j < 5; j++) { 
+				//set the coordinates this loop's card should be placed at
+				double xCardCoord = i * X_OFFSET + (X_MARGIN + i*5);
+				double yCardCoord = j * Y_OFFSET + Y_MARGIN;
+				//create the card node to draw
+				CardNode node = Sylladex.createCardNode(omnifolder[i*5 + j]); //i = folder, j = card
+				node.cardFace.setLayoutX(xCardCoord);
+				node.cardFace.setLayoutY(yCardCoord);
+				//draw the node to display
+				display.getChildren().add(node.cardFace);
+			}
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("PentaFile [weapons=").append(Arrays.toString(weapons)).append(", survival=")
+				.append(Arrays.toString(survival)).append(", misc=").append(Arrays.toString(misc)).append(", info=")
+				.append(Arrays.toString(info)).append(", keyCritical=").append(Arrays.toString(keyCritical))
+				.append("]");
+		return builder.toString();
+	}
 }
