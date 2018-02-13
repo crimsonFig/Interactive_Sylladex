@@ -1,5 +1,7 @@
 package modus;
 
+import java.util.LinkedHashMap;
+
 import app.controller.Sylladex;
 import app.model.Card;
 
@@ -13,10 +15,18 @@ public class AyEye implements Modus {
 	 * @see modus.Modus#entry(int, java.lang.Object[])
 	 */
 	@Override
-	public int entry(int functionCode, Object... objects) {
-		return 0;
+	public String entry(int functionCode, Object... objects) {
+		return "0";
 	}
-
+	
+	/* (non-Javadoc)
+	 * @see modus.Modus#createFunctionMap()
+	 */
+	@Override
+	public LinkedHashMap<String, Integer> createFunctionMap() {
+		return null;
+	}
+	
 	/* (non-Javadoc)
 	 * @see modus.Modus#save()
 	 */
@@ -85,6 +95,13 @@ public class AyEye implements Modus {
 	@Override
 	public String findItemName(String givenName) {
 		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see modus.Modus#drawToDisplay()
+	 */
+	@Override
+	public void drawToDisplay() {
 	}
 
 

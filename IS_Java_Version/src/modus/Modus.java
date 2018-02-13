@@ -1,6 +1,6 @@
 package modus;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import app.controller.Sylladex;
 import app.model.Card;
@@ -43,7 +43,7 @@ public interface Modus {
 	 *  with the new class.
 	 * @return a HashMap of the function name and the entry code
 	 */
-	public abstract HashMap<String, Integer> createFunctionMap();
+	public abstract LinkedHashMap<String, Integer> createFunctionMap();
 	
 	/**
 	 * Access point for the modus. This method should act as a switch for the

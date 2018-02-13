@@ -88,8 +88,8 @@ public class Card implements Serializable {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("Card [item=").append(item).append(", captchaCode=").append(captchaCode).append(", inUse=")
-				.append(inUse).append("]");
+		builder.append("Card details -> captured item: ").append(item).append(", Captchacode: ")
+				.append(captchaCode).append(", 'in use' state: ").append(inUse).append(".");
 		return builder.toString();
 	}
 	

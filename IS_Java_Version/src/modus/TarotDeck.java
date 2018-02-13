@@ -4,6 +4,10 @@ import java.util.*;
 
 import app.controller.Sylladex;
 import app.model.Card;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonBar.ButtonData;
 
 /**
  * This fetch modus is based on the idea of a deck of cards. The intended usage is to insert 
@@ -75,20 +79,55 @@ public class TarotDeck implements Modus {
 	public String entry(int functionCode, Object...objects) {
 		switch (functionCode) {
 		case 0: //save
+			save();
 			break;
-		case 1: //load 1
+		case 1: //load <mode>
+			//based on mode as objects[0], use that load mode. if doesn't match 0, 1, 2, or 3 then invoke entry(-1, "command name") to display help to the output
+			if (objects.length == 1 && objects[0] instanceof String) {
+				switch ((String) objects[0]) {
+				case "0":
+					load(0);
+					drawToDisplay();
+					break;
+				case "1":
+					load(1);
+					drawToDisplay();
+					break;
+				case "2":
+					load(2);
+					drawToDisplay();
+					break;
+				default:
+					entry(-1, "help load");
+					return "-1";
+				}
+			} else {
+				entry(-1, "help load");
+				return "-1";
+			}
 			break;
-		case 2: //load 2
+		case 2: //capture <item name>
+			if (objects.length == 1 && objects[0] instanceof String) {
+				if(! capture((String) objects[0])) return "-1";
+				save();
+				drawToDisplay();
+			} else {
+				entry(-1, "help capture");
+				return "-1";
+			}
 			break;
-		case 3: //load 3
+		case 3: //takeOutCard
+			List<Card> tempDeck = new ArrayList<Card>();
+			Card tempCard = takeOutCard();
+			if (! tempCard.getInUse()) return "-1";
+			tempDeck.add(tempCard);
+			sylladexReference.addToOpenHand(tempDeck);
+			save();
+			drawToDisplay();
 			break;
-		case 4: //capture
-			break;
-		case 5: //addCard
-			break;
-		case 6: //takeOutCard
-			break;
-		case 7: //shuffle
+		case 4: //shuffle
+			shuffleDeck();
+			drawToDisplay();
 			break;
 		}
 		return "0";
@@ -112,16 +151,44 @@ public class TarotDeck implements Modus {
 	 * @see modus.Modus#load(int)
 	 */
 	@Override
-	public void load(int mode) throws Exception {
+	public void load(int mode) {
 		List<Card> _deck = sylladexReference.getDeck();
 		//reset the modus space. if mode 0, return after this step.
 		this.deck = new Stack<Card>();
+		////automatic loading mode
 		if (mode == 1) {
 			//if sylladex's deck is invalid, skip the assignment.
 			//otherwise, iterate through the sylladex deck and push all valid cards (or empty cards if invalid)
 			if (_deck == null || _deck.isEmpty()) return;
 			for (Card card : _deck) {
 				this.deck.push(card.validateCard() ? card : new Card());
+			}
+		////manual loading mode
+		} else if (mode == 2) {
+			//if sylladex's deck is invalid, skip the assignment.
+			//otherwise, iterate through the sylladex deck and push cards that the user accepts
+			if (_deck == null || _deck.isEmpty()) return;
+			for (Card card : _deck) {
+				if (!card.validateCard()) continue;
+				//ask the user about the card
+				Alert alert = new Alert(AlertType.CONFIRMATION);
+			        	alert.setTitle("Card Selection");
+			        alert.setHeaderText("Add Card to Deck?");
+			        alert.setContentText(card.toString());	
+		        //create buttons for alert
+		        ButtonType buttonYes = new ButtonType("Yes", ButtonData.YES);
+		        ButtonType buttonNo = new ButtonType("No", ButtonData.NO);
+		        ButtonType buttonCancel = new ButtonType("Cancel", ButtonData.CANCEL_CLOSE);
+		        alert.getButtonTypes().setAll(buttonYes, buttonNo, buttonCancel);
+		        
+		        Optional<ButtonType> result = alert.showAndWait();
+		        if (result.get().getButtonData().equals(ButtonData.CANCEL_CLOSE)) {
+		        		break;
+		        } else if (result.get() == buttonYes) {
+		        		this.deck.push(card);
+		        } else {
+		        		continue;
+		        }
 			}
 		}
 	}

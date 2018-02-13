@@ -1,5 +1,7 @@
 package modus;
 
+import java.util.LinkedHashMap;
+
 import app.controller.Sylladex;
 import app.model.Card;
 
@@ -13,10 +15,18 @@ public class NodeMap implements Modus {
 	 * @see modus.Modus#entry(int, java.lang.Object[])
 	 */
 	@Override
-	public int entry(int functionCode, Object... objects) {
-		return 0;
+	public String entry(int functionCode, Object... objects) {
+		return "0";
 	}
-
+	
+	/* (non-Javadoc)
+	 * @see modus.Modus#createFunctionMap()
+	 */
+	@Override
+	public LinkedHashMap<String, Integer> createFunctionMap() {
+		return null;
+	}
+	
 	/* (non-Javadoc)
 	 * @see modus.Modus#save()
 	 */
@@ -90,6 +100,13 @@ public class NodeMap implements Modus {
 	//a public variable `Node.next` that was null but could be assigned to hold another Node object
 	//to traverse, you'd create an independent Node variable, and assign it to hold each object and then equal the object's stored Node object.
 	//instead of pointers to structures, it'd just be stored references of objects.
+
+	/* (non-Javadoc)
+	 * @see modus.Modus#drawToDisplay()
+	 */
+	@Override
+	public void drawToDisplay() {
+	}
 
 
 }

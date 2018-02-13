@@ -473,10 +473,10 @@ public class PentaFile implements Modus {
 		StackPane display = sylladexReference.getDisplay();
 		double dWidth = display.getWidth();
 		double dHeight = display.getHeight();
-		CardNode tCardNode = Sylladex.createCardNode(new Card());
-		double X_OFFSET = tCardNode.cardFace.getWidth() + dWidth/6; //card width + padding
+		CardNode cardExample = Sylladex.createCardNode(new Card());
+		double X_OFFSET = cardExample.cardFace.getWidth() + dWidth/6; //card width + padding
 		double X_MARGIN = 5;
-		double Y_OFFSET = tCardNode.cardFace.getHeight() + dHeight/20; //card height + padding
+		double Y_OFFSET = cardExample.cardFace.getHeight() + dHeight/20; //card height + padding
 		double Y_MARGIN = 5;
 		Card[] omnifolder = createOmniFolder();
 		
