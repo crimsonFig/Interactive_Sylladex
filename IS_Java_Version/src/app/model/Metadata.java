@@ -1,9 +1,11 @@
-package modus;
+package app.model;
 
 import java.io.File;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.LinkedHashMap;
+
+import modus.Modus;
 
 /**
  * The Metadata class holds important information about a Modus' functionality

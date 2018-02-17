@@ -7,6 +7,7 @@ import java.util.List;
 import app.controller.Sylladex;
 import app.model.Card;
 import app.model.CardNode;
+import app.model.Metadata;
 import javafx.scene.layout.StackPane;
 
 /**
@@ -61,18 +62,16 @@ public class PentaFile implements Modus {
 		Arrays.fill(keyCritical, card);
 	}
 	
-	/** Creates a HashMap of the functions associated to this specific class. 
-	 *  Subclasses need to override this method and reassign the functions associated
-	 *  with the new class.
-	 * @return a HashMap of the function name and the entry code
+	/* (non-Javadoc)
+	 * @see modus.Modus#createFunctionMap()
 	 */
 	public LinkedHashMap<String, Integer> createFunctionMap() {
 		LinkedHashMap<String, Integer> functionMap = new LinkedHashMap<String, Integer>();
 		functionMap.put("save", 1);
 		functionMap.put("load #", 2); //mode = 0, 1, 2, or 3
 		functionMap.put("capture", 3);
-		functionMap.put("captureByFolder", 4);
-		functionMap.put("takeOutCard", 5);
+		functionMap.put("takeOutCard", 4);
+		functionMap.put("captureByFolder", 5);
 		functionMap.put("takeOutCardByName", 6);
 		return functionMap;
 	}
@@ -126,7 +125,10 @@ public class PentaFile implements Modus {
 				return "-1";
 			}
 			break;
-		case 4: //captureByFolder
+		case 4: //takeOutCard
+			//TODO finish the entry function
+			break;
+		case 5: //captureByFolder
 			if (objects.length == 2 && objects[0] instanceof String && objects[1] instanceof String) {
 				Card[] folder = findFolderByName((String) objects[1]);
 				if(! captureByFolder((String) objects[0], folder)) return "-1";
@@ -136,9 +138,6 @@ public class PentaFile implements Modus {
 				entry(-1, "help captureByFolder");
 				return "-1";
 			}
-			break;
-		case 5: //takeOutCard
-			//TODO finish the entry function
 			break;
 		case 6: //takeOutCardByName
 			break;	
@@ -157,6 +156,14 @@ public class PentaFile implements Modus {
 	 */
 	public Metadata getMETADATA() {
 		return METADATA;
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see modus.Modus#getSylladexReference()
+	 */
+	public Sylladex getSylladexReference() {
+		return sylladexReference;
 	}
 
 	//**************************** SAVE & LOAD ********************************/
@@ -217,7 +224,6 @@ public class PentaFile implements Modus {
 	}
 	
 	//********************************** IO ***************************************/
-
 	/* (non-Javadoc)
 	 * @see modus.Modus#capture(java.lang.String)
 	 */
@@ -317,15 +323,7 @@ public class PentaFile implements Modus {
 		return new Card();
 	}
 
-	//****************************** UTILITY ************************************/
-	/*
-	 * (non-Javadoc)
-	 * @see modus.Modus#getSylladexReference()
-	 */
-	public Sylladex getSylladexReference() {
-		return sylladexReference;
-	}
-	
+	//****************************** UTILITY ************************************/	
 	/* (non-Javadoc)
 	 * @see modus.Modus#isFull()
 	 */

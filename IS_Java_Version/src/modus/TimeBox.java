@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 
 import app.controller.Sylladex;
 import app.model.Card;
+import app.model.Metadata;
 
 /**
  * The time box is a safe-like container with an inside that has no anchor to
@@ -87,7 +88,45 @@ import app.model.Card;
         </dd>
  */
 public class TimeBox implements Modus {
-
+	/**
+	 * A reference to the Sylladex that called the given modus. <br>
+	 * This is used to pass information back to the caller.
+	 */
+	private Sylladex sylladexReference;
+	/**
+	 * provides information about this modus
+	 */
+	protected final Metadata METADATA;
+	//TODO: decide on a data structure for the cards state
+	
+	//***************************** INITIALIZE *********************************/
+	/**
+	 * The constructor of a fetch Modus should save the reference to the sylladex
+	 * 	so that it can functionally return a list of the Modus' functionality to
+	 * 	the ModusManager, specifically passing modusMetadata.
+	 * @param sylladex a reference to the caller, a Sylladex
+	 */
+	public TimeBox(Sylladex sylladex) {
+		this.sylladexReference = sylladex;
+		
+		//initialize the METADATA
+		this.METADATA = new Metadata(this.getClass().getSimpleName(), this.createFunctionMap(), this);
+	}
+	
+	/* (non-Javadoc)
+	 * @see modus.Modus#createFunctionMap()
+	 */
+	@Override
+	public LinkedHashMap<String, Integer> createFunctionMap() {
+		LinkedHashMap<String, Integer> functionMap = new LinkedHashMap<String, Integer>();
+		functionMap.put("save", 1);
+		functionMap.put("load #", 2); //mode = 0, 1, 2, or 3
+		functionMap.put("capture", 3);
+		functionMap.put("takeOutCard", 4);
+		return functionMap;
+	}
+	
+	//***************************** ACCESS *************************************/
 	/* (non-Javadoc)
 	 * @see modus.Modus#entry(int, java.lang.Object[])
 	 */
@@ -96,14 +135,22 @@ public class TimeBox implements Modus {
 		return "0";
 	}
 	
-	/* (non-Javadoc)
-	 * @see modus.Modus#createFunctionMap()
+	/**
+	 * @return the METADATA
 	 */
-	@Override
-	public LinkedHashMap<String, Integer> createFunctionMap() {
-		return null;
+	public Metadata getMETADATA() {
+		return METADATA;
 	}
 	
+	/* (non-Javadoc)
+	 * @see modus.Modus#getSylladexReference()
+	 */
+	@Override
+	public Sylladex getSylladexReference() {
+		return sylladexReference;
+	}
+	
+	//**************************** SAVE & LOAD ********************************/
 	/* (non-Javadoc)
 	 * @see modus.Modus#save()
 	 */
@@ -118,6 +165,7 @@ public class TimeBox implements Modus {
 	public void load(int mode) throws Exception {
 	}
 
+	//********************************** IO ***************************************/
 	/* (non-Javadoc)
 	 * @see modus.Modus#capture(java.lang.String)
 	 */
@@ -142,14 +190,8 @@ public class TimeBox implements Modus {
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see modus.Modus#getSylladexReference()
-	 */
-	@Override
-	public Sylladex getSylladexReference() {
-		return null;
-	}
-
+	//****************************** UTILITY ************************************/
+	
 	/* (non-Javadoc)
 	 * @see modus.Modus#isFull()
 	 */

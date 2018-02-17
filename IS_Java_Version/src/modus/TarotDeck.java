@@ -4,6 +4,7 @@ import java.util.*;
 
 import app.controller.Sylladex;
 import app.model.Card;
+import app.model.Metadata;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Alert.AlertType;
@@ -132,13 +133,22 @@ public class TarotDeck implements Modus {
 		}
 		return "0";
 	}
+
 	/**
 	 * @return the METADATA
 	 */
 	public Metadata getMETADATA() {
 		return METADATA;
 	}
-
+	
+	/*
+	 * (non-Javadoc)
+	 * @see modus.Modus#getSylladexReference()
+	 */
+	public Sylladex getSylladexReference() {
+		return sylladexReference;
+	}
+	
 	//**************************** SAVE & LOAD ********************************/
 	/* (non-Javadoc)
 	 * @see modus.Modus#save()
@@ -225,13 +235,6 @@ public class TarotDeck implements Modus {
 	}
 	
 	//****************************** UTILITY ************************************/
-	/* (non-Javadoc)
-	 * @see modus.Modus#getSylladexReference()
-	 */
-	@Override
-	public Sylladex getSylladexReference() {
-		return sylladexReference;
-	}
 	/* (non-Javadoc)
 	 * @see modus.Modus#isFull()
 	 */
@@ -320,6 +323,7 @@ public class TarotDeck implements Modus {
 	 */
 	@Override
 	public void drawToDisplay() {
+		//TODO: finish this
 	}
 	
 	//Arrays.sort(setFolder, Comparator.comparing((Card card) -> card.getItem()));

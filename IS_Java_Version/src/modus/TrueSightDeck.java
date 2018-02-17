@@ -47,6 +47,7 @@ public class TrueSightDeck extends TarotDeck {
 	 */
 	@Override
 	public String entry(int functionCode, Object...objects) {
+		//TODO: finish the entry function and the drawToDisplay
 		return "0";
 	}
 	
@@ -103,5 +104,6 @@ public class TrueSightDeck extends TarotDeck {
 	 */
 	@Override
 	public void drawToDisplay() {
+		//TODO:Finish this
 	}
 }

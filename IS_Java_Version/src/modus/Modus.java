@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 
 import app.controller.Sylladex;
 import app.model.Card;
+import app.model.Metadata;
 
 /**
  * A "Fetch Modus" is a module that tells the sylladex how to manage it's
@@ -41,6 +42,18 @@ public interface Modus {
 	 * Creates a HashMap of the functions associated to this specific class. 
 	 *  Subclasses need to override this method and reassign the functions associated
 	 *  with the new class.
+	 *  <p> IMPORTANT - for proper interactions with sylladex, the first four associations
+	 *  should be as follows:
+	 *  <br>(key) : (value)
+	 *  <br>{@code save : 1}
+	 *  <br>{@code load # : 2}
+	 *  <br>{@code capture : 3}
+	 *  <br>{@code takeOutCard : 4}
+	 *  
+	 *  <br> Any other function association should follow after.
+	 *  the value `-1` as an int is reserved for use in accessing the help functionality.
+	 *  See {@link Modus#entry(int, Object...) entry()} method for more information regarding 
+	 *  this. 
 	 * @return a HashMap of the function name and the entry code
 	 */
 	public abstract LinkedHashMap<String, Integer> createFunctionMap();
@@ -137,6 +150,11 @@ public interface Modus {
 	 * @return The {@code Sylladex} that owns {@code this} fetch modus
 	 */
 	public abstract Sylladex getSylladexReference();
+	
+	/**
+	 * @return the METADATA
+	 */
+	public abstract Metadata getMETADATA();
 
 	/**
 	 * Determines if the modus has no empty cards AND can not add any more cards. If

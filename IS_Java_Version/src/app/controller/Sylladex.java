@@ -25,9 +25,9 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
-import modus.Metadata;
 import app.model.Card;
 import app.model.CardNode;
+import app.model.Metadata;
 
 //NOTE: This class acts as the main controller for the MVC format.
 /**
@@ -59,6 +59,7 @@ public class Sylladex {
 	private static final LinkedHashSet<String> SYLL_CMD_STRING_LIST = initializeSyllCmdStringList();
 	private static final String SAVE_FILE_NAME = "sylladexDeck.sav";
 	private static final String OUT_PATH = "../../../";
+	static final Object LOCK = new Object();
 	/**
 	 * The maximum number of {@value #MAX_COST} edits/mutations a string can have for fuzzy searching.
 	 */
@@ -156,24 +157,24 @@ public class Sylladex {
 		noModusBox.getChildren().addAll(noModusPrompt_1, noModusPrompt_2);
 		display.getChildren().add(noModusBox);
 		
-		//TODO: initialize this command list and then create parseCommands, and then create syllCommandSwitch that is invoked by submit
-		
 		//initialize the syllCmdList
 		for (String command : SYLL_CMD_STRING_LIST) {
 			Label label = new Label(command);
 			Separator line = new Separator();
 			syllCmdList.getChildren().addAll(label, line);
 		}
+		
 	}
 	
 	private static LinkedHashSet<String> initializeSyllCmdStringList() {
 		LinkedHashSet<String> tSet = new LinkedHashSet<String>();
-		tSet.add("syll save deck");
-		tSet.add("syll load deck");
-		tSet.add("syll delete saved deck");
-		tSet.add("syll refresh modus");
-		tSet.add("syll show loose items");
-		tSet.add("syll help <command name>");
+		tSet.add("syll.saveDeck");
+		tSet.add("syll.loadDeck");
+		tSet.add("syll.deleteDeck");
+		tSet.add("syll.deleteSaveFile");
+		tSet.add("syll.refreshModus");
+		tSet.add("syll.showLooseItems");
+		tSet.add("syll.help <command name>");
 		return tSet;
 	}
 	
@@ -315,81 +316,6 @@ public class Sylladex {
 	}
 	
 	/**
-	 * Creates a CardNode. Using this method is preferred over creating an instance
-	 * so that the sylladex is able to regulate and observe production.
-	 * @param card A card
-	 * @return a graphical CardNode derived from the card
-	 */
-	public static CardNode createCardNode(Card card) {
-		CardNode node = new CardNode(card);
-		return node;
-	}
-	
-	/**
-	 * Writes the {@link #deck} out to a binary file.
-	 * @param fileName the name of the file to be created
-	 * @param outPath the relative pathway to a folder for the file to be created in
-	 */
-	private void writeDeckToFile(String fileName, String outPath) throws SecurityException {
-		String fullOutPath = outPath + fileName;
-		//TODO: consider locking the file when saving
-		try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(fullOutPath)))) {
-			synchronized (this.deck) {
-				//write deck size to the front of the file, 
-				oos.writeInt(Integer.valueOf(this.deck.size()));
-				for (Card card : deck) {
-					oos.writeObject(card);
-				}
-			}
-			//finally write a null to mark the end of the file.
-			oos.writeByte((byte) '\0');
-		} catch (NullPointerException e) {
-			e.printStackTrace();
-		} catch (SecurityException e) {
-			throw e;
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} 
-	}
-	
-	/**
-	 * Loads a binary file to extract a List of Card from. Replaces
-	 * 	the current instance of {@link #deck} with the one found in
-	 * 	the file.
-	 * @param fileName the file to be loaded
-	 * @param outPath relative or absolute path where file is
-	 */
-	private void loadDeckFromFile(String fileName, String outPath) throws SecurityException {
-		String fullInPath = outPath + fileName;
-		List<Card> tempDeck = new ArrayList<Card>();
-		//TODO: consider locking the file somehow when loading
-		try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(new File(fullInPath)))) {
-			Integer numOfCards = ois.readInt();
-			for (int i = 0; i < numOfCards; i++ ) {
-				Object o = ois.readObject();
-				if (o instanceof Card && o != null) tempDeck.add((Card) o);
-			}
-			setDeck(tempDeck);
-		} catch (EOFException e) {
-			this.deck = tempDeck;
-		} catch (NullPointerException e) {
-			e.printStackTrace();
-		} catch (SecurityException e) {
-			throw e;
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (ClassCastException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	/**
 	 * Takes a raw string that is expected to be a command, 
 	 * 	and matches it against the current modus list of 
 	 * 	commands and the sylladex's list of commands. 
@@ -409,6 +335,179 @@ public class Sylladex {
 		return result;
 	}
 	
+	private void commandSwitch(String command, String...args) {
+		//if true then process as sylladex command, otherwise process as modus command
+		if (command.contains("syll.")) {
+			String syllCommand = command.substring(5); //chop off the "syll." prefix
+			switch (syllCommand) {
+			case "saveDeck":
+				textOutput.appendText("Saving deck to file... ");
+				try {
+					writeDeckToFile(SAVE_FILE_NAME, OUT_PATH);
+					textOutput.appendText("save sucessful.\n");
+				} catch (Exception e) {
+					textOutput.appendText("save failed.\n");
+					return;
+				}
+				break;
+			case "loadDeck":
+				textOutput.appendText("Loading deck from file... ");
+				try {
+					loadDeckFromFile(SAVE_FILE_NAME, OUT_PATH);
+					textOutput.appendText("load sucessful.\n");
+				} catch (Exception e) {
+					textOutput.appendText("load failed.\n");
+					return;
+				}
+				break;
+			case "deleteDeck":
+				//TODO: finish this commandSwitch
+				textOutput.appendText("Deleting deck...");
+				synchronized (deck) {
+					deck.clear();
+				}
+				textOutput.appendText("deletion sucessful.\n");
+				break;
+			case "deleteSaveFile":
+				break;
+			case "refreshModus":
+				break;
+			case "showLooseItems":
+				break;
+			default: //"help <command name>"
+				break;
+			}
+		} else {
+			int functionCode = modiMgr.getModusList().get(modiMgr.getCurrentModus()).FUNCTION_MAP.get(command);
+			String resultCode = modiMgr.getModusList().get(modiMgr.getCurrentModus()).REFERENCE.entry(functionCode, (Object) args);
+			//if resultCode is -1 and functionCode matches 1, 2, 3, or 4, give a specific diagnostic
+			if (resultCode.equals("-1")) {
+				//function exited abnormally! TODO: consider giving specific diagnostic info of how it failed
+				switch (functionCode) {
+				case 1: //save failed
+					textOutput.appendText("modus save failed.\n");
+					break;
+				case 2: //load failed
+					textOutput.appendText("modus load failed.\n");
+					break;
+				case 3: //capture failed
+					textOutput.appendText("capture failed.\n");
+					break;
+				case 4: //takeOutCard failed
+					textOutput.appendText("extraction failed.\n");
+					break;
+				default: //something unknown failed
+					textOutput.appendText("something failed.\n");
+					break;	
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Writes the {@link #deck} out to a binary file.
+	 * @param fileName the name of the file to be created
+	 * @param outPath the relative pathway to a folder for the file to be created in
+	 */
+	private void writeDeckToFile(String fileName, String outPath) throws Exception {
+		String fullOutPath = outPath + fileName;
+		synchronized(LOCK) {
+			try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(fullOutPath)))) {
+				synchronized (this.deck) {
+					//write deck size to the front of the file, 
+					oos.writeInt(Integer.valueOf(this.deck.size()));
+					for (Card card : deck) {
+						oos.writeObject(card);
+					}
+				}
+				//finally write a null to mark the end of the file.
+				oos.writeByte((byte) '\0');
+			} catch (NullPointerException e) {
+				e.printStackTrace();
+				throw e;
+			} catch (SecurityException e) {
+				Alert alert = new Alert(AlertType.WARNING);
+			        	alert.setTitle("Insufficient Permission");
+			        alert.setHeaderText("Unable to create save file.");
+			        alert.setContentText("Sylladex was unable to create save file "
+			        		+ "because the save directory had insufficient permission. \n"
+			        		+ "Please change directory permissions to allow file"
+			        		+ "creation and then try again. \n");
+		        alert.showAndWait();
+		        throw e;
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+				throw e;
+			} catch (IOException e) {
+				e.printStackTrace();
+				throw e;
+			} 
+		}
+	}
+	
+	/**
+	 * Loads a binary file to extract a List of Card from. Replaces
+	 * 	the current instance of {@link #deck} with the one found in
+	 * 	the file.
+	 * @param fileName the file to be loaded
+	 * @param outPath relative or absolute path where file is
+	 */
+	private void loadDeckFromFile(String fileName, String outPath) throws Exception {
+		String fullInPath = outPath + fileName;
+		List<Card> tempDeck = new ArrayList<Card>();
+		final File file = new File(fullInPath);
+		synchronized(LOCK) {
+			try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+				Integer numOfCards = ois.readInt();
+				for (int i = 0; i < numOfCards; i++ ) {
+					Object o = ois.readObject();
+					if (o instanceof Card && o != null) tempDeck.add((Card) o);
+				}
+				setDeck(tempDeck);
+			} catch (EOFException e) {
+				setDeck(tempDeck);
+			} catch (NullPointerException e) {
+				e.printStackTrace();
+				throw e;
+			} catch (SecurityException e) {
+				Alert alert = new Alert(AlertType.WARNING);
+			        	alert.setTitle("Insufficient Permission");
+			        alert.setHeaderText("Unable to create save file.");
+			        alert.setContentText("Sylladex was unable to read the save file "
+			        		+ "because the save file had insufficient permission. \n"
+			        		+ "Please change file permissions to allow file "
+			        		+ "read and then try again. \n");
+		        alert.showAndWait();
+		        throw e;
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+				throw e;
+			} catch (IOException e) {
+				e.printStackTrace();
+				throw e;
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+				throw e;
+			} catch (ClassCastException e) {
+				e.printStackTrace();
+				throw e;
+			}
+		}
+	}
+	
+	
+	
+	/**
+	 * Creates a CardNode. Using this method is preferred over creating an instance
+	 * so that the sylladex is able to regulate and observe production.
+	 * @param card A card
+	 * @return a graphical CardNode derived from the card
+	 */
+	public static CardNode createCardNode(Card card) {
+		CardNode node = new CardNode(card);
+		return node;
+	}
+	
 	/**
 	 * Clears the display node
 	 */
@@ -422,20 +521,32 @@ public class Sylladex {
 		
 	}
 	
-	/**If the TextField textInput changes textually, check if it's empty or if their is submittable text
-	 * if there is, then activate the submit button, if it's empty then deactivate the submit button*/
-	@FXML
-	void checkSendable(ActionEvent event) {
-		//TODO: test why this method doesn't seem to respond
-		if (textInput.getCharacters().equals("")) textInput.setDisable(true);
-		else if (textInput.isDisabled()) textInput.setDisable(false);
-	}
-	
 	@FXML
 	void submit(ActionEvent event) {
-		//TODO: check if textInput is empty, if not, then sanitize the input and try to parse the command against a command list.
-			//commands should be given as a single line and shouldn't query any special info through through submission box
-			//	each modus should include a `help <command name>` path set as the `default` case within the `entry()` switch-case
+		String inputRawString = textInput.getText();
+		if (inputRawString.isEmpty()) return;
+		
+		//split the raw input into ["command", "arg1 arg2 arg3..."]
+		String[] splitRawInput = inputRawString.toLowerCase().split(" ", 2);
+		
+		//parse the raw input command against the sylladex and modus commands
+		String rawInputCommand = splitRawInput[0];
+		String parsedCommand = parseCommands(rawInputCommand);
+		//check if the command was actually matched. if not, notify the user by the terminal.
+		if (parsedCommand.isEmpty()) {
+			textOutput.appendText("Command \"" + rawInputCommand + "\" wasn't recognized. Please try again.\n");
+			return;
+		}
+		
+		//split the args string into a list, if any, then run the commandSwitch
+		if (splitRawInput.length > 1) { 
+			String[] inputArgs = splitRawInput[1].split(" ");
+			
+			commandSwitch(parsedCommand, inputArgs);
+		} else {
+			commandSwitch(parsedCommand);
+		}
+		
 	}
 	
 	/**
@@ -499,17 +610,12 @@ public class Sylladex {
 			try {
 				writeDeckToFile(SAVE_FILE_NAME, OUT_PATH);
 				textOutput.appendText("save sucessful.\n");
-				this.deck.clear();
+				synchronized (deck) {
+					deck.clear();
+				}
 				textOutput.appendText("Deck has been refresh.\n\n");
-			} catch (SecurityException e) {
-				Alert alert = new Alert(AlertType.WARNING);
-			        	alert.setTitle("Insufficient Permission");
-			        alert.setHeaderText("Unable to create save file.");
-			        alert.setContentText("Sylladex was unable to create save file "
-			        		+ "because the save directory had insufficient permission. "
-			        		+ "Please change directory permissions to allow file"
-			        		+ "creation and then try again. \n Cancelling modus change.");
-		        alert.showAndWait();
+			} catch (Exception e) {
+				textOutput.appendText("Cancelling modus change.");
 		        return;
 			}
 		} else if (deckAction == 1) {
