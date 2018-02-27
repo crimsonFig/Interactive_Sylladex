@@ -46,7 +46,7 @@ public class TrueSightDeck extends TarotDeck {
 	 * @see modus.Modus#entry()
 	 */
 	@Override
-	public String entry(int functionCode, Object...objects) {
+	public String entry(int functionCode, String...args) {
 		//TODO: finish the entry function and the drawToDisplay
 		return "0";
 	}

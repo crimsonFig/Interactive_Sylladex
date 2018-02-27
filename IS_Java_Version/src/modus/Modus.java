@@ -13,7 +13,9 @@ import app.model.Metadata;
  * Card(s) with respect to the Sylladex <br>
  * <br>
  * A Modus needs to be able to perform Card manipulation for item storage and
- * retrieval.
+ * retrieval. In a sense, a Fetch Modus is a controller that is associated with 
+ * a very specific model. Said model is simply stored in said controller for ease of
+ * modularity.
  * 
  * @author Triston Scallan
  *
@@ -31,11 +33,9 @@ public interface Modus {
 
 	///// Initialize
 
-	/*
+	/* public Modus(Sylladex sylladexReference);
 	 * The constructor of a fetch Modus should save the reference to the sylladex so
-	 * that it can functionally return a list of the Modus' functionality to the
-	 * ModusManager, specifically passing modusMetadata. public Modus(Sylladex
-	 * sylladexReference);
+	 * that it can functionally interact with the view and the sylladex.  
 	 */
 
 	/** 
@@ -51,13 +51,14 @@ public interface Modus {
 	 *  <br>{@code takeOutCard : 4}
 	 *  
 	 *  <br> Any other function association should follow after.
-	 *  the value `-1` as an int is reserved for use in accessing the help functionality.
+	 *  the value `0` and `-1` is reserved for use in accessing the help functionality.
 	 *  See {@link Modus#entry(int, Object...) entry()} method for more information regarding 
 	 *  this. 
 	 * @return a HashMap of the function name and the entry code
 	 */
 	public abstract LinkedHashMap<String, Integer> createFunctionMap();
 	
+	///// Access
 	/**
 	 * Access point for the modus. This method should act as a switch for the
 	 *  sylladex to call functions from. the objects parameter will contain any args given
@@ -80,11 +81,23 @@ public interface Modus {
 	 * 
 	 * @param functionCode
 	 *            an integer associated with a function
-	 * @param objects
+	 * @param args
 	 *            additional args
 	 * @return an integer as an exit code
 	 */
-	public abstract String entry(int functionCode, Object... objects);
+	public abstract String entry(int functionCode, String... args);
+	
+	/**
+	 * Retrieve the {@link Sylladex} associated with this {@link Modus}
+	 * 
+	 * @return The {@code Sylladex} that owns {@code this} fetch modus
+	 */
+	public abstract Sylladex getSylladexReference();
+	
+	/**
+	 * @return the METADATA
+	 */
+	public abstract Metadata getMETADATA();
 
 	///// Save and Load
 	/**
@@ -145,18 +158,6 @@ public interface Modus {
 
 	///// Utility
 	/**
-	 * Retrieve the {@link Sylladex} associated with this {@link Modus}
-	 * 
-	 * @return The {@code Sylladex} that owns {@code this} fetch modus
-	 */
-	public abstract Sylladex getSylladexReference();
-	
-	/**
-	 * @return the METADATA
-	 */
-	public abstract Metadata getMETADATA();
-
-	/**
 	 * Determines if the modus has no empty cards AND can not add any more cards. If
 	 * there is an empty card OR a card can be added, return FALSE.
 	 * 
@@ -185,5 +186,12 @@ public interface Modus {
 	 * Draws the current inventory to the display. Should first clear the display.
 	 */
 	public abstract void drawToDisplay();
+	
+	/**
+	 * Returns a string that provides a description of what the fetch modus is and what
+	 * its storage quirk is. Should be implemented as a static method.
+	 * @return a String description.
+	 */
+	public abstract String description();
 
 }

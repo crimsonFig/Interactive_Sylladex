@@ -34,6 +34,7 @@ public class Metadata {
 	/**
 	 * a File reference to the directory of the associated Modus class file
 	 */
+	@Deprecated
 	private File modusFile;
 	
 	/**

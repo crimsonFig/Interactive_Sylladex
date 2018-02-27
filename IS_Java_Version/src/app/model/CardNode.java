@@ -33,6 +33,10 @@ public class CardNode {
 	 * 
 	 */
 	public final GridPane cardBack;
+	/**
+	 * Scaling factor to resize the card on the fly.
+	 */
+	private double cardScaleFactor;
 	
 	/**
 	 * @param card
@@ -41,6 +45,27 @@ public class CardNode {
 		this.card = card;
 		this.cardFace = createCardFront();
 		this.cardBack = createCardBack();
+	}
+
+	/**
+	 * @return the cardScaleFactor
+	 */
+	public double getCardScaleFactor() {
+		return cardScaleFactor;
+	}
+
+	/**
+	 * Rescales the card to the given factor based on it's X and Y values.<br>
+	 * This only changes the apparent height and width when displayed 
+	 * without changing the actual height and width properties. 
+	 * @param cardScaleFactor the cardScaleFactor to set
+	 */
+	public void setCardScaleFactor(double cardScaleFactor) {
+		this.cardScaleFactor = cardScaleFactor;
+		cardFace.setScaleX(cardScaleFactor);
+		cardFace.setScaleY(cardScaleFactor);
+		cardBack.setScaleX(cardScaleFactor);
+		cardBack.setScaleY(cardScaleFactor);
 	}
 
 	/**

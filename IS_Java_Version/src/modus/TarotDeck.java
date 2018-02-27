@@ -77,15 +77,15 @@ public class TarotDeck implements Modus {
 	 * @see modus.Modus#entry()
 	 */
 	@Override
-	public String entry(int functionCode, Object...objects) {
+	public String entry(int functionCode, String...args) {
 		switch (functionCode) {
 		case 0: //save
 			save();
 			break;
 		case 1: //load <mode>
 			//based on mode as objects[0], use that load mode. if doesn't match 0, 1, 2, or 3 then invoke entry(-1, "command name") to display help to the output
-			if (objects.length == 1 && objects[0] instanceof String) {
-				switch ((String) objects[0]) {
+			if (args.length == 1 && args[0] instanceof String) {
+				switch ((String) args[0]) {
 				case "0":
 					load(0);
 					drawToDisplay();
@@ -108,8 +108,8 @@ public class TarotDeck implements Modus {
 			}
 			break;
 		case 2: //capture <item name>
-			if (objects.length == 1 && objects[0] instanceof String) {
-				if(! capture((String) objects[0])) return "-1";
+			if (args.length == 1 && args[0] instanceof String) {
+				if(! capture((String) args[0])) return "-1";
 				save();
 				drawToDisplay();
 			} else {
@@ -324,6 +324,14 @@ public class TarotDeck implements Modus {
 	@Override
 	public void drawToDisplay() {
 		//TODO: finish this
+	}
+
+	/* (non-Javadoc)
+	 * @see modus.Modus#description()
+	 */
+	@Override
+	public String description() {
+		return null;
 	}
 	
 	//Arrays.sort(setFolder, Comparator.comparing((Card card) -> card.getItem()));

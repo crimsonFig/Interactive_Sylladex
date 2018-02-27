@@ -80,6 +80,20 @@
    <right>
       <TabPane prefWidth="257.0" tabClosingPolicy="UNAVAILABLE">
         <tabs>
+            <Tab text="Modus List">
+               <content>
+                  <VBox fx:id="modusList" prefHeight="200.0" prefWidth="100.0">
+                     <children>
+                        <ToolBar prefHeight="40.0" prefWidth="200.0">
+                          <items>
+                            <Button fx:id="bModusScan" mnemonicParsing="false" onAction="#scan" text="Scan" />
+                              <Button fx:id="bRefresh" mnemonicParsing="false" text="Refresh" />
+                          </items>
+                        </ToolBar>
+                     </children>
+                  </VBox>
+               </content>
+            </Tab>
           <Tab text="Commands">
                <content>
                   <Accordion fx:id="cmdAcc" maxHeight="-Infinity">
@@ -103,20 +117,6 @@
                   </Accordion>
                </content>
           </Tab>
-            <Tab text="Modus List">
-               <content>
-                  <VBox fx:id="modusList" prefHeight="200.0" prefWidth="100.0">
-                     <children>
-                        <ToolBar prefHeight="40.0" prefWidth="200.0">
-                          <items>
-                            <Button fx:id="bModusScan" mnemonicParsing="false" onAction="#scan" text="Scan" />
-                              <Button fx:id="bRefresh" mnemonicParsing="false" text="Refresh" />
-                          </items>
-                        </ToolBar>
-                     </children>
-                  </VBox>
-               </content>
-            </Tab>
           <Tab text="Help">
                <content>
                   <VBox prefHeight="200.0" prefWidth="100.0">

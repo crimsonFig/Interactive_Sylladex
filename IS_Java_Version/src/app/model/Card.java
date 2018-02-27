@@ -32,7 +32,7 @@ public class Card implements Serializable {
 	 * @param item The name of the item stored
 	 */
 	public Card(String item) {
-		this.item = item;
+		this.item = item.toUpperCase();
 		this.captchaCode = captchaHash(item);
 		this.inUse = true;
 	}
@@ -68,7 +68,7 @@ public class Card implements Serializable {
 	 * @return true if valid, false otherwise
 	 */
 	public Boolean validateCard() {
-		if(this.item.length() <= 16 && this.captchaCode.matches("^[\\w\\d]{,7}$"))  
+		if(this.item.length() <= 16 && this.captchaCode.matches("^[\\w\\d]{0,7}$"))  
 			return true;
 		return false;
 	}

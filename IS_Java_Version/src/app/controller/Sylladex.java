@@ -8,9 +8,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
@@ -106,14 +109,22 @@ public class Sylladex {
 	private TextArea textOutput;
 	//////////////////////////////////////////////////////
 	
-	//TODO: create a function to reset the current deck.
 	
 	@FXML
 	private void initialize() {
 		//// initialize some pane parameters
-		cmdAcc.setExpandedPane(syllCmdPane); //set Sylladex Commands pane as defaulted open
+		//cmdAcc.setExpandedPane(syllCmdPane); //set Sylladex Commands pane as defaulted open
 		bRefresh.setDisable(true); //keep disabled until ModusManager can add modi generically (not explicitly)
 		bModusScan.setDisable(true);
+		bInputButton.setDisable(true);
+		textInput.setOnKeyTyped((ev) -> {
+			if (textInput.getText().isEmpty() || modiMgr.getCurrentModus() == -1) {
+				bInputButton.setDisable(true);
+			} else {
+				bInputButton.setDisable(false);
+			}
+		});
+		
 		//should initialize a ModusManager
 		modiMgr = new ModusManager(this);
 		//add modus nodes to the Modus List tab from ModiMgr#modusList.
@@ -158,10 +169,17 @@ public class Sylladex {
 		display.getChildren().add(noModusBox);
 		
 		//initialize the syllCmdList
-		for (String command : SYLL_CMD_STRING_LIST) {
-			Label label = new Label(command);
-			Separator line = new Separator();
-			syllCmdList.getChildren().addAll(label, line);
+		Iterator<String> list = SYLL_CMD_STRING_LIST.iterator();
+		while (list.hasNext()) {
+			String command = list.next();
+			if (list.hasNext()) {
+				Label label = new Label(command);
+				Separator line = new Separator();
+				syllCmdList.getChildren().addAll(label, line);
+			} else {
+				Label label = new Label(command);
+				syllCmdList.getChildren().add(label);
+			}
 		}
 		
 	}
@@ -218,6 +236,13 @@ public class Sylladex {
 	}
 	
 	/**
+	 * @return the textOutput
+	 */
+	public TextArea getTextOutput() {
+		return textOutput;
+	}
+	
+	/**
 	 * adds a collection of Card(s) to {@link #openHand}
 	 * <p>Note: This block will synchronize when in use
 	 * @param tempDeck a List of Card(s)
@@ -247,6 +272,7 @@ public class Sylladex {
 		String guessedWord = "";
 		int score = 999;	//the lower the score, the better
 		int index;		//index of the word in the word list.
+		int guessedIndex = 0; //index of the guessedWord
 		for(index = 0; index < wordList.size(); index++) {
 			String testWord = wordList.get(index);
 			//if a match is found, return it.
@@ -256,27 +282,27 @@ public class Sylladex {
 			String left = givenWord;
 			String right = testWord;
 			int lenGiven = left.length(); 	// length of first string
-	        int lenCard = right.length(); 	// length of second string
+	        int lenTest = right.length(); 	// length of second string
 	
-	        //if the given is empty and card is lower than score, set guessed to card.
-	        if (lenGiven == 0 && lenCard < score) { 
-	        		score = lenCard;
-	        		guessedWord = testWord;
+	        //if the given is empty and card is lower than score, set guessed to test.
+	        if (lenGiven == 0 && lenTest < score) { 
+	        		//score = lenTest;
+	        		//guessedWord = testWord;
 	            continue;
-	        //if the card is empty and the given is lower than the score, set guessed to card 
-	        } else if (lenCard == 0) {
-	        		score = lenGiven;
-	        		guessedWord = testWord;
+	        //if the test is empty and the given is lower than the score, set guessed to test 
+	        } else if (lenTest == 0) {
+	        		//score = lenGiven;
+	        		//guessedWord = testWord;
 	            continue;
 	        }
 	        //if the given item is longer than the card item
-	        if (lenGiven > lenCard) {
+	        if (lenGiven > lenTest) {
 	            //swap the strings to use less memory
 	            final String tmp = left;
 	            left = right;
 	            right = tmp;
-	            lenGiven = lenCard;	
-	            lenCard = right.length();
+	            lenGiven = lenTest;	
+	            lenTest = right.length();
 	        }
 	        
 	        final int[] d = new int[lenGiven + 1];	//cost array, "(d)istance"
@@ -292,7 +318,7 @@ public class Sylladex {
 	            d[i] = i;
 	        } //[0,1,2,3,...,i-1]
 	
-	        for (j = 1; j <= lenCard; j++) {
+	        for (j = 1; j <= lenTest; j++) {
 	            upperLeft = d[0]; 
 	            rightJ = right.charAt(j - 1);
 	            d[0] = j; 
@@ -309,10 +335,11 @@ public class Sylladex {
 	        if (cost < score) { //if cost is lower than the current score, update the best guessed name
 	        		score = cost;
 	        		guessedWord = testWord;
+	        		guessedIndex = index;
 	        }
 	    }
 		//if the score is within the threshold, return info, otherwise return a fail state.
-		return (score > MAX_COST) ? new Object[] {index, guessedWord} : new Object[] {-1, new String()};
+		return (score < MAX_COST) ? new Object[] {guessedIndex, guessedWord} : new Object[] {-1, new String()};
 	}
 	
 	/**
@@ -326,7 +353,11 @@ public class Sylladex {
 	 * @return matching string result of a command
 	 */
 	public String parseCommands(String inputString) {
-		List<String> tCommandList = Arrays.asList((String[]) modiMgr.getModusList().get(modiMgr.getCurrentModus()).FUNCTION_MAP.keySet().toArray());
+		List<Object> keyList = Arrays.asList(modiMgr.getModusList().get(modiMgr.getCurrentModus()).FUNCTION_MAP.keySet().toArray());
+		List<String> tCommandList = new ArrayList<String>();
+		for (Object e : keyList) {
+			tCommandList.add((String) e);
+		}
 		for (String e : SYLL_CMD_STRING_LIST) {
 			tCommandList.add(e);
 		}
@@ -361,7 +392,6 @@ public class Sylladex {
 				}
 				break;
 			case "deleteDeck":
-				//TODO: finish this commandSwitch
 				textOutput.appendText("Deleting deck...");
 				synchronized (deck) {
 					deck.clear();
@@ -369,20 +399,43 @@ public class Sylladex {
 				textOutput.appendText("deletion sucessful.\n");
 				break;
 			case "deleteSaveFile":
+				textOutput.appendText("Deleting save file...");
+				try {
+					Files.deleteIfExists(Paths.get(OUT_PATH + SAVE_FILE_NAME));
+					textOutput.appendText("deletion sucessful.\n");
+				} catch (IOException e) {
+					e.printStackTrace();
+					textOutput.appendText("deletion failed.\n");
+				}
 				break;
 			case "refreshModus":
+				textOutput.appendText("Refreshing the modus...");
+				modiMgr.refreshModus(this);
+				modiMgr.getModusList().get(modiMgr.getCurrentModus()).REFERENCE.drawToDisplay();
+				textOutput.appendText("success. Consider using the modus' load command before continueing.\n ");
 				break;
 			case "showLooseItems":
+				textOutput.appendText("Items in the hand are currently: \n");
+				Iterator<String> hand = openHand.iterator();
+				while (hand.hasNext()) {
+					String item = hand.next();
+					if (hand.hasNext())
+						textOutput.appendText(item + ", ");
+					else
+						textOutput.appendText(item + ".\n");
+				}
 				break;
 			default: //"help <command name>"
+				//TODO: finish this command
 				break;
 			}
 		} else {
 			int functionCode = modiMgr.getModusList().get(modiMgr.getCurrentModus()).FUNCTION_MAP.get(command);
-			String resultCode = modiMgr.getModusList().get(modiMgr.getCurrentModus()).REFERENCE.entry(functionCode, (Object) args);
-			//if resultCode is -1 and functionCode matches 1, 2, 3, or 4, give a specific diagnostic
+			System.out.println("invoking " + command + ":" + functionCode + " with args = " + Arrays.toString(args));
+			String resultCode = modiMgr.getModusList().get(modiMgr.getCurrentModus()).REFERENCE.entry(functionCode, args);
+			//if resultCode is -1 and functionCode matches 1, 2, 3, or 4, give a relative diagnostic
 			if (resultCode.equals("-1")) {
-				//function exited abnormally! TODO: consider giving specific diagnostic info of how it failed
+				//function exited abnormally! 
 				switch (functionCode) {
 				case 1: //save failed
 					textOutput.appendText("modus save failed.\n");
@@ -391,10 +444,10 @@ public class Sylladex {
 					textOutput.appendText("modus load failed.\n");
 					break;
 				case 3: //capture failed
-					textOutput.appendText("capture failed.\n");
+					textOutput.appendText("attempt to capture " + args[0] + " failed.\n");
 					break;
 				case 4: //takeOutCard failed
-					textOutput.appendText("extraction failed.\n");
+					textOutput.appendText("attempt to extract " + args[0] + " failed.\n");
 					break;
 				default: //something unknown failed
 					textOutput.appendText("something failed.\n");
@@ -402,6 +455,7 @@ public class Sylladex {
 				}
 			}
 		}
+		textOutput.appendText("\n");
 	}
 	
 	/**
@@ -521,9 +575,14 @@ public class Sylladex {
 		
 	}
 	
+	//TODO: create a listener for if someone clicks on node in the commands list. if a command-label is clicked
+		//then it should set the textInput contents equal to the label
+	
 	@FXML
 	void submit(ActionEvent event) {
+		//consume the textInput field
 		String inputRawString = textInput.getText();
+		textInput.clear();
 		if (inputRawString.isEmpty()) return;
 		
 		//split the raw input into ["command", "arg1 arg2 arg3..."]
@@ -532,7 +591,14 @@ public class Sylladex {
 		//parse the raw input command against the sylladex and modus commands
 		String rawInputCommand = splitRawInput[0];
 		String parsedCommand = parseCommands(rawInputCommand);
-		//check if the command was actually matched. if not, notify the user by the terminal.
+		
+		//check if the command was "help" (from raw input), if so then invoke entry with the args
+		if (fuzzyStringSearch(Arrays.asList("help"), rawInputCommand)[1].equals("help") && splitRawInput.length > 1) {
+			modiMgr.getModusList().get(modiMgr.getCurrentModus()).REFERENCE.entry(0, splitRawInput[1].trim());
+			return;
+		}
+		
+		//check if the command was actually matched to the cmd lists. if not, notify the user by the terminal.
 		if (parsedCommand.isEmpty()) {
 			textOutput.appendText("Command \"" + rawInputCommand + "\" wasn't recognized. Please try again.\n");
 			return;
@@ -540,7 +606,10 @@ public class Sylladex {
 		
 		//split the args string into a list, if any, then run the commandSwitch
 		if (splitRawInput.length > 1) { 
-			String[] inputArgs = splitRawInput[1].split(" ");
+			String[] inputArgs = splitRawInput[1].split(",");
+			for (int i = 0; i < inputArgs.length; i++) {
+				inputArgs[i] = inputArgs[i].trim();
+			}
 			
 			commandSwitch(parsedCommand, inputArgs);
 		} else {
@@ -599,8 +668,7 @@ public class Sylladex {
 	        		return;
 	        }
 		}
-		//clear the display
-		clearDisplay();
+		
 		//if the new or ok button was pushed, finish with those specific deck actions
 		modiMgr.setCurrentModus(i);
 		textOutput.appendText("Modus selected: " + modusName + "\n");
@@ -615,7 +683,7 @@ public class Sylladex {
 				}
 				textOutput.appendText("Deck has been refresh.\n\n");
 			} catch (Exception e) {
-				textOutput.appendText("Cancelling modus change.");
+				textOutput.appendText("Cancelling modus change.\n");
 		        return;
 			}
 		} else if (deckAction == 1) {
@@ -636,9 +704,14 @@ public class Sylladex {
 		Label functionName = new Label("help <command name>");
 		moduCmdList.getChildren().add(functionName);
 		
+		//reset the display
+		modiMgr.getModusList().get(modiMgr.getCurrentModus()).REFERENCE.drawToDisplay();
+		textOutput.appendText(modiMgr.getModusList().get(modiMgr.getCurrentModus()).REFERENCE.description());
+		
 		//TODO: check if there is a save file. if so, ask if the user would like to load from it.
 			//optionally, i could also just prompt the user indirectly by dropping a hint to load in the text area.
 		
+		//TODO: set the view to be on the commands tab instead of the modusList tab
 	}
 
 	/**Scan the modus package for modi, return a File list of the available modi. 
@@ -652,4 +725,5 @@ public class Sylladex {
 	void reset(ActionEvent event) {
 		//TODO: set currentmodus to -1 and reset reinitialize the sylladex
 	}
+	
 }

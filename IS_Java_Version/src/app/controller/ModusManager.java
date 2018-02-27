@@ -135,6 +135,7 @@ public class ModusManager {
 		}
 		
 		//TODO: attempt to validate the classes via filestream and match against whitelisted calls
+		//TODO: configure a Security Manager policy file and ensure that mine was loaded.
 		
 		//classNameList should now be populated, attempt to load and cast each class.
 		Modus modusObject = null;
@@ -159,12 +160,13 @@ public class ModusManager {
 			Alert alert = new Alert(AlertType.WARNING);
 		        	alert.setTitle("No Modi Found");
 		        alert.setHeaderText("Modus list empty");
-		        alert.setContentText("No modi was added to the modus list. This may be because the directory is empty or there was an issue adding modi to the list. Please refresh the list.");
+		        alert.setContentText("No modi was added to the modus list. This may be because the directory is empty or there was an issue adding modi to the list. Exiting program.");
 	        alert.showAndWait();
+	        System.exit(-1);
 		}
 	}
 	
-	///// GETTERS/SETTERS
+	//************** GETTERS/SETTERS *******************/
 	/**
 	 * @return the currentModus
 	 */
@@ -190,6 +192,34 @@ public class ModusManager {
 		this.modusList = modusList;
 	}
 	
+	//*************** UTILITY **************************/
+	
+	/**
+	 * Initializes a new object of the current modus class, then effectively replaces 
+	 * the old object's reference. 
+	 * @param syll 
+	 */
+	public void refreshModus(Sylladex syll) {
+		Class<? extends Modus> modusClassObject = modusList.get(currentModus).REFERENCE.getClass();
+		Constructor<? extends Modus> modusClassConstructor;
+		try {
+			modusClassConstructor = modusClassObject.getConstructor(Sylladex.class);
+			Modus modusInstance = modusClassConstructor.newInstance(syll);
+			if (modusInstance != null) { 
+				modusList.set(currentModus, modusInstance.getMETADATA());
+			}
+		} catch (SecurityException | IllegalAccessException e) {
+			e.printStackTrace();
+			System.exit(-1);
+		}  catch (NoSuchMethodException | IllegalArgumentException | InvocationTargetException | InstantiationException e) {
+			//These exceptions should never happen if it didn't happen in during it's first initialization
+			//I would consider this a fatal issue that needs to be addressed by debugging.
+			e.printStackTrace();
+			//TODO: provide some more information about the fatal issue before closing.
+			System.exit(-1);
+		}
+		
+	}
 	
 	//TODO: function to update the modus tracker, based on "new" modus and scanned package
 	

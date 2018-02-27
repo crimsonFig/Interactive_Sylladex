@@ -1,4 +1,4 @@
-package modus;
+  package modus;
 
 import java.util.LinkedHashMap;
 
@@ -131,7 +131,7 @@ public class TimeBox implements Modus {
 	 * @see modus.Modus#entry(int, java.lang.Object[])
 	 */
 	@Override
-	public String entry(int functionCode, Object... objects) {
+	public String entry(int functionCode, String... objects) {
 		return "0";
 	}
 	
@@ -221,6 +221,14 @@ public class TimeBox implements Modus {
 	 */
 	@Override
 	public void drawToDisplay() {
+	}
+
+	/* (non-Javadoc)
+	 * @see modus.Modus#description()
+	 */
+	@Override
+	public String description() {
+		return null;
 	}
 
 }
