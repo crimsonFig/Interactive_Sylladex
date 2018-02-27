@@ -26,6 +26,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonBar.ButtonData;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import app.model.Card;
@@ -69,6 +70,8 @@ public class Sylladex {
 	private final static int MAX_COST = 3;
 	
 	///// GUI references ////////////
+	@FXML
+	private BorderPane root;
 	//BOTTOM
 	@FXML
 	private Button bInputButton;
@@ -82,7 +85,7 @@ public class Sylladex {
 	@FXML
 	private VBox syllCmdList;
 	@FXML
-	private TitledPane syllCmdPane;
+	private Tab cmdTab;
 	@FXML
 	private VBox moduCmdList;
 	@FXML
@@ -117,12 +120,24 @@ public class Sylladex {
 		bRefresh.setDisable(true); //keep disabled until ModusManager can add modi generically (not explicitly)
 		bModusScan.setDisable(true);
 		bInputButton.setDisable(true);
+		//submit key is not disabled if a modus is chosen and the field isnt empty.
 		textInput.setOnKeyTyped((ev) -> {
 			if (textInput.getText().isEmpty() || modiMgr.getCurrentModus() == -1) {
 				bInputButton.setDisable(true);
 			} else {
 				bInputButton.setDisable(false);
 			}
+		});
+		//if the enter key is typed, fire the submit button, else focus on the field.
+		root.setOnKeyPressed(keyEvent -> {
+			if (keyEvent.getCode() == KeyCode.ENTER) {
+				bInputButton.fire();
+				keyEvent.consume();
+			} 
+			else {
+				textInput.requestFocus();
+			}
+			
 		});
 		
 		//should initialize a ModusManager
@@ -146,7 +161,7 @@ public class Sylladex {
 			//create a button in the GridePane
 			Button button = new Button("Select");
 			button.setFont(new Font("Courier", 11));
-			button.setOnAction((event) -> handleModusSelection(e.NAME)); //set event handler
+			button.setOnAction((event) -> handleModusSelection(e, event)); //set event handler
 			GridPane.setHalignment(button, HPos.RIGHT);
 			node.add(button, 0, 1);
 			
@@ -355,12 +370,9 @@ public class Sylladex {
 	public String parseCommands(String inputString) {
 		List<Object> keyList = Arrays.asList(modiMgr.getModusList().get(modiMgr.getCurrentModus()).FUNCTION_MAP.keySet().toArray());
 		List<String> tCommandList = new ArrayList<String>();
-		for (Object e : keyList) {
-			tCommandList.add((String) e);
-		}
-		for (String e : SYLL_CMD_STRING_LIST) {
-			tCommandList.add(e);
-		}
+		keyList.forEach(key -> tCommandList.add((String) key));
+		SYLL_CMD_STRING_LIST.forEach(string -> tCommandList.add(string));
+
 		Object[] container = fuzzyStringSearch(tCommandList, inputString);
 		String result = (String) container[1];
 		return result;
@@ -622,15 +634,16 @@ public class Sylladex {
 	 * Sets the current modus to the modus selected, updates the view 
 	 * to represent the modus changes, and handles logic related to 
 	 * selecting and switching modi from the {@code #modusList} node.
+	 * @param event 
 	 * @param modusName
 	 */
-	void handleModusSelection(String modusName) {
+	void handleModusSelection(Metadata metadata, ActionEvent event) {
 		int i = -1;
 		Boolean bFound = false;
 		Boolean isAnyModusActive = (modiMgr.getCurrentModus() != -1) ? true : false;
 		for (Metadata e : modiMgr.getModusList()) {
 			i++;
-			if (e.NAME.equals(modusName)) {
+			if (e.equals(metadata)) {
 				bFound = true;
 				break;
 			}
@@ -670,26 +683,30 @@ public class Sylladex {
 		}
 		
 		//if the new or ok button was pushed, finish with those specific deck actions
-		modiMgr.setCurrentModus(i);
-		textOutput.appendText("Modus selected: " + modusName + "\n");
-		//textOutput.appendText(e.FUNCTION_MAP.toString() + "\n");
 		if (deckAction == 0) {
 			textOutput.appendText("Saving deck to file... ");
 			try {
 				writeDeckToFile(SAVE_FILE_NAME, OUT_PATH);
 				textOutput.appendText("save sucessful.\n");
-				synchronized (deck) {
-					deck.clear();
-				}
-				textOutput.appendText("Deck has been refresh.\n\n");
+				this.deck.clear();
+				textOutput.appendText("Deck has been refreshed.\n\n");
 			} catch (Exception e) {
-				textOutput.appendText("Cancelling modus change.\n");
+				textOutput.appendText("Cancelling modus change.\n\n");
 		        return;
 			}
 		} else if (deckAction == 1) {
 			this.deck.clear();
 			textOutput.appendText("Deck has been refreshed without saving.\n\n");
-		} //else, do nothing.
+		} 
+		
+		//set the new active modus and disable it's button
+		modiMgr.setCurrentModus(i);
+		textOutput.appendText("Modus selected: " + metadata.NAME + "\n");
+		//set all buttons in this list as not disabled, then disable only this modus' button.
+		modusList.getChildren().stream() //TODO: determine why this isn't working
+			.filter(node -> Button.class.equals(node.getClass()))
+			.forEach(node -> node.setDisable(false));
+		((Button) event.getSource()).setDisable(true);
 		
 		//clear the moduCmdList and set the moduCmdList to the selected modus FUNCTION_MAP
 		moduCmdList.getChildren().clear();

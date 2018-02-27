@@ -25,7 +25,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane prefHeight="700.0" prefWidth="949.0" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.controller.Sylladex">
+<BorderPane fx:id="root" prefHeight="700.0" prefWidth="949.0" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.controller.Sylladex">
    <top>
       <MenuBar BorderPane.alignment="CENTER">
         <menus>
@@ -94,11 +94,11 @@
                   </VBox>
                </content>
             </Tab>
-          <Tab text="Commands">
+          <Tab fx:id="cmdTab" text="Commands">
                <content>
                   <Accordion fx:id="cmdAcc" maxHeight="-Infinity">
                     <panes>
-                      <TitledPane fx:id="syllCmdPane" alignment="TOP_LEFT" maxHeight="-Infinity" text="Sylladex Commands">
+                      <TitledPane alignment="TOP_LEFT" maxHeight="-Infinity" text="Sylladex Commands">
                            <content>
                               <VBox fx:id="syllCmdList" prefWidth="100.0" spacing="5.0" />
                            </content>

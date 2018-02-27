@@ -331,7 +331,7 @@ public class TarotDeck implements Modus {
 	 */
 	@Override
 	public String description() {
-		return null;
+		return " ";
 	}
 	
 	//Arrays.sort(setFolder, Comparator.comparing((Card card) -> card.getItem()));
