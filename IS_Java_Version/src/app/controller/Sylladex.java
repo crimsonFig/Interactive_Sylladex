@@ -17,18 +17,21 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
+import javafx.util.Pair;
 import app.model.Card;
 import app.model.CardNode;
 import app.model.Metadata;
@@ -270,20 +273,40 @@ public class Sylladex {
 		}
 	}
 	
+	/**
+	 * If the parameter item matches an item in {@link #openHand}
+	 * then remove it. Only a single match will be removed if the 
+	 * openHand contains duplicates.
+	 * @param item
+	 * @return true if item was removed. false otherwise.
+	 */
+	public Boolean removeFromHand(String item) {
+		//TODO: use this to remove an openHand item during capture.
+		Boolean result = false;
+		for (String handItem : openHand) {
+			if (handItem.equalsIgnoreCase(item)) {
+				openHand.remove(handItem);
+				result = true;
+				break;
+			}
+		}
+		return result;
+	}
+	
 ///// UTILITY /////
 	
 	/**
 	 * Takes a word and searches for the closest match in the list.
 	 * <p> Uses the Levenshtein Distance algorithm to compute the edit
 	 * 	distance where a deletion or addition of a char counts as 1 and
-	 * 	a char mutation counts as 1.
+	 * 	a char mutation counts as 1. This comparison is case insensitive.
 	 * <p> Allows only a maximum of {@value #MAX_COST} edits, otherwise it fails.
 	 * @param wordList The list to search
 	 * @param givenWord The word to be matched
 	 * @return an Object array of format {@code [int index, String match]}. If failed,
 	 * 	returns {@code [-1,""]}.
 	 */
-	public static final Object[] fuzzyStringSearch(List<String> wordList, String givenWord) {
+	public static final Pair<Integer, String> fuzzyStringSearch(List<String> wordList, String givenWord) {
 		String guessedWord = "";
 		int score = 999;	//the lower the score, the better
 		int index;		//index of the word in the word list.
@@ -291,11 +314,12 @@ public class Sylladex {
 		for(index = 0; index < wordList.size(); index++) {
 			String testWord = wordList.get(index);
 			//if a match is found, return it.
-			if (givenWord.equals(testWord)) return new Object[]{index, testWord};
+			if (givenWord.toLowerCase().equals(testWord.toLowerCase())) return new Pair<Integer, String>(index, testWord);
 			
-			//create copies of the item names to prevent confusion if swapped later
-			String left = givenWord;
-			String right = testWord;
+			//create copies of the item names to prevent confusion if swapped later.
+				//also make the comparisons case insensitive.
+			String left = givenWord.toLowerCase();
+			String right = testWord.toLowerCase();
 			int lenGiven = left.length(); 	// length of first string
 	        int lenTest = right.length(); 	// length of second string
 	
@@ -354,7 +378,7 @@ public class Sylladex {
 	        }
 	    }
 		//if the score is within the threshold, return info, otherwise return a fail state.
-		return (score < MAX_COST) ? new Object[] {guessedIndex, guessedWord} : new Object[] {-1, new String()};
+		return (score < MAX_COST) ? new Pair<Integer, String>(guessedIndex, guessedWord) : new Pair<Integer, String>(-1, new String());
 	}
 	
 	/**
@@ -373,9 +397,7 @@ public class Sylladex {
 		keyList.forEach(key -> tCommandList.add((String) key));
 		SYLL_CMD_STRING_LIST.forEach(string -> tCommandList.add(string));
 
-		Object[] container = fuzzyStringSearch(tCommandList, inputString);
-		String result = (String) container[1];
-		return result;
+		return fuzzyStringSearch(tCommandList, inputString).getValue();
 	}
 	
 	private void commandSwitch(String command, String...args) {
@@ -467,7 +489,7 @@ public class Sylladex {
 				}
 			}
 		}
-		textOutput.appendText("\n");
+		textOutput.appendText("\n"); //TODO: shift textoutput dialogues to have \n appear at the front instead of end
 	}
 	
 	/**
@@ -584,10 +606,10 @@ public class Sylladex {
 ///// LISTENERS /////
 	@FXML
 	void displayClick(ActionEvent event) {
-		
+		//TODO: consider displaying info on click?
 	}
 	
-	//TODO: create a listener for if someone clicks on node in the commands list. if a command-label is clicked
+	//TODO: create a listener for if someone clicks a label in the commands list. if a command-label is clicked
 		//then it should set the textInput contents equal to the label
 	
 	@FXML
@@ -598,14 +620,14 @@ public class Sylladex {
 		if (inputRawString.isEmpty()) return;
 		
 		//split the raw input into ["command", "arg1 arg2 arg3..."]
-		String[] splitRawInput = inputRawString.toLowerCase().split(" ", 2);
+		String[] splitRawInput = inputRawString.split(" ", 2);
 		
 		//parse the raw input command against the sylladex and modus commands
 		String rawInputCommand = splitRawInput[0];
 		String parsedCommand = parseCommands(rawInputCommand);
 		
 		//check if the command was "help" (from raw input), if so then invoke entry with the args
-		if (fuzzyStringSearch(Arrays.asList("help"), rawInputCommand)[1].equals("help") && splitRawInput.length > 1) {
+		if (fuzzyStringSearch(Arrays.asList("help"), rawInputCommand).getValue().equals("help") && splitRawInput.length > 1) {
 			modiMgr.getModusList().get(modiMgr.getCurrentModus()).REFERENCE.entry(0, splitRawInput[1].trim());
 			return;
 		}
@@ -699,12 +721,18 @@ public class Sylladex {
 			textOutput.appendText("Deck has been refreshed without saving.\n\n");
 		} 
 		
-		//set the new active modus and disable it's button
+		//set the new active modus
 		modiMgr.setCurrentModus(i);
 		textOutput.appendText("Modus selected: " + metadata.NAME + "\n");
+		
 		//set all buttons in this list as not disabled, then disable only this modus' button.
-		modusList.getChildren().stream() //TODO: determine why this isn't working
-			.filter(node -> Button.class.equals(node.getClass()))
+		modusList.getChildren().stream() 
+			.filter(node -> GridPane.class.equals(node.getClass()))
+			.map((Function<? super Node, ? extends Button>) node -> {
+				return (Button) ((GridPane) node).getChildren().stream()
+					.filter(subnode -> Button.class.equals(subnode.getClass()))
+					.findFirst().orElse(new Button());
+			})
 			.forEach(node -> node.setDisable(false));
 		((Button) event.getSource()).setDisable(true);
 		
@@ -713,10 +741,13 @@ public class Sylladex {
 		for(String function : modiMgr.getModusList().get(modiMgr.getCurrentModus()).FUNCTION_MAP.keySet()) {
 			//for each function, create a node to be inserted into the moduCmdList
 			Label functionName = new Label(function);
-			//TODO: add a description label to each command by pinging the `help <commandName> <1>` path, and use
-			//	the returned string for the label.
+			//add a description label to each command by pinging the `help <commandName> <1>` in Modus#entry method
+			Label functionDesc = new Label();
+			functionDesc.setText(modiMgr.getModusList().get(modiMgr.getCurrentModus()).REFERENCE.entry(0, function, "1"));
+			functionDesc.setWrapText(true);
+			functionDesc.setPadding(new Insets(0, 0, 0, 5)); 
 			Separator line = new Separator();
-			moduCmdList.getChildren().addAll(functionName, line);
+			moduCmdList.getChildren().addAll(functionName, functionDesc, line);
 		}
 		Label functionName = new Label("help <command name>");
 		moduCmdList.getChildren().add(functionName);
@@ -725,10 +756,8 @@ public class Sylladex {
 		modiMgr.getModusList().get(modiMgr.getCurrentModus()).REFERENCE.drawToDisplay();
 		textOutput.appendText(modiMgr.getModusList().get(modiMgr.getCurrentModus()).REFERENCE.description());
 		
-		//TODO: check if there is a save file. if so, ask if the user would like to load from it.
-			//optionally, i could also just prompt the user indirectly by dropping a hint to load in the text area.
-		
-		//TODO: set the view to be on the commands tab instead of the modusList tab
+		//set the view to be on the commands tab from the modusList tab
+		((TabPane) cmdTab.getStyleableParent()).getSelectionModel().select(cmdTab);
 	}
 
 	/**Scan the modus package for modi, return a File list of the available modi. 

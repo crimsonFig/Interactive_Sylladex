@@ -264,9 +264,7 @@ public class TarotDeck implements Modus {
 		for (Card card : deck) { itemList.add(card.getItem()); }
 			
 		//perform a fuzzy string search
-		Object[] results = Sylladex.fuzzyStringSearch(itemList, givenItem);
-		assert(results[1].getClass().equals(String.class));
-		return (String) results[1];
+		return Sylladex.fuzzyStringSearch(itemList, givenItem).getValue();
 	}
 	
 	/**

@@ -4,26 +4,43 @@ import java.util.LinkedHashMap;
 
 import app.controller.Sylladex;
 import app.model.Card;
+import app.model.Metadata;
 
 /**
  * @author Triston Scallan
  *
  */
 public class BTree implements Modus {
-
-	/* (non-Javadoc)
-	 * @see modus.Modus#entry(int, java.lang.Object[])
-	 */
-	@Override
-	public String entry(int functionCode, Object... objects) {
-		return "0";
-	}
 	
 	/* (non-Javadoc)
 	 * @see modus.Modus#createFunctionMap()
 	 */
 	@Override
 	public LinkedHashMap<String, Integer> createFunctionMap() {
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see modus.Modus#entry(int, java.lang.Object[])
+	 */
+	@Override
+	public String entry(int functionCode, String... objects) {
+		return "0";
+	}
+
+	/* (non-Javadoc)
+	 * @see modus.Modus#getSylladexReference()
+	 */
+	@Override
+	public Sylladex getSylladexReference() {
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see modus.Modus#getMETADATA()
+	 */
+	@Override
+	public Metadata getMETADATA() {
 		return null;
 	}
 	
@@ -66,14 +83,6 @@ public class BTree implements Modus {
 	}
 
 	/* (non-Javadoc)
-	 * @see modus.Modus#getSylladexReference()
-	 */
-	@Override
-	public Sylladex getSylladexReference() {
-		return null;
-	}
-
-	/* (non-Javadoc)
 	 * @see modus.Modus#isFull()
 	 */
 	@Override
@@ -102,6 +111,14 @@ public class BTree implements Modus {
 	 */
 	@Override
 	public void drawToDisplay() {
+	}
+
+	/* (non-Javadoc)
+	 * @see modus.Modus#description()
+	 */
+	@Override
+	public String description() {
+		return null;
 	}
 
 }

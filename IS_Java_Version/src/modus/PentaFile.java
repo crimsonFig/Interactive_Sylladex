@@ -190,9 +190,8 @@ public class PentaFile implements Modus {
 				int returnStringFlag = 0; //flag to distinguish from pure case 1 and 2
 				
 				//isolate the first word of the args string, expected to be the command
-				String[] splitArgs = args[0].split(" ", 2);
-				String commandName = splitArgs[0].toLowerCase();
-				System.out.println("Providing modus command help on: " + commandName);
+				String[] splitArgs = args[0].toLowerCase().split(" ", 2);
+				String commandName = splitArgs[0];
 				
 				String result;
 				//determine the cases
@@ -204,34 +203,34 @@ public class PentaFile implements Modus {
 				}
 				switch (commandName) { //case 2
 				case "save":
-					result = "syntax: save\n\t saves the current inventory to the sylladex's deck. "
+					result = "syntax: save\n\u2022 saves the current inventory to the sylladex's deck. "
 							+ "This command is called at the end of every other command except load.";
 					break;
 				case "load":
-					result = "syntax: load <mode>\n\t loads the inventory from the sylladex, which may differ."
-							+ "\n\tmode 0 will simply reset the inventory."
-							+ "\n\tmode 1 will auto load the inventory, based on card positions in the deck."
-							+ "\n\tmode 2 will manually load the inv. you will choose where items go."
-							+ "\n\tmode 3 will fast load the inventory. disregards saved card positions.";
+					result = "syntax: load <mode>\n\u2022 loads the inventory from the sylladex, which may differ."
+							+ "\n\u2022 mode 0 will simply reset the inventory."
+							+ "\n\u2022 mode 1 will auto load the inventory, based on card positions in the deck."
+							+ "\n\u2022 mode 2 will manually load the inv. you will choose where items go."
+							+ "\n\u2022 mode 3 will fast load the inventory. disregards saved card positions.";
 					break;
 				case "capture":
-					result = "syntax: capture <item>\n\t captchalogues the item. the item can have "
+					result = "syntax: capture <item>\n\u2022 captchalogues the item. the item can have "
 							+ "spaces when you type its name. puts in first available spot.";
 					break;
 				case "takeoutcard":
-					result = "syntax: takeOutCard <index>, <folder>\n\t takes out the card at "
+					result = "syntax: takeOutCard <index>, <folder>\n\u2022 takes out the card at "
 							+ "the index within the folder. index is from 1 to 5.";
 					break;
 				case "capturebyfolder":
-					result = "syntax: captureByFolder <item>, <folder>\n\t captchalogues the item. the item can have "
+					result = "syntax: captureByFolder <item>, <folder>\n\u2022 captchalogues the item. the item can have "
 							+ "spaces when you type its name. puts in the specified folder.";
 					break;
 				case "takeoutcardbyname":
-					result = "syntax: takeOutCard <item>\n\t attempts to take out a card based on the given "
+					result = "syntax: takeOutCardByName <item>\n\u2022 attempts to take out a card based on the given "
 							+ "item name you gave. item can have spaces in its name.";
 					break;
 				default: 
-					result = "syntax: help <command>\n\t provides help information about the "
+					result = "syntax: help <command>\n\u2022 provides help information about the "
 							+ "given command. syntax is the form you input a complete command. "
 							+ "if a command has multiple arguments they need to be seperated by a comma.";
 				}
@@ -239,6 +238,7 @@ public class PentaFile implements Modus {
 				if (returnStringFlag == 1) {
 					return result;
 				} 
+				System.out.println("Providing modus command help on: " + commandName);
 				textOutput.appendText(result + "\n");
 				return "0";
 			}
@@ -526,8 +526,7 @@ public class PentaFile implements Modus {
 		folderList.add("info");
 		folderList.add("keyCritical");
 		
-		Object[] result = Sylladex.fuzzyStringSearch(folderList, givenFolder);
-		int i = (int) result[0];
+		int i = Sylladex.fuzzyStringSearch(folderList, givenFolder).getKey();
 		if (i == -1) {
 			System.out.println("folder requested wasn't found. returning `weapons` folder as default.");
 			return weapons;
@@ -567,9 +566,7 @@ public class PentaFile implements Modus {
 		for (int i = 0; i < 25; i++) { itemList.add(omniFolder[i].getItem()); }
 			
 		//perform a fuzzy string search
-		Object[] results = Sylladex.fuzzyStringSearch(itemList, givenItem);
-		assert(results[1].getClass().equals(String.class));
-		return (String) results[1];
+		return Sylladex.fuzzyStringSearch(itemList, givenItem).getValue();
 	}
 	
 	/**
