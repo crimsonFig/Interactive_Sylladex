@@ -72,7 +72,7 @@ public class TrueSightDeck extends TarotDeck {
 	/**
 	 * Draws the card matching the given name
 	 * @param itemName the given name to find
-	 * @return the closestnmatching card, an empty card otherwise
+	 * @return the closest matching card, an empty card otherwise
 	 */
 	public Card takeOutCardByName(String itemName) {
 		String match = findItemName(itemName);
@@ -90,7 +90,7 @@ public class TrueSightDeck extends TarotDeck {
 	 */
 	public int findCardIndexByName(String itemName) {
 		int i = 0;
-		Card card = null;
+		Card card = Card.EMPTY;
 		String match = findItemName(itemName);
 		for(ListIterator<Card> deckTop = this.deck.listIterator(); deckTop.hasNext(); card = deckTop.next()) {
 			if (card.getItem().equals(match)) return i;

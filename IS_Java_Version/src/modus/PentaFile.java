@@ -2,16 +2,13 @@ package modus;
 
 import java.awt.Color;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
+
 import app.controller.Sylladex;
 import app.model.Card;
 import app.model.CardNode;
 import app.model.Metadata;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.SVGPath;
@@ -34,11 +31,11 @@ public class PentaFile implements Modus {
 	 * A reference to the Sylladex that called the given modus. <br>
 	 * This is used to pass information back to the caller.
 	 */
-	private Sylladex sylladexReference;
+    private       Sylladex sylladexReference;
 	/**
 	 * provides information about this modus
 	 */
-	protected final Metadata METADATA;
+    private final Metadata METADATA;
 	
 	//5 arrays, each with 5 elements
 	private Card[] weapons = new Card[5];
@@ -73,7 +70,7 @@ public class PentaFile implements Modus {
 	 * @see modus.Modus#createFunctionMap()
 	 */
 	public LinkedHashMap<String, Integer> createFunctionMap() {
-		LinkedHashMap<String, Integer> functionMap = new LinkedHashMap<String, Integer>();
+		LinkedHashMap<String, Integer> functionMap = new LinkedHashMap<>();
 		functionMap.put("save", 1);
 		functionMap.put("load #", 2); //mode = 0, 1, 2, or 3
 		functionMap.put("capture", 3);
@@ -141,7 +138,7 @@ public class PentaFile implements Modus {
 					save();
 					drawToDisplay();
 					//return a non-empty card to hand, but its not an error if it was empty.
-					if (card.getInUse()) sylladexReference.addToOpenHand(Arrays.asList(card));
+					if (card.getInUse()) sylladexReference.addToOpenHand(Collections.singletonList(card));
 					return "0";
 				}
 				textOutput.appendText("ERROR: " + args[0] + " is not a valid index.\n");
@@ -165,7 +162,7 @@ public class PentaFile implements Modus {
 				textOutput.appendText("Retrieving " + args[0] + "...");
 				Card card = takeOutCardByName(args[0]);
 				if (card.getInUse()) { 
-					sylladexReference.addToOpenHand(Arrays.asList(card));
+					sylladexReference.addToOpenHand(Collections.singletonList(card));
 					textOutput.appendText("success.\n");
 					save();
 					drawToDisplay();
@@ -288,7 +285,7 @@ public class PentaFile implements Modus {
 		Arrays.fill(keyCritical, freshCard);
 		///// automatic loading
 		if (mode == 1) {
-			//load from the deck based as the pattern 
+			//load from the deck based as the pattern TODO: if deck > 25 then alert user.
 			for (int i = 0; i < 25; i++ ) {
 				Card card = deck.get(i);
 				if (i < 5 ) weapons[i] = card;
@@ -304,8 +301,29 @@ public class PentaFile implements Modus {
 					//TODO: present the card's item through the GUI
 						
 					//ask which folder to place the card in (or none at all)
-					String givenFolder = null; //TODO: prompt the user for input
-					Card[] folder = findFolderByName(givenFolder);
+                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                        alert.setTitle("Manual modus deck loading");
+                        alert.setHeaderText("Select a folder.");
+                        alert.setContentText("Please select a folder to save this card into.");
+
+                    //create buttons for alert TODO: set buttons to folder selection
+                    ButtonType buttonSave = new ButtonType("Save");
+                    ButtonType buttonNew = new ButtonType("New");
+                    ButtonType buttonCancel = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+                    alert.getButtonTypes().setAll(buttonSave, buttonNew, buttonCancel);
+                    Optional<ButtonType> result = alert.showAndWait();
+                    //if cancel, return, otherwise change deckAction and continue
+                    Card[] folder;
+                    if (!result.isPresent()) {
+                        sylladexReference.getTextOutput().appendText("Error in getting your choice. Ending load().");
+                        return;
+                    }
+                    if (result.get() != buttonCancel) {
+                        folder = findFolderByName(result.get().getText());
+                    } else {
+                        return;
+                    }
+
 					//place it in the folder
 					if (! captureByFolder(card.getItem(), folder)) throw new IllegalStateException();
 				}
@@ -330,9 +348,8 @@ public class PentaFile implements Modus {
 		//if invalid card
 		if (! card.validateCard()) return false;
 		//this call will not cause the side effect as described by Note #2
-		if (! addCard(card)) return false;
-		return true;
-	}
+        return addCard(card);
+    }
 
 	/* (non-Javadoc)
 	 * @see modus.Modus#addCard(app.model.Card)
@@ -365,13 +382,13 @@ public class PentaFile implements Modus {
 	 * @param folder the Card array to be inserted into
 	 * @return {@code true} if successful, {@code false} otherwise
 	 */
-	public Boolean captureByFolder(String item, Card[] folder) {
-		int index = 0;
+	private Boolean captureByFolder(String item, Card[] folder) {
+		int index;
 		Card card = new Card(item);
 		//if invalid card
 		if (! card.validateCard()) return false;
 		
-		if ((index = findFolderSpace(folder)) == -1) {
+		if (findFolderSpace(folder) == -1) {
 			List<Card> tempDeck = explodeFolder(folder);
 			folder[0] = card;
 			//hand off tempDeck to the Sylladex
@@ -413,7 +430,7 @@ public class PentaFile implements Modus {
 	 * @param itemName the item key
 	 * @return a card matching the key
 	 */
-	public Card takeOutCardByName(String itemName) {
+	private Card takeOutCardByName(String itemName) {
 		if (isEmpty()) return new Card();
 		String match = findItemName(itemName);
 		Card[] omniFolder = createOmniFolder();
@@ -503,11 +520,9 @@ public class PentaFile implements Modus {
 	 * @return an ArrayList of Card to be given to the Sylladex
 	 */
 	private List<Card> explodeFolder(Card[] folder) {
-		List<Card> tempDeck = new ArrayList<Card>();
-		for (Card card : folder) {
-			tempDeck.add(card);
-			card = new Card();
-		}
+		List<Card> tempDeck = new ArrayList<>();
+		Collections.addAll(tempDeck, folder);
+		Arrays.fill(folder, Card.EMPTY);
 		return tempDeck;
 	}
 	
@@ -519,7 +534,7 @@ public class PentaFile implements Modus {
 	 * @return the Card array "folder" based on given folder name
 	 */
 	private Card[] findFolderByName(String givenFolder) {
-		List<String> folderList = new ArrayList<String>();
+		List<String> folderList = new ArrayList<>();
 		folderList.add("weapons");
 		folderList.add("survival");
 		folderList.add("misc");
@@ -531,28 +546,26 @@ public class PentaFile implements Modus {
 			System.out.println("folder requested wasn't found. returning `weapons` folder as default.");
 			return weapons;
 		}
-		Card[] folder = (
-				(i == 0) ? weapons : 
-				((i == 1) ? survival : 
-				((i == 2) ? misc : 
+		return (
+				(i == 0) ? weapons :
+				((i == 1) ? survival :
+				((i == 2) ? misc :
 				((i == 3) ? info : keyCritical))));
-		return folder;
 	}
 	
 	/**
 	 * returns a folder based off of an index that relates to a position in a omni-folder
 	 * @param i the index to use
 	 * @return a Card[]
-	 * @see {@link #createOmniFolder()}
+	 * @see #createOmniFolder()
 	 */
 	private Card[] findFolderFromOmniIndex(int i) {
 		i = i / 5; //collapse the index into the 5 buckets
-		Card[] folder = (
-				(i == 0) ? weapons : 
-				((i == 1) ? survival : 
-				((i == 2) ? misc : 
+		return (
+				(i == 0) ? weapons :
+				((i == 1) ? survival :
+				((i == 2) ? misc :
 				((i == 3) ? info : keyCritical))));
-		return folder;
 	}
 	
 	/* (non-Javadoc)
@@ -562,7 +575,7 @@ public class PentaFile implements Modus {
 	public String findItemName(String givenItem) {
 		Card[] omniFolder = createOmniFolder();
 		//iterate through the array and scrape the item names into a list
-		List<String> itemList = new ArrayList<String>();
+		List<String> itemList = new ArrayList<>();
 		for (int i = 0; i < 25; i++) { itemList.add(omniFolder[i].getItem()); }
 			
 		//perform a fuzzy string search
@@ -573,7 +586,7 @@ public class PentaFile implements Modus {
 	 * merges the 5 folders into a single array.
 	 * @return a {@code Card[25]} array
 	 */
-	public final Card[] createOmniFolder() {
+	private Card[] createOmniFolder() {
 		Card[] omniFolder = new Card[25];
 		System.arraycopy(weapons, 0, omniFolder, 0, 5);
 		System.arraycopy(survival, 0, omniFolder, 5, 5);
@@ -611,7 +624,7 @@ public class PentaFile implements Modus {
 		sylladexReference.clearDisplay();
 		
 		//get list of folder names
-		List<Label> folderNames = new ArrayList<Label>();
+		List<Label> folderNames = new ArrayList<>();
 		for (Field f : PentaFile.class.getDeclaredFields()) {
 			if (f.getType().isAssignableFrom(Card[].class)) {
 				Label folderLabel = new Label(f.getName());
@@ -661,15 +674,18 @@ public class PentaFile implements Modus {
 	 */
 	@Override
 	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("PentaFile [")
-				.append("\n\tweapons=").append(Arrays.toString(weapons))
-				.append("\n\tsurvival=").append(Arrays.toString(survival))
-				.append("\n\tmisc=").append(Arrays.toString(misc))
-				.append("\n\tinfo=").append(Arrays.toString(info))
-				.append("\n\tkeyCritical=").append(Arrays.toString(keyCritical))
-				.append("\n]");
-		return builder.toString();
+        return "PentaFile [" +
+               "\n\tweapons=" +
+               Arrays.toString(weapons) +
+               "\n\tsurvival=" +
+               Arrays.toString(survival) +
+               "\n\tmisc=" +
+               Arrays.toString(misc) +
+               "\n\tinfo=" +
+               Arrays.toString(info) +
+               "\n\tkeyCritical=" +
+               Arrays.toString(keyCritical) +
+               "\n]";
 	}
 
 	/* (non-Javadoc)
@@ -677,14 +693,12 @@ public class PentaFile implements Modus {
 	 */
 	@Override
 	public String description() {
-		StringBuilder value = new StringBuilder();
-		value.append("The PentaFile Fetch Modus is designed to simulate a Filing Cabinet.\n")
-				.append("It comprises 5 folders that each store exactly 5 cards. ")
-				.append("You can store items to a specific folder or retrieve from either ")
-				.append("just the item name or from a folder and index. \n")
-				.append("the notable quirk of this modus is that if a 6th item is placed into a filled ")
-				.append("folder, the contents of the folder will be ejected to the sylladex and then the ")
-				.append("6th item will be placed into the now empty folder.\n");
-		return value.toString();
+        return "The PentaFile Fetch Modus is designed to simulate a Filing Cabinet.\n" +
+               "It comprises 5 folders that each store exactly 5 cards. " +
+               "You can store items to a specific folder or retrieve from either " +
+               "just the item name or from a folder and index. \n" +
+               "the notable quirk of this modus is that if a 6th item is placed into a filled " +
+               "folder, the contents of the folder will be ejected to the sylladex and then the " +
+               "6th item will be placed into the now empty folder.\n";
 	}
 }

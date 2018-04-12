@@ -41,20 +41,19 @@ import modus.*;
  * of the various modus files wherever they happen to reside. would require re-
  * enabling the tracking of File paths through Metadata class. 
  * @author Triston Scallan
- * @see {@link modus.Modus modus.Modus}
- * @see {@link modus modus}
+ * @see modus.Modus
  */
-public class ModusManager {
+class ModusManager {
 	/** Tracks the current active Modus as an index of {@link #modusList}. -1 means no active Modus. */
 	private int currentModus = -1;
 	/** Tracks all available Fetch Modi for the Sylladex */
-	private List<Metadata> modusList = new ArrayList<Metadata>();
+	private List<Metadata> modusList = new ArrayList<>();
 	
 	/**
 	 * Constructor
 	 * @param syll reference to the Sylladex object
 	 */
-	public ModusManager(Sylladex syll) {
+	ModusManager(Sylladex syll) {
 		//populate modusList
 			/* This is done in a modular and generalized way utilizing reflection. 
 			 * First it will attempt to get the name of the modus package.
@@ -78,7 +77,7 @@ public class ModusManager {
 			 * the classes are loaded, performed on a filestream of the class file.
 			 */
 		String pkgname = Modus.class.getPackage().getName();
-		List<String> classNameList = new ArrayList<String>();
+		List<String> classNameList = new ArrayList<>();
 		// Get a File object for the package
 		File directory = null;
 		String fullPath;
@@ -95,15 +94,14 @@ public class ModusManager {
 		    directory = new File(resource.toURI());
 		} catch (URISyntaxException e) {
 		    throw new RuntimeException(pkgname + " (" + resource + ") does not appear to be a valid URL / URI.  Strange, since we got it from the system...", e);
-		} catch (IllegalArgumentException e) {
-		    directory = null;
+		} catch (IllegalArgumentException ignored) {
 		}
 		System.out.println("ClassDiscovery: Directory = " + directory);
 		
 		if (directory != null && directory.exists()) {
 		    // Get the list of the files contained in the package
-		    List<String> files = Arrays.asList(directory.list());
-		    files.sort((f1, f2) -> f1.compareTo(f2));
+		    List<String> files = Arrays.asList(Objects.requireNonNull(directory.list()));
+		    files.sort(String::compareTo);
 		    for (String file : files) {
 		        // we are only interested in .class files
 		        if (file.endsWith(".class")) {
@@ -138,7 +136,7 @@ public class ModusManager {
 		//TODO: configure a Security Manager policy file and ensure that mine was loaded.
 		
 		//classNameList should now be populated, attempt to load and cast each class.
-		Modus modusObject = null;
+		Modus modusObject;
 		for(String className : classNameList) {
 			try {
 				Class<?> classObject = Class.forName(className, false, Modus.class.getClassLoader());
@@ -150,8 +148,7 @@ public class ModusManager {
 				}
 			} catch (ClassCastException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | ClassNotFoundException | LinkageError e) {
 				e.printStackTrace();
-			} catch (NoSuchMethodException e) {
-				continue;
+			} catch (NoSuchMethodException ignored) {
 			}
 		}
 		
@@ -170,25 +167,25 @@ public class ModusManager {
 	/**
 	 * @return the currentModus
 	 */
-	public Integer getCurrentModus() {
+	Integer getCurrentModus() {
 		return currentModus;
 	}
 	/**
 	 * @param currentModus the currentModus to set
 	 */
-	public void setCurrentModus(Integer currentModus) {
+	void setCurrentModus(Integer currentModus) {
 		this.currentModus = currentModus;
 	}
 	/**
 	 * @return the modusList
 	 */
-	public List<Metadata> getModusList() {
+	List<Metadata> getModusList() {
 		return modusList;
 	}
 	/**
 	 * @param modusList the modusList to set
 	 */
-	public void setModusList(List<Metadata> modusList) {
+	void setModusList(List<Metadata> modusList) {
 		this.modusList = modusList;
 	}
 	
@@ -197,17 +194,15 @@ public class ModusManager {
 	/**
 	 * Initializes a new object of the current modus class, then effectively replaces 
 	 * the old object's reference. 
-	 * @param syll 
+	 * @param syll The sylladex controller reference
 	 */
-	public void refreshModus(Sylladex syll) {
+	void refreshModus(Sylladex syll) {
 		Class<? extends Modus> modusClassObject = modusList.get(currentModus).REFERENCE.getClass();
 		Constructor<? extends Modus> modusClassConstructor;
 		try {
 			modusClassConstructor = modusClassObject.getConstructor(Sylladex.class);
 			Modus modusInstance = modusClassConstructor.newInstance(syll);
-			if (modusInstance != null) { 
-				modusList.set(currentModus, modusInstance.getMETADATA());
-			}
+			modusList.set(currentModus, modusInstance.getMETADATA());
 		} catch (SecurityException | IllegalAccessException e) {
 			e.printStackTrace();
 			System.exit(-1);
@@ -215,10 +210,10 @@ public class ModusManager {
 			//These exceptions should never happen if it didn't happen in during it's first initialization
 			//I would consider this a fatal issue that needs to be addressed by debugging.
 			e.printStackTrace();
-			//TODO: provide some more information about the fatal issue before closing.
+			System.out.println("An unusual and fatal error that should never happen has occurred.");
 			System.exit(-1);
 		}
-		
+
 	}
 	
 	//TODO: function to update the modus tracker, based on "new" modus and scanned package
