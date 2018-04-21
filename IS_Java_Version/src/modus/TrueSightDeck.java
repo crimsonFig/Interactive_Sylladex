@@ -60,11 +60,14 @@ public class TrueSightDeck extends TarotDeck {
 	public Card takeOutCardByIndex(int index) {
 		if (index > deck.size() - 1 || index < 0) return new Card(); //if invalid index, return an empty card
 		
-		Card card = null;
+		Card card;
 		ListIterator<Card> deckTop = this.deck.listIterator();
 		for (int i = 0; deckTop.hasNext(); i++) {
 			card = deckTop.next();
-			if (i == index) return card;	
+			if (i == index) {
+				deck.remove(i);
+				return card;
+			}
 		}
 		return new Card();
 	}
@@ -77,7 +80,10 @@ public class TrueSightDeck extends TarotDeck {
 	public Card takeOutCardByName(String itemName) {
 		String match = findItemName(itemName);
 		for (Card card : deck) {
-			if (card.getItem().equals(match)) return card;
+			if (card.getItem().equals(match)) {
+			    deck.remove(card);
+			    return card;
+            }
 		}
 		return new Card();
 	}

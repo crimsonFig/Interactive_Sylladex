@@ -31,10 +31,10 @@ import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
-import javafx.util.Pair;
 import app.model.Card;
 import app.model.CardNode;
 import app.model.Metadata;
+import commandline_utils.*;
 
 //NOTE: This class acts as the main controller for the MVC format.
 /**
@@ -54,7 +54,7 @@ import app.model.Metadata;
  * @author Triston Scallan
  *
  */
-public class Sylladex {
+public class Sylladex extends CmdListeners implements Parser{
 	/**
 	 * a List of item(s) that represent items that exist but aren't in a Card.
 	 * <p>This field utilizes {@link Collections#synchronizedList} and may
@@ -67,11 +67,6 @@ public class Sylladex {
 	private static final String SAVE_FILE_NAME = "sylladexDeck.sav";
 	private static final String OUT_PATH = "../../../";
 	static final Object LOCK = new Object();
-	/**
-	 * The maximum number of {@value #MAX_COST} edits/mutations a string can have for fuzzy searching.
-	 */
-	private final static int MAX_COST = 3;
-	
 	///// GUI references ////////////
 	@FXML
 	private BorderPane root;
@@ -294,113 +289,30 @@ public class Sylladex {
 	}
 	
 ///// UTILITY /////
-	
-	/**
-	 * Takes a word and searches for the closest match in the list.
-	 * <p> Uses the Levenshtein Distance algorithm to compute the edit
-	 * 	distance where a deletion or addition of a char counts as 1 and
-	 * 	a char mutation counts as 1. This comparison is case insensitive.
-	 * <p> Allows only a maximum of {@value #MAX_COST} edits, otherwise it fails.
-	 * @param wordList The list to search
-	 * @param givenWord The word to be matched
-	 * @return an Object array of format {@code [int index, String match]}. If failed,
-	 * 	returns {@code [-1,""]}.
-	 */
-	public static final Pair<Integer, String> fuzzyStringSearch(List<String> wordList, String givenWord) {
-		String guessedWord = "";
-		int score = 999;	//the lower the score, the better
-		int index;		//index of the word in the word list.
-		int guessedIndex = 0; //index of the guessedWord
-		for(index = 0; index < wordList.size(); index++) {
-			String testWord = wordList.get(index);
-			//if a match is found, return it.
-			if (givenWord.toLowerCase().equals(testWord.toLowerCase())) return new Pair<Integer, String>(index, testWord);
-			
-			//create copies of the item names to prevent confusion if swapped later.
-				//also make the comparisons case insensitive.
-			String left = givenWord.toLowerCase();
-			String right = testWord.toLowerCase();
-			int lenGiven = left.length(); 	// length of first string
-	        int lenTest = right.length(); 	// length of second string
-	
-	        //if the given is empty and card is lower than score, set guessed to test.
-	        if (lenGiven == 0 && lenTest < score) { 
-	        		//score = lenTest;
-	        		//guessedWord = testWord;
-	            continue;
-	        //if the test is empty and the given is lower than the score, set guessed to test 
-	        } else if (lenTest == 0) {
-	        		//score = lenGiven;
-	        		//guessedWord = testWord;
-	            continue;
-	        }
-	        //if the given item is longer than the card item
-	        if (lenGiven > lenTest) {
-	            //swap the strings to use less memory
-	            final String tmp = left;
-	            left = right;
-	            right = tmp;
-	            lenGiven = lenTest;	
-	            lenTest = right.length();
-	        }
-	        
-	        final int[] d = new int[lenGiven + 1];	//cost array, "(d)istance"
-	        int i; // iterates through left string
-	        int j; // iterates through right string
-	        int upperLeft;
-	        int upper;	
-	        char rightJ; // jth character of right
-	        int cost; 
-	        
-	        //initialize the array
-	        for (i = 0; i <= lenGiven; i++) {
-	            d[i] = i;
-	        } //[0,1,2,3,...,i-1]
-	
-	        for (j = 1; j <= lenTest; j++) {
-	            upperLeft = d[0]; 
-	            rightJ = right.charAt(j - 1);
-	            d[0] = j; 
-	
-	            for (i = 1; i <= lenGiven; i++) {
-	                upper = d[i];
-	                cost = left.charAt(i - 1) == rightJ ? 0 : 1;
-	                // minimum of cell to the left+1, to the top+1, diagonally left and up +cost
-	                d[i] = Math.min(Math.min(d[i - 1] + 1, d[i] + 1), upperLeft + cost);
-	                upperLeft = upper;
-	            }
-	        }
-	        cost = d[lenGiven];
-	        if (cost < score) { //if cost is lower than the current score, update the best guessed name
-	        		score = cost;
-	        		guessedWord = testWord;
-	        		guessedIndex = index;
-	        }
-	    }
-		//if the score is within the threshold, return info, otherwise return a fail state.
-		return (score < MAX_COST) ? new Pair<Integer, String>(guessedIndex, guessedWord) : new Pair<Integer, String>(-1, new String());
-	}
-	
-	/**
-	 * Takes a raw string that is expected to be a command, 
-	 * 	and matches it against the current modus list of 
-	 * 	commands and the sylladex's list of commands. 
-	 * <p> functionality would be the same as invoking 
-	 * {@link #fuzzyStringSearch(List, String)} with a List of
-	 * the commands and the inputString, respectively.
-	 * @param inputString The given command to parse
-	 * @return matching string result of a command
-	 */
-	public String parseCommands(String inputString) {
-		List<Object> keyList = Arrays.asList(modiMgr.getModusList().get(modiMgr.getCurrentModus()).FUNCTION_MAP.keySet().toArray());
-		List<String> tCommandList = new ArrayList<String>();
-		keyList.forEach(key -> tCommandList.add((String) key));
-		SYLL_CMD_STRING_LIST.forEach(string -> tCommandList.add(string));
-
-		return fuzzyStringSearch(tCommandList, inputString).getValue();
-	}
-	
-	private void commandSwitch(String command, String...args) {
+	@Override
+	public void commandSwitch(String inputCommand, String...args) {
+		
+		//parse the raw input command against the sylladex and modus commands
+		String command = Searcher.parseCommands(inputCommand, () -> {
+			List<Object> keyList = Arrays.asList(modiMgr.getModusList().get(modiMgr.getCurrentModus()).FUNCTION_MAP.keySet().toArray());
+			List<String> tCommandList = new ArrayList<String>();
+			keyList.forEach(key -> tCommandList.add((String) key));
+			SYLL_CMD_STRING_LIST.forEach(string -> tCommandList.add(string));
+			return tCommandList;
+		});
+		
+		//check if the command was "help" (from raw input), if so then invoke entry with the args
+		if (Searcher.fuzzyStringSearch(Arrays.asList("help"), inputCommand).getValue().equals("help") && args.length > 0) {
+			modiMgr.getModusList().get(modiMgr.getCurrentModus()).REFERENCE.entry(0, args[0].trim());
+			return;
+		}
+		
+		//check if the command was actually matched to the cmd lists. if not, notify the user by the terminal.
+		if (command.isEmpty()) {
+			textOutput.appendText("Command \"" + inputCommand + "\" wasn't recognized. Please try again.\n");
+			return;
+		}
+		
 		//if true then process as sylladex command, otherwise process as modus command
 		if (command.contains("syll.")) {
 			String syllCommand = command.substring(5); //chop off the "syll." prefix
@@ -621,22 +533,7 @@ public class Sylladex {
 		
 		//split the raw input into ["command", "arg1 arg2 arg3..."]
 		String[] splitRawInput = inputRawString.split(" ", 2);
-		
-		//parse the raw input command against the sylladex and modus commands
-		String rawInputCommand = splitRawInput[0];
-		String parsedCommand = parseCommands(rawInputCommand);
-		
-		//check if the command was "help" (from raw input), if so then invoke entry with the args
-		if (fuzzyStringSearch(Arrays.asList("help"), rawInputCommand).getValue().equals("help") && splitRawInput.length > 1) {
-			modiMgr.getModusList().get(modiMgr.getCurrentModus()).REFERENCE.entry(0, splitRawInput[1].trim());
-			return;
-		}
-		
-		//check if the command was actually matched to the cmd lists. if not, notify the user by the terminal.
-		if (parsedCommand.isEmpty()) {
-			textOutput.appendText("Command \"" + rawInputCommand + "\" wasn't recognized. Please try again.\n");
-			return;
-		}
+		String inputCommand = splitRawInput[0];
 		
 		//split the args string into a list, if any, then run the commandSwitch
 		if (splitRawInput.length > 1) { 
@@ -645,9 +542,9 @@ public class Sylladex {
 				inputArgs[i] = inputArgs[i].trim();
 			}
 			
-			commandSwitch(parsedCommand, inputArgs);
+			commandSwitch(inputCommand, inputArgs);
 		} else {
-			commandSwitch(parsedCommand);
+			commandSwitch(inputCommand);
 		}
 		
 	}
@@ -657,12 +554,12 @@ public class Sylladex {
 	 * to represent the modus changes, and handles logic related to 
 	 * selecting and switching modi from the {@code #modusList} node.
 	 * @param event 
-	 * @param modusName
+	 * @param metadata
 	 */
 	void handleModusSelection(Metadata metadata, ActionEvent event) {
 		int i = -1;
 		Boolean bFound = false;
-		Boolean isAnyModusActive = (modiMgr.getCurrentModus() != -1) ? true : false;
+		Boolean isAnyModusActive = modiMgr.getCurrentModus() != -1;
 		for (Metadata e : modiMgr.getModusList()) {
 			i++;
 			if (e.equals(metadata)) {
@@ -709,7 +606,7 @@ public class Sylladex {
 			textOutput.appendText("Saving deck to file... ");
 			try {
 				writeDeckToFile(SAVE_FILE_NAME, OUT_PATH);
-				textOutput.appendText("save sucessful.\n");
+				textOutput.appendText("save successful.\n");
 				this.deck.clear();
 				textOutput.appendText("Deck has been refreshed.\n\n");
 			} catch (Exception e) {
@@ -728,11 +625,10 @@ public class Sylladex {
 		//set all buttons in this list as not disabled, then disable only this modus' button.
 		modusList.getChildren().stream() 
 			.filter(node -> GridPane.class.equals(node.getClass()))
-			.map((Function<? super Node, ? extends Button>) node -> {
-				return (Button) ((GridPane) node).getChildren().stream()
-					.filter(subnode -> Button.class.equals(subnode.getClass()))
-					.findFirst().orElse(new Button());
-			})
+			.map((Function<? super Node, ? extends Button>) node ->
+					(Button) ((GridPane) node).getChildren().stream()
+											  .filter(subnode -> Button.class.equals(subnode.getClass()))
+											  .findFirst().orElse(new Button()))
 			.forEach(node -> node.setDisable(false));
 		((Button) event.getSource()).setDisable(true);
 		

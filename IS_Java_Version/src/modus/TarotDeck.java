@@ -5,6 +5,7 @@ import java.util.*;
 import app.controller.Sylladex;
 import app.model.Card;
 import app.model.Metadata;
+import commandline_utils.Searcher;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Alert.AlertType;
@@ -264,7 +265,7 @@ public class TarotDeck implements Modus {
 		for (Card card : deck) { itemList.add(card.getItem()); }
 			
 		//perform a fuzzy string search
-		return Sylladex.fuzzyStringSearch(itemList, givenItem).getValue();
+		return Searcher.fuzzyStringSearch(itemList, givenItem).getValue();
 	}
 	
 	/**

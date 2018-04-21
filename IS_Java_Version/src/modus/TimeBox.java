@@ -5,6 +5,7 @@ import java.util.stream.*;
 
 import app.controller.Sylladex;
 import app.model.*;
+import commandline_utils.Searcher;
 import javafx.scene.control.TextArea;
 
 /**
@@ -223,7 +224,7 @@ public class TimeBox implements Modus {
      * @see modus.Modus#entry(int, java.lang.Object[])
      */
     @Override
-    public String entry(int functionCode, String... args) {
+    public String entry(int functionCode, String... args) { //TODO: finish implement
         TextArea textOutput = sylladexReference.getTextOutput();
         switch (functionCode) {
         case 1: //save
@@ -361,6 +362,7 @@ public class TimeBox implements Modus {
      */
     @Override
     public void save() {
+        //TODO: implement
     }
 
     /* (non-Javadoc)
@@ -368,6 +370,7 @@ public class TimeBox implements Modus {
      */
     @Override
     public void load(int mode) {
+        //TODO: implement
     }
 
     //********************************** IO ***************************************/
@@ -468,7 +471,7 @@ public class TimeBox implements Modus {
     public String findItemName(String givenName) {
         List<String> itemList = timeBox.stream()
                                        .collect(ArrayList::new, (r, e) -> r.add(e.getItem()), ArrayList::addAll);
-        return Sylladex.fuzzyStringSearch(itemList, givenName).getValue();
+        return Searcher.fuzzyStringSearch(itemList, givenName).getValue();
     }
 
     /* (non-Javadoc)
@@ -476,6 +479,7 @@ public class TimeBox implements Modus {
      */
     @Override
     public void drawToDisplay() {
+        //TODO: implement
     }
 
     /* (non-Javadoc)
@@ -483,6 +487,7 @@ public class TimeBox implements Modus {
      */
     @Override
     public String description() {
+        //TODO: implement
         return null;
     }
 

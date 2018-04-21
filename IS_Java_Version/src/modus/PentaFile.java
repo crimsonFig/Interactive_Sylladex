@@ -8,6 +8,7 @@ import app.controller.Sylladex;
 import app.model.Card;
 import app.model.CardNode;
 import app.model.Metadata;
+import commandline_utils.Searcher;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Paint;
@@ -528,7 +529,7 @@ public class PentaFile implements Modus {
 	
 	/**
 	 * retrieves the folder Card array based on a string name given to search with.
-	 * <p>identical to calling {@link app.controller.Sylladex#fuzzyStringSearch(List, String) fuzzyStringSearch} using a list of the folder names and the
+	 * <p>identical to calling {@link commandline_utils.Searcher#fuzzyStringSearch(List, String) fuzzyStringSearch} using a list of the folder names and the
 	 * input, respectively.
 	 * @param givenFolder the name of the folder to obtain
 	 * @return the Card array "folder" based on given folder name
@@ -541,7 +542,7 @@ public class PentaFile implements Modus {
 		folderList.add("info");
 		folderList.add("keyCritical");
 		
-		int i = Sylladex.fuzzyStringSearch(folderList, givenFolder).getKey();
+		int i = Searcher.fuzzyStringSearch(folderList, givenFolder).getKey();
 		if (i == -1) {
 			System.out.println("folder requested wasn't found. returning `weapons` folder as default.");
 			return weapons;
@@ -579,7 +580,7 @@ public class PentaFile implements Modus {
 		for (int i = 0; i < 25; i++) { itemList.add(omniFolder[i].getItem()); }
 			
 		//perform a fuzzy string search
-		return Sylladex.fuzzyStringSearch(itemList, givenItem).getValue();
+		return Searcher.fuzzyStringSearch(itemList, givenItem).getValue();
 	}
 	
 	/**
