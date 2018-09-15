@@ -2,7 +2,6 @@ package modus;
 
 import java.util.LinkedHashMap;
 
-import app.controller.Sylladex;
 import app.model.Card;
 import app.model.Metadata;
 
@@ -21,22 +20,12 @@ import app.model.Metadata;
  *
  */
 public interface Modus {
-	/*
-	 * A reference to the Sylladex that called the given modus. <br> This is used to
-	 * pass information back to the caller.
-	 */
-	// private Sylladex sylladexReference = null;
 	/**
 	 * provides information about this modus
 	 */
 	static final Metadata modusMetadata = null;
 
 	///// Initialize
-
-	/* public Modus(Sylladex sylladexReference);
-	 * The constructor of a fetch Modus should save the reference to the sylladex so
-	 * that it can functionally interact with the view and the sylladex.  
-	 */
 
 	/** 
 	 * Creates a HashMap of the functions associated to this specific class. 
@@ -86,13 +75,6 @@ public interface Modus {
 	 * @return an integer as an exit code
 	 */
 	public abstract String entry(int functionCode, String... args);
-	
-	/**
-	 * Retrieve the {@link Sylladex} associated with this {@link Modus}
-	 * 
-	 * @return The {@code Sylladex} that owns {@code this} fetch modus
-	 */
-	public abstract Sylladex getSylladexReference();
 	
 	/**
 	 * @return the METADATA

@@ -2,7 +2,6 @@ package modus;
 
 import java.util.LinkedHashMap;
 
-import app.controller.Sylladex;
 import app.model.Card;
 import app.model.Metadata;
 
@@ -34,14 +33,6 @@ public class NodeMap implements Modus {
 	 */
 	@Override
 	public Metadata getMETADATA() {
-		return null;
-	}
-
-	/* (non-Javadoc)
-	 * @see modus.Modus#getSylladexReference()
-	 */
-	@Override
-	public Sylladex getSylladexReference() {
 		return null;
 	}
 	

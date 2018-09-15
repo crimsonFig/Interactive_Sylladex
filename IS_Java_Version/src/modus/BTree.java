@@ -2,7 +2,6 @@ package modus;
 
 import java.util.LinkedHashMap;
 
-import app.controller.Sylladex;
 import app.model.Card;
 import app.model.Metadata;
 
@@ -26,14 +25,6 @@ public class BTree implements Modus {
 	@Override
 	public String entry(int functionCode, String... objects) {
 		return "0";
-	}
-
-	/* (non-Javadoc)
-	 * @see modus.Modus#getSylladexReference()
-	 */
-	@Override
-	public Sylladex getSylladexReference() {
-		return null;
 	}
 
 	/* (non-Javadoc)

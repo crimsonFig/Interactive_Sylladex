@@ -2,7 +2,6 @@ package modus;
 
 import java.util.LinkedHashMap;
 
-import app.controller.Sylladex;
 import app.model.Card;
 import app.model.Metadata;
 
@@ -63,14 +62,6 @@ public class Heap implements Modus {
 	 */
 	@Override
 	public Card takeOutCard(Object... objects) {
-		return null;
-	}
-
-	/* (non-Javadoc)
-	 * @see modus.Modus#getSylladexReference()
-	 */
-	@Override
-	public Sylladex getSylladexReference() {
 		return null;
 	}
 

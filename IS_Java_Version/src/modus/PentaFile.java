@@ -29,11 +29,6 @@ import javafx.scene.text.Font;
  */
 public class PentaFile implements Modus {
 	/**
-	 * A reference to the Sylladex that called the given modus. <br>
-	 * This is used to pass information back to the caller.
-	 */
-    private       Sylladex sylladexReference;
-	/**
 	 * provides information about this modus
 	 */
     private final Metadata METADATA;
@@ -50,11 +45,8 @@ public class PentaFile implements Modus {
 	 * The constructor of a fetch Modus should save the reference to the sylladex
 	 * 	so that it can functionally return a list of the Modus' functionality to
 	 * 	the ModusManager, specifically passing modusMetadata.
-	 * @param sylladex a reference to the caller, a Sylladex
 	 */
-	public PentaFile(Sylladex sylladex) {
-		this.sylladexReference = sylladex;
-		
+	public PentaFile() {
 		//initialize the METADATA
 		this.METADATA = new Metadata(this.getClass().getSimpleName(), this.createFunctionMap(), this);
 		
@@ -87,7 +79,7 @@ public class PentaFile implements Modus {
 	 */
 	@Override
 	public String entry(int functionCode, String...args) {
-		TextArea textOutput = sylladexReference.getTextOutput();
+		TextArea textOutput = Sylladex.getTextOutput();
 		switch (functionCode) {
 		case 1: //save
 			save();
@@ -139,7 +131,7 @@ public class PentaFile implements Modus {
 					save();
 					drawToDisplay();
 					//return a non-empty CARD to hand, but its not an error if it was empty.
-					if (card.getInUse()) sylladexReference.addToOpenHand(Collections.singletonList(card));
+					if (card.getInUse()) Sylladex.addToOpenHand(Collections.singletonList(card));
 					return "0";
 				}
 				textOutput.appendText("ERROR: " + args[0] + " is not a valid index.\n");
@@ -163,7 +155,7 @@ public class PentaFile implements Modus {
 				textOutput.appendText("Retrieving " + args[0] + "...");
 				Card card = takeOutCardByName(args[0]);
 				if (card.getInUse()) { 
-					sylladexReference.addToOpenHand(Collections.singletonList(card));
+					Sylladex.addToOpenHand(Collections.singletonList(card));
 					textOutput.appendText("success.\n");
 					save();
 					drawToDisplay();
@@ -252,14 +244,6 @@ public class PentaFile implements Modus {
 	public Metadata getMETADATA() {
 		return METADATA;
 	}
-	
-	/*
-	 * (non-Javadoc)
-	 * @see modus.Modus#getSylladexReference()
-	 */
-	public Sylladex getSylladexReference() {
-		return sylladexReference;
-	}
 
 	//**************************** SAVE & LOAD ********************************/
 	/* (non-Javadoc)
@@ -268,7 +252,7 @@ public class PentaFile implements Modus {
 	@Override
 	public void save() {
 		List<Card> deck = Arrays.asList(createOmniFolder());
-		sylladexReference.setDeck(deck);
+		Sylladex.setDeck(deck);
 	}
 
 	/* (non-Javadoc)
@@ -276,7 +260,7 @@ public class PentaFile implements Modus {
 	 */
 	@Override
 	public void load(int mode) {
-		List<Card> deck = sylladexReference.getDeck();
+		List<Card> deck = Sylladex.getDeck();
 		// reset the modus space
 		Card freshCard = new Card();	//empty CARD
 		Arrays.fill(weapons, freshCard);
@@ -286,7 +270,7 @@ public class PentaFile implements Modus {
 		Arrays.fill(keyCritical, freshCard);
 		///// automatic loading
 		if (mode == 1) {
-			//load from the deck based as the pattern TODO: if deck > 25 then alert user.
+			//load from the deck based as the pattern 
 			for (int i = 0; i < 25; i++ ) {
 				try {
 					Card card = deck.get(i);
@@ -316,7 +300,7 @@ public class PentaFile implements Modus {
                         alert.setHeaderText("Select a folder.");
                         alert.setContentText("Please select a folder to save \"" + card.getItem() + "\" into.");
 
-                    //create buttons for alert TODO: set buttons to folder selection
+                    //create buttons for alert 
                     ButtonType buttonF1 = new ButtonType("weapons");
                     ButtonType buttonF2 = new ButtonType("survival");
                     ButtonType buttonF3 = new ButtonType("misc");
@@ -409,7 +393,7 @@ public class PentaFile implements Modus {
 			List<Card> tempDeck = explodeFolder(folder);
 			folder[0] = card;
 			//hand off tempDeck to the Sylladex
-			sylladexReference.addToOpenHand(tempDeck);
+			Sylladex.addToOpenHand(tempDeck);
 			return true;
 		} else if ((index = findFolderSpace(folder)) != -1 && index < 5) {
 			folder[index] = card;
@@ -619,7 +603,7 @@ public class PentaFile implements Modus {
 	@Override
 	public void drawToDisplay() {
 		//variable data constants
-		StackPane display = sylladexReference.getDisplay();
+		StackPane display = Sylladex.getDisplay();
 		double dWidth = display.getMaxWidth();
 		double dHeight = display.getMaxHeight();
 		CardNode cardExample = Sylladex.createCardNode(new Card());
@@ -638,7 +622,7 @@ public class PentaFile implements Modus {
 		};
 		
 		//clear the display and then start adding nodes
-		sylladexReference.clearDisplay();
+		Sylladex.clearDisplay();
 		
 		//get list of folder names
 		List<Label> folderNames = new ArrayList<>();

@@ -66,11 +66,6 @@ import javafx.scene.control.TextArea;
  */
 public class TimeBox implements Modus {
     /**
-     * A reference to the Sylladex that called the given modus. <br> This is used to pass information back to the
-     * caller.
-     */
-    private              Sylladex      sylladexReference;
-    /**
      * provides information about this modus
      */
     private final        Metadata      METADATA;
@@ -112,7 +107,7 @@ public class TimeBox implements Modus {
      *
      * @author Triston Scallan
      */
-    class Timeline {
+    private class Timeline {
         //the range of temporal slots. starts from 0 up to TIMELINE_SIZE (exclusive).
         private final int        range;
         //the collection of items within this timeline
@@ -198,9 +193,7 @@ public class TimeBox implements Modus {
      * @param sylladex
      *         a reference to the caller, a Sylladex
      */
-    public TimeBox(Sylladex sylladex) {
-        this.sylladexReference = sylladex;
-
+    public TimeBox() {
         //initialize the METADATA
         this.METADATA = new Metadata(this.getClass().getSimpleName(), this.createFunctionMap(), this);
     }
@@ -226,7 +219,7 @@ public class TimeBox implements Modus {
      */
     @Override
     public String entry(int functionCode, String... args) { //TODO: finish implement
-        TextArea textOutput = sylladexReference.getTextOutput();
+        TextArea textOutput = Sylladex.getTextOutput();
         switch (functionCode) {
         case 1: //save
             save();
@@ -254,7 +247,7 @@ public class TimeBox implements Modus {
         case 3: //capture
             if (args.length == 1) {
                 textOutput.appendText("Attempting to capture " + args[0] + "...");
-                sylladexReference.removeFromHand(args[0]);
+                Sylladex.removeFromHand(args[0]);
                 if (!capture(args[0])) return "-1";
                 textOutput.appendText("success.\n");
                 save();
@@ -268,7 +261,7 @@ public class TimeBox implements Modus {
                 textOutput.appendText("Retrieving " + args[0] + "...");
                 Card card = takeOutCard(args[0]);
                 if (card.getInUse()) {
-                    sylladexReference.addToOpenHand(Collections.singletonList(card));
+                    Sylladex.addToOpenHand(Collections.singletonList(card));
                     textOutput.appendText("success.\n");
                     save();
                     drawToDisplay();
@@ -347,14 +340,6 @@ public class TimeBox implements Modus {
      */
     public Metadata getMETADATA() {
         return METADATA;
-    }
-
-    /* (non-Javadoc)
-     * @see modus.Modus#getSylladexReference()
-     */
-    @Override
-    public Sylladex getSylladexReference() {
-        return sylladexReference;
     }
 
     //**************************** SAVE & LOAD ********************************/
