@@ -29,11 +29,6 @@ import javafx.scene.control.ButtonBar.ButtonData;
  */
 public class TarotDeck implements Modus {
 	/**
-	 * A reference to the Sylladex that called the given modus. <br>
-	 * This is used to pass information back to the caller.
-	 */
-	protected Sylladex sylladexReference;
-	/**
 	 * provides information about this modus.
 	 * private so that inherited classes don't clash with this
 	 */
@@ -52,9 +47,7 @@ public class TarotDeck implements Modus {
 	 * Constructor for TarotDeck class
 	 * @param sylladexReference
 	 */
-	public TarotDeck(Sylladex sylladexReference) {
-		this.sylladexReference = sylladexReference;
-		
+	public TarotDeck() {
 		//initialize the METADATA
 		this.METADATA = new Metadata(this.getClass().getSimpleName(), this.createFunctionMap(), this);
 	}
@@ -123,7 +116,7 @@ public class TarotDeck implements Modus {
 			Card tempCard = takeOutCard();
 			if (! tempCard.getInUse()) return "-1";
 			tempDeck.add(tempCard);
-			sylladexReference.addToOpenHand(tempDeck);
+			Sylladex.addToOpenHand(tempDeck);
 			save();
 			drawToDisplay();
 			break;
@@ -142,28 +135,20 @@ public class TarotDeck implements Modus {
 		return METADATA;
 	}
 	
-	/*
-	 * (non-Javadoc)
-	 * @see modus.Modus#getSylladexReference()
-	 */
-	public Sylladex getSylladexReference() {
-		return sylladexReference;
-	}
-	
 	//**************************** SAVE & LOAD ********************************/
 	/* (non-Javadoc)
 	 * @see modus.Modus#save()
 	 */
 	@Override
 	public void save() {
-		sylladexReference.setDeck(this.deck);
+		Sylladex.setDeck(this.deck);
 	}
 	/* (non-Javadoc)
 	 * @see modus.Modus#load(int)
 	 */
 	@Override
 	public void load(int mode) {
-		List<Card> _deck = sylladexReference.getDeck();
+		List<Card> _deck = Sylladex.getDeck();
 		//reset the modus space. if mode 0, return after this step.
 		this.deck = new Stack<Card>();
 		////automatic loading mode

@@ -51,9 +51,8 @@ class ModusManager {
 	
 	/**
 	 * Constructor
-	 * @param syll reference to the Sylladex object
 	 */
-	ModusManager(Sylladex syll) {
+	ModusManager() {
 		//populate modusList
 			/* This is done in a modular and generalized way utilizing reflection. 
 			 * First it will attempt to get the name of the modus package.
@@ -136,20 +135,21 @@ class ModusManager {
 		//TODO: configure a Security Manager policy file and ensure that mine was loaded.
 		
 		//classNameList should now be populated, attempt to load and cast each class.
-		Modus modusObject;
+		Modus clazzObject;
 		for(String className : classNameList) {
 			try {
 				Class<?> classObject = Class.forName(className, false, Modus.class.getClassLoader());
-				Constructor<?> classConstructor = classObject.getConstructor(Sylladex.class);
-				Object instanceObject = classConstructor.newInstance(syll);
+				Object instanceObject = classObject.newInstance(); 
 				if (Modus.class.isInstance(instanceObject)) { //(this test auto checks against null too)
-					modusObject = Modus.class.cast(instanceObject);
-					modusList.add(modusObject.getMETADATA());
-				}
-			} catch (ClassCastException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | ClassNotFoundException | LinkageError e) {
+					clazzObject = Modus.class.cast(instanceObject);
+					if (clazzObject.getMETADATA() != null)
+						modusList.add(clazzObject.getMETADATA());
+				} 
+			} catch (InstantiationException ignore) {	
+				System.out.println(ignore.getCause().toString());
+			} catch (ClassCastException | SecurityException | IllegalAccessException | IllegalArgumentException | ClassNotFoundException | LinkageError e) {
 				e.printStackTrace();
-			} catch (NoSuchMethodException ignored) {
-			}
+			} 
 		}
 		
 		//if modusList is empty, warn the user
@@ -215,8 +215,6 @@ class ModusManager {
 		}
 
 	}
-	
-	//TODO: function to update the modus tracker, based on "new" modus and scanned package
 	
 	//TODO: function to validate a modus file
 	

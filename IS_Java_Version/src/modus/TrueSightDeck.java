@@ -3,7 +3,6 @@ package modus;
 import java.util.LinkedHashMap;
 import java.util.ListIterator;
 
-import app.controller.Sylladex;
 import app.model.Card;
 
 /**
@@ -12,7 +11,6 @@ import app.model.Card;
  */
 public class TrueSightDeck extends TarotDeck {
 
-	//inherited Sylladex sylladexReference = null;
 	//inherited List<Card> deck = new Stack<Card>(); 	
 	//inherited final static int SHUFFLE_VAL;
 	
@@ -21,8 +19,8 @@ public class TrueSightDeck extends TarotDeck {
 	 * Constructor for the TrueSightDeck
 	 * @param sylladexReference
 	 */
-	public TrueSightDeck(Sylladex sylladexReference) {
-		super(sylladexReference);
+	public TrueSightDeck() {
+		super();
 	}
 	
 	/* (non-Javadoc)

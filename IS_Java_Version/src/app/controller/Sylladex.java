@@ -60,8 +60,8 @@ public class Sylladex extends CmdListeners implements Parser{
 	 * <p>This field utilizes {@link Collections#synchronizedList} and may
 	 * 	become synchronized when modified.
 	 */
-	private List<String> openHand = Collections.synchronizedList(new ArrayList<String>());
-	private List<Card> deck = Collections.synchronizedList(new ArrayList<Card>());
+	private static List<String> openHand = new ArrayList<String>();
+	private static List<Card> deck = new ArrayList<Card>();
 	private ModusManager modiMgr;
 	private static final LinkedHashSet<String> SYLL_CMD_STRING_LIST = initializeSyllCmdStringList();
 	private static final String SAVE_FILE_NAME = "sylladexDeck.sav";
@@ -146,7 +146,7 @@ public class Sylladex extends CmdListeners implements Parser{
 		staticTextOutput = textOutput;
 		
 		//should initialize a ModusManager
-		modiMgr = new ModusManager(this);
+		modiMgr = new ModusManager();
 		//add modus nodes to the Modus List tab from ModiMgr#modusList.
 		for (Metadata e : modiMgr.getModusList()) {
 			
@@ -235,15 +235,15 @@ public class Sylladex extends CmdListeners implements Parser{
 	/**
 	 * @return the deck
 	 */
-	public List<Card> getDeck() {
+	public static List<Card> getDeck() {
 		return deck;
 	}
 
 	/**
 	 * @param deck the deck to set
 	 */
-	public void setDeck(List<Card> deck) {
-		this.deck = deck;
+	public static void setDeck(List<Card> deck) {
+		Sylladex.deck = deck;
 	}
 	
 	/**
@@ -265,7 +265,7 @@ public class Sylladex extends CmdListeners implements Parser{
 	 * <p>Note: This block will synchronize when in use
 	 * @param tempDeck a List of Card(s)
 	 */
-	public void addToOpenHand(List<Card> tempDeck) {
+	public static void addToOpenHand(List<Card> tempDeck) {
 		synchronized (openHand) {
 			for (Card card : tempDeck) {
 				openHand.add(card.getItem());
@@ -280,7 +280,7 @@ public class Sylladex extends CmdListeners implements Parser{
 	 * @param item
 	 * @return true if item was removed. false otherwise.
 	 */
-	public Boolean removeFromHand(String item) {
+	public static Boolean removeFromHand(String item) {
 		//TODO: use this to remove an openHand item during capture.
 		Boolean result = false;
 		for (String handItem : openHand) {
@@ -418,7 +418,7 @@ public class Sylladex extends CmdListeners implements Parser{
 		String fullOutPath = outPath + fileName;
 		try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(fullOutPath)))) {
 			//write deck size to the front of the file, 
-			oos.writeInt(Integer.valueOf(this.deck.size()));
+			oos.writeInt(Integer.valueOf(deck.size()));
 			for (Card card : deck) {
 				oos.writeObject(card);
 			}
@@ -491,7 +491,7 @@ public class Sylladex extends CmdListeners implements Parser{
 	/**
 	 * Creates a CardNode. Using this method is preferred over creating an instance
 	 * so that the sylladex is able to regulate and observe production.
-	 * @param CARD A CARD
+	 * @param card A CARD
 	 * @return a graphical CardNode derived from the CARD
 	 */
 	public static CardNode createCardNode(Card card) {
@@ -502,8 +502,8 @@ public class Sylladex extends CmdListeners implements Parser{
 	/**
 	 * Clears the display node
 	 */
-	public void clearDisplay() {
-		display.getChildren().clear();
+	public static void clearDisplay() {
+		staticDisplay.getChildren().clear();
 	}
 	
 ///// LISTENERS /////
@@ -587,14 +587,14 @@ public class Sylladex extends CmdListeners implements Parser{
 				try {
 					writeDeckToFile(SAVE_FILE_NAME, OUT_PATH);
 					textOutput.appendText("save successful.\n");
-					this.deck.clear();
+					Sylladex.deck.clear();
 					textOutput.appendText("Deck has been refreshed.\n\n");
 				} catch (Exception e) {
 					textOutput.appendText("Cancelling modus change.\n\n");
 			        return;
 				}
 	        } else if (result.get() == buttonNew) {
-	        		this.deck.clear();
+	        		Sylladex.deck.clear();
 	        		textOutput.appendText("Deck has been refreshed without saving.\n\n");
 	        } else {
 	        		return;
