@@ -14,8 +14,8 @@ import javafx.scene.control.ButtonBar.ButtonData;
 /**
  * This fetch modus is based on the idea of a deck of cards. The intended usage is to insert 
  * 	item filled Cards into the {@link #deck} and then to retrieve an item, you shuffle the
- * 	deck and pull a card from the top of the deck. The success for retrieving the <i>desired</i>
- * 	item is fully luck based. Ofcourse, one could cheat and look at each card at a time to 
+ * 	deck and pull a CARD from the top of the deck. The success for retrieving the <i>desired</i>
+ * 	item is fully luck based. Ofcourse, one could cheat and look at each CARD at a time to 
  * 	find their desired item and pull from that index; if cheating <i>is</i> desired then see the
  * 	extension of this modus: {@link TrueSightDeck}. 
  * @author Triston Scallan
@@ -181,7 +181,7 @@ public class TarotDeck implements Modus {
 			if (_deck == null || _deck.isEmpty()) return;
 			for (Card card : _deck) {
 				if (!card.validateCard()) continue;
-				//ask the user about the card
+				//ask the user about the CARD
 				Alert alert = new Alert(AlertType.CONFIRMATION);
 			        	alert.setTitle("Card Selection");
 			        alert.setHeaderText("Add Card to Deck?");
@@ -210,9 +210,9 @@ public class TarotDeck implements Modus {
 	 */
 	@Override
 	public Boolean capture(String item) {
-		//create card from item
+		//create CARD from item
 		Card card = new Card(item);
-		//if invalid card
+		//if invalid CARD
 		if (! card.validateCard()) return false;
 		//this call will not cause the side effect as described by Note #2
 		if (! addCard(card)) return false;
@@ -273,7 +273,7 @@ public class TarotDeck implements Modus {
 	 * Creates two temporary Stack decks, respectively holding the top half and lower half of {@link #deck this.deck},
 	 * then randomly draws from either temporary deck to rebuild this.deck. 
 	 * <p> Uses {@link Stack#pop()} and {@link Stack#push(Card)} which is a synchronized action. 
-	 * <p> If this.deck contains only one card or is empty/null, it will return without any changes made.
+	 * <p> If this.deck contains only one CARD or is empty/null, it will return without any changes made.
 	 */
 	protected void shuffleDeck() {
 		//test if the deck is 1 or less, if so, then return the deck unchanged.
@@ -333,5 +333,5 @@ public class TarotDeck implements Modus {
 		return " ";
 	}
 	
-	//Arrays.sort(setFolder, Comparator.comparing((Card card) -> card.getItem()));
+	//Arrays.sort(setFolder, Comparator.comparing((Card CARD) -> CARD.getItem()));
 }

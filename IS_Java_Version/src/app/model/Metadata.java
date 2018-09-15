@@ -56,6 +56,7 @@ public class Metadata {
 	/**
 	 * @return the modusFile
 	 */
+	@Deprecated
 	public File getModusPath() {
 		return modusFile;
 	}
@@ -63,6 +64,7 @@ public class Metadata {
 	/**
 	 * @param modusFile the modusFile to set
 	 */
+	@Deprecated
 	public void setModusPath(File modusFile) {
 		this.modusFile = modusFile;
 	}

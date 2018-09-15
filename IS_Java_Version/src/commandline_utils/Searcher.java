@@ -1,7 +1,5 @@
 package commandline_utils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -45,7 +43,7 @@ public class Searcher {
 			int lenGiven = left.length(); 	// length of first string
 	        int lenTest = right.length(); 	// length of second string
 	
-	        //if the given is empty and card is lower than score, set guessed to test.
+	        //if the given is empty and CARD is lower than score, set guessed to test.
 	        if (lenGiven == 0 && lenTest < score) { 
 	        		//score = lenTest;
 	        		//guessedWord = testWord;
@@ -56,7 +54,7 @@ public class Searcher {
 	        		//guessedWord = testWord;
 	            continue;
 	        }
-	        //if the given item is longer than the card item
+	        //if the given item is longer than the CARD item
 	        if (lenGiven > lenTest) {
 	            //swap the strings to use less memory
 	            final String tmp = left;

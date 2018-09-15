@@ -10,6 +10,9 @@ import java.io.Serializable;
  * @author Triston Scallan
  */
 public class Card implements Serializable {
+    /**
+     * The class constant for an empty CARD.
+     */
     public static final  Card EMPTY            = new Card();
     private static final long serialVersionUID = 1L;
 
@@ -18,12 +21,12 @@ public class Card implements Serializable {
     private final String  item;
     /** 7 alphanumeric code */
     private final String  captchaCode;
-    /** track if this card is empty or not */
+    /** track if this CARD is empty or not */
     private final Boolean inUse;
 
     ///// Constructors
 
-    /** Constructor for empty card */
+    /** Constructor for empty CARD */
     public Card() {
         this.item = "EMPTY";
         this.captchaCode = "0000000";
@@ -69,7 +72,7 @@ public class Card implements Serializable {
     ///// Methods
 
     /**
-     * Validates the card to make sure it doesn't have bad data
+     * Validates the CARD to make sure it doesn't have bad data
      *
      * @return true if valid, false otherwise
      */

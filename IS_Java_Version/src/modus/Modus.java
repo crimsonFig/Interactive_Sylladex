@@ -127,7 +127,7 @@ public interface Modus {
 
 	///// IO
 	/**
-	 * Defines the method responsible for taking an item and pushing the card.
+	 * Defines the method responsible for taking an item and pushing the CARD.
 	 * 
 	 * @param item
 	 *            the item to be added
@@ -136,30 +136,30 @@ public interface Modus {
 	public abstract Boolean capture(String item);
 
 	/**
-	 * Defines the method responsible for adding the card into the modus space. This
+	 * Defines the method responsible for adding the CARD into the modus space. This
 	 * is usually called by {@link #capture(String) #capture}, but can be used by
 	 * any other method.
 	 * 
-	 * @param card
+	 * @param CARD
 	 *            The Card to be added
-	 * @return True if it successfully added the card
+	 * @return True if it successfully added the CARD
 	 */
 	public abstract Boolean addCard(Card card);
 
 	/**
-	 * Defines the method responsible for retrieving the card. There can be multiple
+	 * Defines the method responsible for retrieving the CARD. There can be multiple
 	 * ways of retrieval, but those should be called through this method.
 	 * 
 	 * @param objects
 	 *            an array of needed inputs for the method
-	 * @return a Card from the Modus space. If failure, Card will be an empty card.
+	 * @return a Card from the Modus space. If failure, Card will be an empty CARD.
 	 */
 	public abstract Card takeOutCard(Object... objects);
 
 	///// Utility
 	/**
 	 * Determines if the modus has no empty cards AND can not add any more cards. If
-	 * there is an empty card OR a card can be added, return FALSE.
+	 * there is an empty CARD OR a CARD can be added, return FALSE.
 	 * 
 	 * @return state of deck
 	 */

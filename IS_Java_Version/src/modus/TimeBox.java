@@ -19,7 +19,7 @@ import javafx.scene.control.TextArea;
  *         <dt> Notes: </dt>
  *         <dd>
  *         Due to the nature of the timeBox existing separate to timelines, {@link #load(int) loading} with this method
- *         will be considered as opening the safe, putting a card into the safe, and then closing the safe, repeated
+ *         will be considered as opening the safe, putting a CARD into the safe, and then closing the safe, repeated
  *         until all cards from the save file are exhausted (with each item querying for a size of a given item). {@link
  *         #save() Saving} will strip the size and temporal data off of the items, thus loading directly after saving is
  *         considered as using a new safe to replace the old safe.
@@ -32,8 +32,8 @@ import javafx.scene.control.TextArea;
  *         given item, it may appear within the box for the user to interact with. several items may appear in the box
  *         at once, but each item are considered uniquely different if they have a different absolute time. items placed
  *         together at the same time are considered as one entity now, but a given entity may be several items. Each
- *         item would still have their own card, but an entity would exist as a linked list of cards. an entity may be a
- *         single card of a linked list, or several cards chained together, in an acycled fashion. opening the safe also
+ *         item would still have their own CARD, but an entity would exist as a linked list of cards. an entity may be a
+ *         single CARD of a linked list, or several cards chained together, in an acycled fashion. opening the safe also
  *         breaks the entity up into single cards, breaking up any multitude of separate entities. Closing the safe
  *         updates the current items that was inside at the moment of closing so that their absolute time reflects the
  *         new current time (and thus combining those item into a single entitity within time). This creates a side
@@ -178,7 +178,8 @@ public class TimeBox implements Modus {
             if (this.range != other.range) return false;
             if (timelineDeck == null) {
                 return other.timelineDeck == null;
-            } else return timelineDeck.equals(other.timelineDeck);
+            }
+			return timelineDeck.equals(other.timelineDeck);
         }
 
         private TimeBox getOuterType() {
@@ -271,7 +272,7 @@ public class TimeBox implements Modus {
                     textOutput.appendText("success.\n");
                     save();
                     drawToDisplay();
-                } else textOutput.appendText("card " + args[0] + " either doesn't exist or match failed.\n");
+                } else textOutput.appendText("CARD " + args[0] + " either doesn't exist or match failed.\n");
                 return "0";
             }
             entry(0, "takeOutCard");
@@ -310,16 +311,16 @@ public class TimeBox implements Modus {
                 case "load":
                     result = "syntax: load <mode>\n\u2022 loads the inventory from the sylladex, which may differ." +
                              "\n\u2022 mode 0 will simply reset the inventory." +
-                             "\n\u2022 mode 1 will auto load the inventory, based on card positions in the deck." +
+                             "\n\u2022 mode 1 will auto load the inventory, based on CARD positions in the deck." +
                              "\n\u2022 mode 2 will manually load the inv. you will choose where items go." +
-                             "\n\u2022 mode 3 will fast load the inventory. disregards saved card positions.";
+                             "\n\u2022 mode 3 will fast load the inventory. disregards saved CARD positions.";
                     break;
                 case "capture":
                     result = "syntax: capture <item>\n\u2022 captchalogues the item. the item can have " +
                              "spaces when you type its name. puts in first available spot.";
                     break;
                 case "takeoutcard":
-                    result = "syntax: takeOutCard <index>, <folder>\n\u2022 takes out the card at " +
+                    result = "syntax: takeOutCard <index>, <folder>\n\u2022 takes out the CARD at " +
                              "the index within the folder. index is from 1 to 5.";
                     break;
                 default:
@@ -380,7 +381,7 @@ public class TimeBox implements Modus {
     @Override
     public Boolean capture(String item) {
         Card card = new Card(item);
-        //if invalid card
+        //if invalid CARD
         if (!card.validateCard()) return false;
         return addCard(card);
     }
@@ -391,7 +392,7 @@ public class TimeBox implements Modus {
      */
     @Override
     public Boolean addCard(Card card) {
-        //if the box door is open, attempt to add card
+        //if the box door is open, attempt to add CARD
         if (!isBoxOpen()) return false;
         return timeBox.add(card);
     }
@@ -399,7 +400,7 @@ public class TimeBox implements Modus {
     /**
      * {@inheritDoc}
      * <p>parameter is `Objects{String itemname}`.
-     * Uses the name of an item as a key to search for it's card. Because it calls {@link #findItemName(String)}, it may
+     * Uses the name of an item as a key to search for it's CARD. Because it calls {@link #findItemName(String)}, it may
      * have undesired affects if the name given is misspelled. The function will attempt to get the closest match, but
      * an exact match is not guaranteed.
      * <p> If the modus space is empty, this function will short circuit
@@ -407,12 +408,12 @@ public class TimeBox implements Modus {
      */
     @Override
     public Card takeOutCard(Object... objects) {
-        //if the box door is open and arg is a String, attempt to retrieve card
+        //if the box door is open and arg is a String, attempt to retrieve CARD
         if (!isBoxOpen() && String.class.isInstance(objects[0])) return new Card();
         String itemName = findItemName((String) objects[0]);
         if (itemName.isEmpty()) return new Card();
         for (Card card : timeBox) {
-            //if the itemName matches, remove card from the box and return it
+            //if the itemName matches, remove CARD from the box and return it
             if (card.getItem().equals(itemName)) {
                 timeBox.remove(card);
                 return card;

@@ -53,12 +53,12 @@ public class TrueSightDeck extends TarotDeck {
 	
 	//********************************** IO ***************************************/
 	/**
-	 * Draws the index'th card from the deck.
+	 * Draws the index'th CARD from the deck.
 	 * @param index the desired index
-	 * @return the card at index, an empty card if unable to.
+	 * @return the CARD at index, an empty CARD if unable to.
 	 */
 	public Card takeOutCardByIndex(int index) {
-		if (index > deck.size() - 1 || index < 0) return new Card(); //if invalid index, return an empty card
+		if (index > deck.size() - 1 || index < 0) return new Card(); //if invalid index, return an empty CARD
 		
 		Card card;
 		ListIterator<Card> deckTop = this.deck.listIterator();
@@ -73,9 +73,9 @@ public class TrueSightDeck extends TarotDeck {
 	}
 	
 	/**
-	 * Draws the card matching the given name
+	 * Draws the CARD matching the given name
 	 * @param itemName the given name to find
-	 * @return the closest matching card, an empty card otherwise
+	 * @return the closest matching CARD, an empty CARD otherwise
 	 */
 	public Card takeOutCardByName(String itemName) {
 		String match = findItemName(itemName);
@@ -90,9 +90,9 @@ public class TrueSightDeck extends TarotDeck {
 	
 	//****************************** UTILITY ************************************/	
 	/**
-	 * given an item's name, finds the index location within the deck of a card that matches the name.
+	 * given an item's name, finds the index location within the deck of a CARD that matches the name.
 	 * @param itemName the given name to find
-	 * @return the card location's index, -1 if not found
+	 * @return the CARD location's index, -1 if not found
 	 */
 	public int findCardIndexByName(String itemName) {
 		int i = 0;

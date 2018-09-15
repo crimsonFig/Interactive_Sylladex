@@ -16,7 +16,7 @@ import javafx.scene.text.Font;
 
 /**
  * Describes the graphical representation of a Card object.
- * To use this card, simply reference it's constants.
+ * To use this CARD, simply reference it's constants.
  * @author Triston Scallan
  *
  */
@@ -24,27 +24,27 @@ public class CardNode {
 	/**
 	 * 
 	 */
-	public final Card card;
+	public final Card CARD;
 	/**
 	 * 
 	 */
-	public final GridPane cardFace; 
+	public final GridPane CARD_FACE; 
 	/**
 	 * 
 	 */
-	public final GridPane cardBack;
+	public final GridPane CARD_BACK;
 	/**
-	 * Scaling factor to resize the card on the fly.
+	 * Scaling factor to resize the CARD on the fly.
 	 */
 	private double cardScaleFactor;
 	
 	/**
-	 * @param card
+	 * @param CARD
 	 */
 	public CardNode(Card card) {
-		this.card = card;
-		this.cardFace = createCardFront();
-		this.cardBack = createCardBack();
+		this.CARD = card;
+		this.CARD_FACE = createCardFront();
+		this.CARD_BACK = createCardBack();
 	}
 
 	/**
@@ -55,17 +55,17 @@ public class CardNode {
 	}
 
 	/**
-	 * Rescales the card to the given factor based on it's X and Y values.<br>
+	 * Rescales the CARD to the given factor based on it's X and Y values.<br>
 	 * This only changes the apparent height and width when displayed 
 	 * without changing the actual height and width properties. 
 	 * @param cardScaleFactor the cardScaleFactor to set
 	 */
 	public void setCardScaleFactor(double cardScaleFactor) {
 		this.cardScaleFactor = cardScaleFactor;
-		cardFace.setScaleX(cardScaleFactor);
-		cardFace.setScaleY(cardScaleFactor);
-		cardBack.setScaleX(cardScaleFactor);
-		cardBack.setScaleY(cardScaleFactor);
+		CARD_FACE.setScaleX(cardScaleFactor);
+		CARD_FACE.setScaleY(cardScaleFactor);
+		CARD_BACK.setScaleX(cardScaleFactor);
+		CARD_BACK.setScaleY(cardScaleFactor);
 	}
 
 	/**
@@ -116,7 +116,7 @@ public class CardNode {
 		GridPane.setValignment(pageFace, VPos.TOP);
 		node.add(pageFace, 1, 1);
 		
-		Label itemName = new Label(card.getItem());
+		Label itemName = new Label(CARD.getItem());
 		itemName.setFont(new Font("Courier", 12));
 		itemName.setTextFill(Paint.valueOf("#FFFFFF"));
 		itemName.setPadding(new Insets(0, 2, 2, 2));
@@ -130,7 +130,7 @@ public class CardNode {
 		GridPane.setValignment(captchaBG, VPos.BOTTOM);
 		node.add(captchaBG, 1, 3);
 		
-		Label captcha = new Label(card.getCaptchaCode());
+		Label captcha = new Label(CARD.getCaptchaCode());
 		captcha.setFont(new Font("CourierStd", 13));
 		GridPane.setHalignment(captcha, HPos.CENTER);
 		GridPane.setValignment(captcha, VPos.CENTER);
@@ -170,7 +170,7 @@ public class CardNode {
 		cardBack.setScaleX(-1);
 		node.add(cardBack, 0, 0);
 		
-		SVGPath cardGraphic = new SVGPath(); //the gradient design of the card's back
+		SVGPath cardGraphic = new SVGPath(); //the gradient design of the CARD's back
 		cardGraphic.setContent("M 40 0 L 160 0 L 160 0 L 160 200 L 0 200 L 0 40 L 20 40 L 20 20 L 40 20 Z");
 		List<Stop> stops = new ArrayList<Stop>();
 				stops.add(new Stop(0.0, Color.rgb(70, 39, 39)));

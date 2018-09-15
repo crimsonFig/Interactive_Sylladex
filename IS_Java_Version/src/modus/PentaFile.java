@@ -59,7 +59,7 @@ public class PentaFile implements Modus {
 		this.METADATA = new Metadata(this.getClass().getSimpleName(), this.createFunctionMap(), this);
 		
 		//attempt to initialize the modus space
-		Card card = new Card();	//empty card
+		Card card = new Card();	//empty CARD
 		Arrays.fill(weapons, card);
 		Arrays.fill(survival, card);
 		Arrays.fill(misc, card);
@@ -133,12 +133,12 @@ public class PentaFile implements Modus {
 					//do nothing...
 				}
 				if (index >= 1 && index <= 5) {
-					textOutput.appendText("Retrieving card at index " + args[0] + " in folder " + args[1] + "...");
+					textOutput.appendText("Retrieving CARD at index " + args[0] + " in folder " + args[1] + "...");
 					Card card = takeOutCard(index - 1, folder);
 					textOutput.appendText("success.\n");
 					save();
 					drawToDisplay();
-					//return a non-empty card to hand, but its not an error if it was empty.
+					//return a non-empty CARD to hand, but its not an error if it was empty.
 					if (card.getInUse()) sylladexReference.addToOpenHand(Collections.singletonList(card));
 					return "0";
 				}
@@ -168,7 +168,7 @@ public class PentaFile implements Modus {
 					save();
 					drawToDisplay();
 				}
-				else textOutput.appendText("card " + args[0] + " either doesn't exist or match failed.\n");
+				else textOutput.appendText("CARD " + args[0] + " either doesn't exist or match failed.\n");
 				return "0";
 			}
 			entry(0, "takeOutCardByName");
@@ -207,16 +207,16 @@ public class PentaFile implements Modus {
 				case "load":
 					result = "syntax: load <mode>\n\u2022 loads the inventory from the sylladex, which may differ."
 							+ "\n\u2022 mode 0 will simply reset the inventory."
-							+ "\n\u2022 mode 1 will auto load the inventory, based on card positions in the deck."
+							+ "\n\u2022 mode 1 will auto load the inventory, based on CARD positions in the deck."
 							+ "\n\u2022 mode 2 will manually load the inv. you will choose where items go."
-							+ "\n\u2022 mode 3 will fast load the inventory. disregards saved card positions.";
+							+ "\n\u2022 mode 3 will fast load the inventory. disregards saved CARD positions.";
 					break;
 				case "capture":
 					result = "syntax: capture <item>\n\u2022 captchalogues the item. the item can have "
 							+ "spaces when you type its name. puts in first available spot.";
 					break;
 				case "takeoutcard":
-					result = "syntax: takeOutCard <index>, <folder>\n\u2022 takes out the card at "
+					result = "syntax: takeOutCard <index>, <folder>\n\u2022 takes out the CARD at "
 							+ "the index within the folder. index is from 1 to 5.";
 					break;
 				case "capturebyfolder":
@@ -224,7 +224,7 @@ public class PentaFile implements Modus {
 							+ "spaces when you type its name. puts in the specified folder.";
 					break;
 				case "takeoutcardbyname":
-					result = "syntax: takeOutCardByName <item>\n\u2022 attempts to take out a card based on the given "
+					result = "syntax: takeOutCardByName <item>\n\u2022 attempts to take out a CARD based on the given "
 							+ "item name you gave. item can have spaces in its name.";
 					break;
 				default: 
@@ -278,7 +278,7 @@ public class PentaFile implements Modus {
 	public void load(int mode) {
 		List<Card> deck = sylladexReference.getDeck();
 		// reset the modus space
-		Card freshCard = new Card();	//empty card
+		Card freshCard = new Card();	//empty CARD
 		Arrays.fill(weapons, freshCard);
 		Arrays.fill(survival, freshCard);
 		Arrays.fill(misc, freshCard);
@@ -288,41 +288,57 @@ public class PentaFile implements Modus {
 		if (mode == 1) {
 			//load from the deck based as the pattern TODO: if deck > 25 then alert user.
 			for (int i = 0; i < 25; i++ ) {
-				Card card = deck.get(i);
-				if (i < 5 ) weapons[i] = card;
-				else if (i < 10) survival[i%5] = card;
-				else if (i < 15) misc[i%5] = card;
-				else if (i < 20) info[i%5] = card;
-				else keyCritical[i%5] = card;
+				try {
+					Card card = deck.get(i);
+					if (i < 5 ) weapons[i] = card;
+					else if (i < 10) survival[i%5] = card;
+					else if (i < 15) misc[i%5] = card;
+					else if (i < 20) info[i%5] = card;
+					else keyCritical[i%5] = card;
+				} catch (IndexOutOfBoundsException e) {
+					break;
+				}
+			}
+			if (deck.size() > 25) {
+				Alert alert = new Alert(Alert.AlertType.WARNING);
+                        alert.setTitle("Manual modus deck loading");
+                        alert.setHeaderText("Sylladex deck is larger than modus deck");
+                        alert.setContentText("Some cards were lost since they didn't fit into the modus...");
 			}
 		///// manual loading
 		} else if (mode == 2) {
 			for (Card card : deck) {
 				if (card.validateCard() ? card.getInUse() : false) {
-					//TODO: present the card's item through the GUI
 						
-					//ask which folder to place the card in (or none at all)
+					//ask which folder to place the CARD in (or none at all)
                     Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
                         alert.setTitle("Manual modus deck loading");
                         alert.setHeaderText("Select a folder.");
-                        alert.setContentText("Please select a folder to save this card into.");
+                        alert.setContentText("Please select a folder to save \"" + card.getItem() + "\" into.");
 
                     //create buttons for alert TODO: set buttons to folder selection
-                    ButtonType buttonSave = new ButtonType("Save");
-                    ButtonType buttonNew = new ButtonType("New");
-                    ButtonType buttonCancel = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
-                    alert.getButtonTypes().setAll(buttonSave, buttonNew, buttonCancel);
+                    ButtonType buttonF1 = new ButtonType("weapons");
+                    ButtonType buttonF2 = new ButtonType("survival");
+                    ButtonType buttonF3 = new ButtonType("misc");
+                    ButtonType buttonF4 = new ButtonType("info");
+                    ButtonType buttonF5 = new ButtonType("keyCritical");
+                    
+                    ButtonType buttonSkip = new ButtonType("skip");
+                    ButtonType buttonCancel = new ButtonType("cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+                    alert.getButtonTypes().setAll(buttonF1, buttonF2, buttonF3, buttonF4, buttonF5, buttonSkip, buttonCancel);
                     Optional<ButtonType> result = alert.showAndWait();
                     //if cancel, return, otherwise change deckAction and continue
                     Card[] folder;
-                    if (!result.isPresent()) {
-                        sylladexReference.getTextOutput().appendText("Error in getting your choice. Ending load().");
+                    if (!result.isPresent()) {	//if error
+                        Sylladex.getTextOutput().appendText("Error in getting your choice. Ending load().");
                         return;
                     }
-                    if (result.get() != buttonCancel) {
+                    if  (result.get() == buttonSkip) {	//if skip then continue
+                        continue;
+                    } else if (result.get() != buttonCancel) {	//if option then fill the folder variable
                         folder = findFolderByName(result.get().getText());
-                    } else {
-                        return;
+                    } else {	//if cancel then return
+                    		return;
                     }
 
 					//place it in the folder
@@ -346,7 +362,7 @@ public class PentaFile implements Modus {
 	@Override
 	public Boolean capture(String item) {
 		Card card = new Card(item);
-		//if invalid card
+		//if invalid CARD
 		if (! card.validateCard()) return false;
 		//this call will not cause the side effect as described by Note #2
         return addCard(card);
@@ -378,7 +394,7 @@ public class PentaFile implements Modus {
 	}
 
 	/**
-	 * adds the card to the modus through a specific folder
+	 * adds the CARD to the modus through a specific folder
 	 * @param item the item to be added
 	 * @param folder the Card array to be inserted into
 	 * @return {@code true} if successful, {@code false} otherwise
@@ -386,7 +402,7 @@ public class PentaFile implements Modus {
 	private Boolean captureByFolder(String item, Card[] folder) {
 		int index;
 		Card card = new Card(item);
-		//if invalid card
+		//if invalid CARD
 		if (! card.validateCard()) return false;
 		
 		if (findFolderSpace(folder) == -1) {
@@ -421,7 +437,7 @@ public class PentaFile implements Modus {
 	}
 	
 	/**
-	 * Uses the name of an item as a key to search for it's card.
+	 * Uses the name of an item as a key to search for it's CARD.
 	 * Because it calls {@link #findItemName(String)}, it may have
 	 * 	undesired affects if the name given is misspelled. The
 	 * 	function will attempt to get the closest match, but an 
@@ -429,7 +445,7 @@ public class PentaFile implements Modus {
 	 * <p> If the modus space is empty, this function will short circuit
 	 * 	and return an "empty" Card.
 	 * @param itemName the item key
-	 * @return a card matching the key
+	 * @return a CARD matching the key
 	 */
 	private Card takeOutCardByName(String itemName) {
 		if (isEmpty()) return new Card();
@@ -608,9 +624,9 @@ public class PentaFile implements Modus {
 		double dHeight = display.getMaxHeight();
 		CardNode cardExample = Sylladex.createCardNode(new Card());
 		double scaleFactor = 0.5;
-		double X_OFFSET = cardExample.cardFace.getMaxWidth() + dWidth/4; //card width + padding
+		double X_OFFSET = cardExample.CARD_FACE.getMaxWidth() + dWidth/4; //CARD width + padding
 		double X_MARGIN = 128;
-		double Y_OFFSET = cardExample.cardFace.getMaxHeight() + dHeight/4; //card height + padding
+		double Y_OFFSET = cardExample.CARD_FACE.getMaxHeight() + dHeight/4; //CARD height + padding
 		double Y_MARGIN = 4;
 		Card[] omnifolder = createOmniFolder();
 		Paint[] folderColors = {
@@ -639,21 +655,21 @@ public class PentaFile implements Modus {
 		for (int i = 0; i < 5; i++) { 
 			//loop of 5 cards within a folder
 			for (int j = 0; j < 5; j++) { 
-				//set the coordinates this loop's card should be placed at
-				double xCardCoord = i * X_OFFSET + i*X_MARGIN + (j*15) + 4; 	//per-folder offset + margin + per-card offset + scalable constant offset
-				double yCardCoord = j * Y_OFFSET + j*Y_MARGIN; 				//per-card offset, margin
-				//create the card node to draw
-				CardNode node = Sylladex.createCardNode(omnifolder[i*5 + j]); //i = folder, j = card
+				//set the coordinates this loop's CARD should be placed at
+				double xCardCoord = i * X_OFFSET + i*X_MARGIN + (j*15) + 4; 	//per-folder offset + margin + per-CARD offset + scalable constant offset
+				double yCardCoord = j * Y_OFFSET + j*Y_MARGIN; 				//per-CARD offset, margin
+				//create the CARD node to draw
+				CardNode node = Sylladex.createCardNode(omnifolder[i*5 + j]); //i = folder, j = CARD
 				
 				//account for the translation difference caused by scaling from the node's center
-				double widthDiff  = cardExample.cardFace.getMaxWidth()/2;
-				double heightDiff = cardExample.cardFace.getMaxHeight()/2;
+				double widthDiff  = cardExample.CARD_FACE.getMaxWidth()/2;
+				double heightDiff = cardExample.CARD_FACE.getMaxHeight()/2;
 				double apparentWidthDifference = widthDiff*scaleFactor - widthDiff;
 				double apparentHeightDifference = heightDiff*scaleFactor - heightDiff;
 				double finalCoordX = xCardCoord * scaleFactor + apparentWidthDifference;
 				double finalCoordY = yCardCoord * scaleFactor + apparentHeightDifference;
-				node.cardFace.setTranslateX(finalCoordX);
-				node.cardFace.setTranslateY(finalCoordY + 12); //add a non-scalable constant offset for the folder labels
+				node.CARD_FACE.setTranslateX(finalCoordX);
+				node.CARD_FACE.setTranslateY(finalCoordY + 12); //add a non-scalable constant offset for the folder labels
 				node.setCardScaleFactor(scaleFactor);
 				//create label for the folder column
 				if (j == 0) {
@@ -662,10 +678,10 @@ public class PentaFile implements Modus {
 				}
 				
 				//re-color the node based on folder
-				((SVGPath) node.cardFace.getChildren().get(1)).setFill(folderColors[i]);
+				((SVGPath) node.CARD_FACE.getChildren().get(1)).setFill(folderColors[i]);
 				
 				//draw the node to display
-				display.getChildren().add(node.cardFace);
+				display.getChildren().add(node.CARD_FACE);
 			}
 		}
 	}

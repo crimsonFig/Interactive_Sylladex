@@ -65,8 +65,7 @@ public class Sylladex extends CmdListeners implements Parser{
 	private ModusManager modiMgr;
 	private static final LinkedHashSet<String> SYLL_CMD_STRING_LIST = initializeSyllCmdStringList();
 	private static final String SAVE_FILE_NAME = "sylladexDeck.sav";
-	private static final String OUT_PATH = "../../../";
-	static final Object LOCK = new Object();
+	private static final String OUT_PATH = "";
 	///// GUI references ////////////
 	@FXML
 	private BorderPane root;
@@ -106,8 +105,11 @@ public class Sylladex extends CmdListeners implements Parser{
 	//CENTER
 	@FXML
 	private StackPane display;
+	private static StackPane staticDisplay;
 	@FXML
 	private TextArea textOutput;
+	private static TextArea staticTextOutput;
+	
 	//////////////////////////////////////////////////////
 	
 	
@@ -118,6 +120,7 @@ public class Sylladex extends CmdListeners implements Parser{
 		bRefresh.setDisable(true); //keep disabled until ModusManager can add modi generically (not explicitly)
 		bModusScan.setDisable(true);
 		bInputButton.setDisable(true);
+		bReset.setDisable(true);
 		//submit key is not disabled if a modus is chosen and the field isnt empty.
 		textInput.setOnKeyTyped((ev) -> {
 			if (textInput.getText().isEmpty() || modiMgr.getCurrentModus() == -1) {
@@ -137,6 +140,10 @@ public class Sylladex extends CmdListeners implements Parser{
 			}
 			
 		});
+		
+		//set the instance references to the class variables
+		staticDisplay = display;
+		staticTextOutput = textOutput;
 		
 		//should initialize a ModusManager
 		modiMgr = new ModusManager(this);
@@ -236,23 +243,21 @@ public class Sylladex extends CmdListeners implements Parser{
 	 * @param deck the deck to set
 	 */
 	public void setDeck(List<Card> deck) {
-		synchronized (this.deck) {
-			this.deck = Collections.synchronizedList(deck);
-		}
+		this.deck = deck;
 	}
 	
 	/**
 	 * @return the display
 	 */
-	public StackPane getDisplay() {
-		return display;
+	public static StackPane getDisplay() {
+		return staticDisplay;
 	}
 	
 	/**
 	 * @return the textOutput
 	 */
-	public TextArea getTextOutput() {
-		return textOutput;
+	public static TextArea getTextOutput() {
+		return staticTextOutput;
 	}
 	
 	/**
@@ -321,7 +326,7 @@ public class Sylladex extends CmdListeners implements Parser{
 				textOutput.appendText("Saving deck to file... ");
 				try {
 					writeDeckToFile(SAVE_FILE_NAME, OUT_PATH);
-					textOutput.appendText("save sucessful.\n");
+					textOutput.appendText("save sucessful at location: " + java.nio.file.Paths.get(OUT_PATH, SAVE_FILE_NAME).toString() + ".\n");
 				} catch (Exception e) {
 					textOutput.appendText("save failed.\n");
 					return;
@@ -339,9 +344,7 @@ public class Sylladex extends CmdListeners implements Parser{
 				break;
 			case "deleteDeck":
 				textOutput.appendText("Deleting deck...");
-				synchronized (deck) {
-					deck.clear();
-				}
+				deck.clear();
 				textOutput.appendText("deletion sucessful.\n");
 				break;
 			case "deleteSaveFile":
@@ -406,43 +409,41 @@ public class Sylladex extends CmdListeners implements Parser{
 	
 	/**
 	 * Writes the {@link #deck} out to a binary file.
+	 * <br>
+	 * Not thread-safe.
 	 * @param fileName the name of the file to be created
 	 * @param outPath the relative pathway to a folder for the file to be created in
 	 */
 	private void writeDeckToFile(String fileName, String outPath) throws Exception {
 		String fullOutPath = outPath + fileName;
-		synchronized(LOCK) {
-			try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(fullOutPath)))) {
-				synchronized (this.deck) {
-					//write deck size to the front of the file, 
-					oos.writeInt(Integer.valueOf(this.deck.size()));
-					for (Card card : deck) {
-						oos.writeObject(card);
-					}
-				}
-				//finally write a null to mark the end of the file.
-				oos.writeByte((byte) '\0');
-			} catch (NullPointerException e) {
-				e.printStackTrace();
-				throw e;
-			} catch (SecurityException e) {
-				Alert alert = new Alert(AlertType.WARNING);
-			        	alert.setTitle("Insufficient Permission");
-			        alert.setHeaderText("Unable to create save file.");
-			        alert.setContentText("Sylladex was unable to create save file "
-			        		+ "because the save directory had insufficient permission. \n"
-			        		+ "Please change directory permissions to allow file"
-			        		+ "creation and then try again. \n");
-		        alert.showAndWait();
-		        throw e;
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-				throw e;
-			} catch (IOException e) {
-				e.printStackTrace();
-				throw e;
-			} 
-		}
+		try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(fullOutPath)))) {
+			//write deck size to the front of the file, 
+			oos.writeInt(Integer.valueOf(this.deck.size()));
+			for (Card card : deck) {
+				oos.writeObject(card);
+			}
+			//finally write a null to mark the end of the file.
+			oos.writeByte((byte) '\0');
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+			throw e;
+		} catch (SecurityException e) {
+			Alert alert = new Alert(AlertType.WARNING);
+		        	alert.setTitle("Insufficient Permission");
+		        alert.setHeaderText("Unable to create save file.");
+		        alert.setContentText("Sylladex was unable to create save file "
+		        		+ "because the save directory had insufficient permission. \n"
+		        		+ "Please change directory permissions to allow file"
+		        		+ "creation and then try again. \n");
+	        alert.showAndWait();
+	        throw e;
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			throw e;
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw e;
+		} 
 	}
 	
 	/**
@@ -456,43 +457,33 @@ public class Sylladex extends CmdListeners implements Parser{
 		String fullInPath = outPath + fileName;
 		List<Card> tempDeck = new ArrayList<Card>();
 		final File file = new File(fullInPath);
-		synchronized(LOCK) {
-			try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-				Integer numOfCards = ois.readInt();
-				for (int i = 0; i < numOfCards; i++ ) {
-					Object o = ois.readObject();
-					if (o instanceof Card && o != null) tempDeck.add((Card) o);
-				}
-				setDeck(tempDeck);
-			} catch (EOFException e) {
-				setDeck(tempDeck);
-			} catch (NullPointerException e) {
-				e.printStackTrace();
-				throw e;
-			} catch (SecurityException e) {
-				Alert alert = new Alert(AlertType.WARNING);
-			        	alert.setTitle("Insufficient Permission");
-			        alert.setHeaderText("Unable to create save file.");
-			        alert.setContentText("Sylladex was unable to read the save file "
-			        		+ "because the save file had insufficient permission. \n"
-			        		+ "Please change file permissions to allow file "
-			        		+ "read and then try again. \n");
-		        alert.showAndWait();
-		        throw e;
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-				throw e;
-			} catch (IOException e) {
-				e.printStackTrace();
-				throw e;
-			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
-				throw e;
-			} catch (ClassCastException e) {
-				e.printStackTrace();
-				throw e;
+		
+		try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+			Integer numOfCards = ois.readInt();
+			for (int i = 0; i < numOfCards; i++ ) {
+				Object o = ois.readObject();
+				if (o instanceof Card && o != null) tempDeck.add((Card) o);
 			}
-		}
+			setDeck(tempDeck);
+		} catch (EOFException e) {
+			setDeck(tempDeck);
+		} catch (SecurityException e) {
+			Alert alert = new Alert(AlertType.WARNING);
+		        	alert.setTitle("Insufficient Permission");
+		        alert.setHeaderText("Unable to create save file.");
+		        alert.setContentText("Sylladex was unable to read the save file "
+		        		+ "because the save file had insufficient permission. \n"
+		        		+ "Please change file permissions to allow file "
+		        		+ "read and then try again. \n");
+	        alert.showAndWait();
+	        throw e;
+		} catch (FileNotFoundException e) {
+			System.out.println("sylladex load failed ERROR: file not found at " + file.getPath());
+			throw e;
+		} catch (NullPointerException | IOException| ClassNotFoundException | ClassCastException e) {
+			e.printStackTrace();
+			throw e;
+		} 
 	}
 	
 	
@@ -500,8 +491,8 @@ public class Sylladex extends CmdListeners implements Parser{
 	/**
 	 * Creates a CardNode. Using this method is preferred over creating an instance
 	 * so that the sylladex is able to regulate and observe production.
-	 * @param card A card
-	 * @return a graphical CardNode derived from the card
+	 * @param CARD A CARD
+	 * @return a graphical CardNode derived from the CARD
 	 */
 	public static CardNode createCardNode(Card card) {
 		CardNode node = new CardNode(card);
@@ -578,7 +569,6 @@ public class Sylladex extends CmdListeners implements Parser{
 		}
 		
 		//if there was a previous modus selected, prompt if they want to save or reset their deck
-		int deckAction = -1; //0=save deck, 1=new deck
 		if (isAnyModusActive) {
 			Alert alert = new Alert(AlertType.CONFIRMATION);
 		        	alert.setTitle("Changing Modus Confirmation");
@@ -591,32 +581,25 @@ public class Sylladex extends CmdListeners implements Parser{
 	        ButtonType buttonCancel = new ButtonType("Cancel", ButtonData.CANCEL_CLOSE);
 	        alert.getButtonTypes().setAll(buttonSave, buttonNew, buttonCancel);
 	        Optional<ButtonType> result = alert.showAndWait();
-	        //if cancel, return, otherwise change deckAction and continue
+	        //if cancel, return, otherwise perform deck actions
 	        if (result.get() == buttonSave) {
-	        		deckAction = 0;
+				textOutput.appendText("Saving deck to file... ");
+				try {
+					writeDeckToFile(SAVE_FILE_NAME, OUT_PATH);
+					textOutput.appendText("save successful.\n");
+					this.deck.clear();
+					textOutput.appendText("Deck has been refreshed.\n\n");
+				} catch (Exception e) {
+					textOutput.appendText("Cancelling modus change.\n\n");
+			        return;
+				}
 	        } else if (result.get() == buttonNew) {
-	        		deckAction = 1;
+	        		this.deck.clear();
+	        		textOutput.appendText("Deck has been refreshed without saving.\n\n");
 	        } else {
 	        		return;
 	        }
 		}
-		
-		//if the new or ok button was pushed, finish with those specific deck actions
-		if (deckAction == 0) {
-			textOutput.appendText("Saving deck to file... ");
-			try {
-				writeDeckToFile(SAVE_FILE_NAME, OUT_PATH);
-				textOutput.appendText("save successful.\n");
-				this.deck.clear();
-				textOutput.appendText("Deck has been refreshed.\n\n");
-			} catch (Exception e) {
-				textOutput.appendText("Cancelling modus change.\n\n");
-		        return;
-			}
-		} else if (deckAction == 1) {
-			this.deck.clear();
-			textOutput.appendText("Deck has been refreshed without saving.\n\n");
-		} 
 		
 		//set the new active modus
 		modiMgr.setCurrentModus(i);
