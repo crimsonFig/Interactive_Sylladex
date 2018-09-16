@@ -359,7 +359,7 @@ public class Sylladex extends CmdListeners implements Parser{
 				break;
 			case "refreshModus":
 				textOutput.appendText("Refreshing the modus...");
-				modiMgr.refreshModus(this);
+				modiMgr.refreshModus();
 				modiMgr.getModusList().get(modiMgr.getCurrentModus()).REFERENCE.drawToDisplay();
 				textOutput.appendText("success. Consider using the modus' load command before continueing.\n ");
 				break;

@@ -2,8 +2,6 @@ package app.controller;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
@@ -135,13 +133,12 @@ class ModusManager {
 		//TODO: configure a Security Manager policy file and ensure that mine was loaded.
 		
 		//classNameList should now be populated, attempt to load and cast each class.
-		Modus clazzObject;
 		for(String className : classNameList) {
 			try {
 				Class<?> classObject = Class.forName(className, false, Modus.class.getClassLoader());
 				Object instanceObject = classObject.newInstance(); 
 				if (Modus.class.isInstance(instanceObject)) { //(this test auto checks against null too)
-					clazzObject = Modus.class.cast(instanceObject);
+					Modus clazzObject = Modus.class.cast(instanceObject);
 					if (clazzObject.getMETADATA() != null)
 						modusList.add(clazzObject.getMETADATA());
 				} 
@@ -196,17 +193,15 @@ class ModusManager {
 	 * the old object's reference. 
 	 * @param syll The sylladex controller reference
 	 */
-	void refreshModus(Sylladex syll) {
+	void refreshModus() {
 		Class<? extends Modus> modusClassObject = modusList.get(currentModus).REFERENCE.getClass();
-		Constructor<? extends Modus> modusClassConstructor;
 		try {
-			modusClassConstructor = modusClassObject.getConstructor(Sylladex.class);
-			Modus modusInstance = modusClassConstructor.newInstance(syll);
+			Modus modusInstance = modusClassObject.newInstance();
 			modusList.set(currentModus, modusInstance.getMETADATA());
 		} catch (SecurityException | IllegalAccessException e) {
 			e.printStackTrace();
 			System.exit(-1);
-		}  catch (NoSuchMethodException | IllegalArgumentException | InvocationTargetException | InstantiationException e) {
+		}  catch (IllegalArgumentException | InstantiationException e) {
 			//These exceptions should never happen if it didn't happen in during it's first initialization
 			//I would consider this a fatal issue that needs to be addressed by debugging.
 			e.printStackTrace();
