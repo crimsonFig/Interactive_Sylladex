@@ -11,11 +11,11 @@ import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -50,6 +50,8 @@ import commandline_utils.*;
  *   system for entertainment purposes. The application is meant to be 
  *   controlled through a text console to remain true to the 
  *   "==> Text Adventure" style. 
+ * <br><br>
+ * <b>Architecture</b>
  *   
  * @author Triston Scallan
  *
@@ -123,7 +125,7 @@ public class Sylladex extends CmdListeners implements Parser{
 		bReset.setDisable(true);
 		//submit key is not disabled if a modus is chosen and the field isnt empty.
 		textInput.setOnKeyTyped((ev) -> {
-			if (textInput.getText().isEmpty() || modiMgr.getCurrentModus() == -1) {
+			if (textInput.getText().isEmpty() || modiMgr.getCurrentModusIndex() == -1) {
 				bInputButton.setDisable(true);
 			} else {
 				bInputButton.setDisable(false);
@@ -145,12 +147,12 @@ public class Sylladex extends CmdListeners implements Parser{
 		staticDisplay = display;
 		staticTextOutput = textOutput;
 		
-		//should initialize a ModusManager
+		//initialize a ModusManager
 		modiMgr = new ModusManager();
-		//add modus nodes to the Modus List tab from ModiMgr#modusList.
+		
+		//add modus nodes to the modusList VBox in modus selection tab, using Metadata from ModiMgr#modusList.
 		for (Metadata e : modiMgr.getModusList()) {
-			
-			//create a gridpane object
+			//create a GridPane object
 			GridPane node = new GridPane();
 			//add a column and two rows
 			node.getColumnConstraints().add(new ColumnConstraints(10, 100, Region.USE_COMPUTED_SIZE, Priority.SOMETIMES, null, false));
@@ -188,7 +190,7 @@ public class Sylladex extends CmdListeners implements Parser{
 		noModusBox.getChildren().addAll(noModusPrompt_1, noModusPrompt_2);
 		display.getChildren().add(noModusBox);
 		
-		//initialize the syllCmdList
+		//initialize the syllCmdList TODO: fix this and the modusCmdList to utilize the new function map
 		Iterator<String> list = SYLL_CMD_STRING_LIST.iterator();
 		while (list.hasNext()) {
 			String command = list.next();
@@ -297,29 +299,24 @@ public class Sylladex extends CmdListeners implements Parser{
 	@Override
 	public void commandSwitch(String inputCommand, String...args) {
 		
-		//parse the raw input command against the sylladex and modus commands
+		//TODO: consider rearranging order to first check if its syll or modus command and then parse it separately from there.
+		//parse the raw input command against a list containing both the sylladex and modus commands
 		String command = Searcher.parseCommands(inputCommand, () -> {
-			List<Object> keyList = Arrays.asList(modiMgr.getModusList().get(modiMgr.getCurrentModus()).FUNCTION_MAP.keySet().toArray());
+			//TODO: create this list instead in the initialization steps so that it doesn't process a new list every time.
 			List<String> tCommandList = new ArrayList<String>();
-			keyList.forEach(key -> tCommandList.add((String) key));
+			modiMgr.getCurrentModusMetadata().COMMAND_MAP.keySet().forEach(key -> tCommandList.add(key));
 			SYLL_CMD_STRING_LIST.forEach(string -> tCommandList.add(string));
 			return tCommandList;
 		});
 		
-		//check if the command was "help" (from raw input), if so then invoke entry with the args
-		if (Searcher.fuzzyStringSearch(Arrays.asList("help"), inputCommand).getValue().equals("help") && args.length > 0) {
-			modiMgr.getModusList().get(modiMgr.getCurrentModus()).REFERENCE.entry(0, args[0].trim());
-			return;
-		}
-		
-		//check if the command was actually matched to the cmd lists. if not, notify the user by the terminal.
+		//check if the command wasn't matched to the cmd lists. if so, notify the user by the terminal.
 		if (command.isEmpty()) {
 			textOutput.appendText("Command \"" + inputCommand + "\" wasn't recognized. Please try again.\n");
 			return;
 		}
 		
-		//if true then process as sylladex command, otherwise process as modus command
-		if (command.contains("syll.")) {
+		//if true then process as sylladex command, otherwise process as modus command. TODO: convert to a function map or ENUM.
+		if (command.startsWith("syll.")) {
 			String syllCommand = command.substring(5); //chop off the "syll." prefix
 			switch (syllCommand) {
 			case "saveDeck":
@@ -360,7 +357,7 @@ public class Sylladex extends CmdListeners implements Parser{
 			case "refreshModus":
 				textOutput.appendText("Refreshing the modus...");
 				modiMgr.refreshModus();
-				modiMgr.getModusList().get(modiMgr.getCurrentModus()).REFERENCE.drawToDisplay();
+				modiMgr.getModusList().get(modiMgr.getCurrentModusIndex()).REFERENCE.drawToDisplay();
 				textOutput.appendText("success. Consider using the modus' load command before continueing.\n ");
 				break;
 			case "showLooseItems":
@@ -379,30 +376,7 @@ public class Sylladex extends CmdListeners implements Parser{
 				break;
 			}
 		} else {
-			int functionCode = modiMgr.getModusList().get(modiMgr.getCurrentModus()).FUNCTION_MAP.get(command);
-			System.out.println("invoking " + command + ":" + functionCode + " with args = " + Arrays.toString(args));
-			String resultCode = modiMgr.getModusList().get(modiMgr.getCurrentModus()).REFERENCE.entry(functionCode, args);
-			//if resultCode is -1 and functionCode matches 1, 2, 3, or 4, give a relative diagnostic
-			if (resultCode.equals("-1")) {
-				//function exited abnormally! 
-				switch (functionCode) {
-				case 1: //save failed
-					textOutput.appendText("modus save failed.\n");
-					break;
-				case 2: //load failed
-					textOutput.appendText("modus load failed.\n");
-					break;
-				case 3: //capture failed
-					textOutput.appendText("attempt to capture " + args[0] + " failed.\n");
-					break;
-				case 4: //takeOutCard failed
-					textOutput.appendText("attempt to extract " + args[0] + " failed.\n");
-					break;
-				default: //something unknown failed
-					textOutput.appendText("something failed.\n");
-					break;	
-				}
-			}
+			modiMgr.execModusCmd(command, args);
 		}
 		textOutput.appendText("\n"); //TODO: shift textoutput dialogues to have \n appear at the front instead of end
 	}
@@ -524,7 +498,7 @@ public class Sylladex extends CmdListeners implements Parser{
 		
 		//split the raw input into ["command", "arg1 arg2 arg3..."]
 		String[] splitRawInput = inputRawString.split(" ", 2);
-		String inputCommand = splitRawInput[0];
+		String inputCommand = splitRawInput[0].trim();
 		
 		//split the args string into a list, if any, then run the commandSwitch
 		if (splitRawInput.length > 1) { 
@@ -544,37 +518,20 @@ public class Sylladex extends CmdListeners implements Parser{
 	 * Sets the current modus to the modus selected, updates the view 
 	 * to represent the modus changes, and handles logic related to 
 	 * selecting and switching modi from the {@code #modusList} node.
+	 * 
+	 * Called by a modusList button with its assigned metadata argument.
 	 * @param event 
 	 * @param metadata
 	 */
 	void handleModusSelection(Metadata metadata, ActionEvent event) {
-		int i = -1;
-		Boolean bFound = false;
-		Boolean isAnyModusActive = modiMgr.getCurrentModus() != -1;
-		for (Metadata e : modiMgr.getModusList()) {
-			i++;
-			if (e.equals(metadata)) {
-				bFound = true;
-				break;
-			}
-		}
-		if (!bFound) {
-			Alert alert = new Alert(AlertType.ERROR);
-		        	alert.setTitle("Metadata error!");
-		        alert.setHeaderText("The selected Modus was not found!");
-		        alert.setContentText("Error in handleModusSelection, button's assigned name "
-		        		+ "does not match any names in the ModusManager's ModusList.");
-	        alert.showAndWait();
-			return; 
-		}
 		
 		//if there was a previous modus selected, prompt if they want to save or reset their deck
-		if (isAnyModusActive) {
+		if (modiMgr.getCurrentModusIndex() != -1) {
 			Alert alert = new Alert(AlertType.CONFIRMATION);
 		        	alert.setTitle("Changing Modus Confirmation");
 		        alert.setHeaderText("Are you Sure?");
 		        alert.setContentText("There is a modus currently active, would you like to "
-		        		+ "save your deck to file, reset to a new deck, or cancel?");
+		        		+ "save your deck to file and refresh deck, only refresh to a new deck, or cancel?");
 	        //create buttons for alert
 	        ButtonType buttonSave = new ButtonType("Save");
 	        ButtonType buttonNew = new ButtonType("New");
@@ -602,7 +559,20 @@ public class Sylladex extends CmdListeners implements Parser{
 		}
 		
 		//set the new active modus
-		modiMgr.setCurrentModus(i);
+		try {
+			modiMgr.updateCurrentSelectedModus(metadata);
+		} catch (NoSuchElementException e) {
+			//if the given metadata doesn't match any in the modus list
+			Alert alert = new Alert(AlertType.ERROR);
+		        	alert.setTitle("Metadata error!");
+		        alert.setHeaderText("The selected Modus was not found!");
+		        alert.setContentText("Error in handleModusSelection, button's assigned name "
+		        		+ "does not match any names in the ModusManager's ModusList.");
+	        alert.showAndWait();
+			return; 
+		} catch (NullPointerException e) {
+			throw e;
+		}
 		textOutput.appendText("Modus selected: " + metadata.NAME + "\n");
 		
 		//set all buttons in this list as not disabled, then disable only this modus' button.
@@ -615,25 +585,24 @@ public class Sylladex extends CmdListeners implements Parser{
 			.forEach(node -> node.setDisable(false));
 		((Button) event.getSource()).setDisable(true);
 		
-		//clear the moduCmdList and set the moduCmdList to the selected modus FUNCTION_MAP
+		//clear the moduCmdList and set the moduCmdList to the selected modus COMMAND_MAP
 		moduCmdList.getChildren().clear();
-		for(String function : modiMgr.getModusList().get(modiMgr.getCurrentModus()).FUNCTION_MAP.keySet()) {
+		for(String command : modiMgr.getCurrentModusMetadata().COMMAND_MAP.keySet()) {
+			if (command == null) continue;
 			//for each function, create a node to be inserted into the moduCmdList
-			Label functionName = new Label(function);
-			//add a description label to each command by pinging the `help <commandName> <1>` in Modus#entry method
+			Label commandName = new Label(command);
+			//add a description label to each command by getting the value from the function map from each function's Pair
 			Label functionDesc = new Label();
-			functionDesc.setText(modiMgr.getModusList().get(modiMgr.getCurrentModus()).REFERENCE.entry(0, function, "1"));
+			functionDesc.setText(modiMgr.getCurrentModusMetadata().COMMAND_MAP.desc(command));
 			functionDesc.setWrapText(true);
 			functionDesc.setPadding(new Insets(0, 0, 0, 5)); 
 			Separator line = new Separator();
-			moduCmdList.getChildren().addAll(functionName, functionDesc, line);
+			moduCmdList.getChildren().addAll(commandName, functionDesc, line);
 		}
-		Label functionName = new Label("help <command name>");
-		moduCmdList.getChildren().add(functionName);
 		
 		//reset the display
-		modiMgr.getModusList().get(modiMgr.getCurrentModus()).REFERENCE.drawToDisplay();
-		textOutput.appendText(modiMgr.getModusList().get(modiMgr.getCurrentModus()).REFERENCE.description());
+		modiMgr.getCurrentModusMetadata().REFERENCE.drawToDisplay();
+		textOutput.appendText(modiMgr.getModusList().get(modiMgr.getCurrentModusIndex()).REFERENCE.description());
 		
 		//set the view to be on the commands tab from the modusList tab
 		((TabPane) cmdTab.getStyleableParent()).getSelectionModel().select(cmdTab);

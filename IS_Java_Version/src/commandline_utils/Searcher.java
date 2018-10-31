@@ -14,7 +14,8 @@ public class Searcher {
 	 * The maximum number of {@value #MAX_COST} edits/mutations a string can have for fuzzy searching.
 	 */
 	public final static int MAX_COST = 3;
-
+	//TODO: have it except a collection instead of ONLY a list.
+	//TODO: have the fuzzysearch shortcircuit
 	/**
 	 * Takes a word and searches for the closest match in the list.
 	 * <p> Uses the Levenshtein Distance algorithm to compute the edit

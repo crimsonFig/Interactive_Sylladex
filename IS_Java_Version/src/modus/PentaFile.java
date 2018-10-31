@@ -3,10 +3,12 @@ package modus;
 import java.awt.Color;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.function.Consumer;
 
 import app.controller.Sylladex;
 import app.model.Card;
 import app.model.CardNode;
+import app.model.CommandMap;
 import app.model.Metadata;
 import commandline_utils.Searcher;
 import javafx.scene.control.*;
@@ -14,6 +16,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Font;
+import javafx.util.Pair;
 
 /**
  * This fetch modus is the PentaFile pfModus, a modus designed for use with a sylladex.
@@ -62,182 +65,161 @@ public class PentaFile implements Modus {
 	/* (non-Javadoc)
 	 * @see modus.Modus#createFunctionMap()
 	 */
-	public LinkedHashMap<String, Integer> createFunctionMap() {
-		LinkedHashMap<String, Integer> functionMap = new LinkedHashMap<>();
-		functionMap.put("save", 1);
-		functionMap.put("load #", 2); //mode = 0, 1, 2, or 3
-		functionMap.put("capture", 3);
-		functionMap.put("takeOutCard", 4);
-		functionMap.put("captureByFolder", 5);
-		functionMap.put("takeOutCardByName", 6);
-		return functionMap;
-	}
-	
-	//***************************** ACCESS *************************************/
-	/* (non-Javadoc)
-	 * @see modus.Modus#entry()
-	 */
-	@Override
-	public String entry(int functionCode, String...args) {
-		TextArea textOutput = Sylladex.getTextOutput();
-		switch (functionCode) {
-		case 1: //save
-			save();
-			textOutput.appendText("Deck was saved to sylladex.\n");
-			break;
-		case 2: //load <mode>
-			//based on mode as objects[0], use that load mode. if doesn't match 0, 1, 2, or 3 then invoke entry(-1, "command name") to display help to the output
-			if (args.length == 1) {
-				int mode;
-				textOutput.appendText("Loading from sylladex deck in mode "+ args[0] +"...");
-				try {
-					mode = Integer.valueOf(args[0]);
-					if (0 <= mode && mode <= 3) {
-						load(mode);
-						drawToDisplay();
+	public CommandMap createFunctionMap() {
+		CommandMap commandMap = new CommandMap();
+		
+		commandMap.put("save", 
+				new Pair<Consumer<String[]>, String>((args) -> {
+					save();
+					Sylladex.getTextOutput().appendText("Deck was saved to sylladex.\n");
+				}, "syntax: save\n\u2022 saves the current inventory to the sylladex's deck. "
+					+ "This command is called at the end of every other command except load.")
+		);
+		
+		commandMap.put("load #", 
+				new Pair<Consumer<String[]>, String>((args) -> {
+					//based on mode as objects[0], use that load mode. if doesn't match 0, 1, 2, or 3 then invoke entry(-1, "command name") to display help to the output
+					TextArea textOutput = Sylladex.getTextOutput();
+					if (args.length == 1) {
+						int mode;
+						textOutput.appendText("Loading from sylladex deck in mode "+ args[0] +"...");
+						try {
+							mode = Integer.valueOf(args[0]);
+							if (0 <= mode && mode <= 3) {
+								load(mode);
+								drawToDisplay();
+								textOutput.appendText("success.\n");
+								return;
+							}
+						} catch (NumberFormatException e) {
+							//do nothing...
+						}
+					} 
+					textOutput.appendText("ERROR-\n" + this.METADATA.COMMAND_MAP.desc("load") + "\n");
+				}, "syntax: load <mode>\n\u2022 loads the inventory from the sylladex, which may differ."
+					+ "\n\u2022 mode 0 will simply reset the inventory."
+					+ "\n\u2022 mode 1 will auto load the inventory, based on CARD positions in the deck."
+					+ "\n\u2022 mode 2 will manually load the inv. you will choose where items go."
+					+ "\n\u2022 mode 3 will fast load the inventory. disregards saved CARD positions.")
+		); //mode = 0, 1, 2, or 3
+		
+		commandMap.put("capture", 
+				new Pair<Consumer<String[]>, String>((args) -> {
+					TextArea textOutput = Sylladex.getTextOutput();
+					if (args.length == 1) {
+						textOutput.appendText("Attempting to capture " + args[0] + "...");
+						if(! capture(args[0])) {
+							textOutput.appendText("ERROR: captured card invalid.\n");
+							return;
+						}
 						textOutput.appendText("success.\n");
-						return "0";
+						save();
+						drawToDisplay();
+						return;
+					} 
+					textOutput.appendText("ERROR-\n" + this.METADATA.COMMAND_MAP.desc("capture") + "\n");
+				}, "syntax: capture <item>\n\u2022 captchalogues the item. the item can have "
+					+ "spaces when you type its name. puts in first available spot.")
+		);
+		
+		commandMap.put("takeOutCard", 
+				new Pair<Consumer<String[]>, String>((args) -> {
+					TextArea textOutput = Sylladex.getTextOutput();
+					if (args.length == 2) {
+						Card[] folder = findFolderByName(args[1]);
+						Integer index = -1;
+						try {
+							index = Integer.valueOf(args[0]);
+						} catch (NumberFormatException e) {
+							//do nothing...
+						}
+						if (index >= 1 && index <= 5) {
+							textOutput.appendText("Retrieving CARD at index " + args[0] + " in folder " + args[1] + "...");
+							Card card = takeOutCard(index - 1, folder);
+							textOutput.appendText("success.\n");
+							save();
+							drawToDisplay();
+							//return a non-empty CARD to hand, but its not an error if it was empty.
+							if (card.getInUse()) Sylladex.addToOpenHand(Collections.singletonList(card));
+							return;
+						}
+						textOutput.appendText("ERROR: " + args[0] + " is not a valid index.\n");
 					}
-				} catch (NumberFormatException e) {
-					//do nothing...
-				}
-			} 
-			entry(0, "load");
-			return "-1";
-		case 3: //capture
-			if (args.length == 1) {
-				textOutput.appendText("Attempting to capture " + args[0] + "...");
-				if(! capture(args[0])) return "-1";
-				textOutput.appendText("success.\n");
-				save();
-				drawToDisplay();
-				return "0";
-			} 
-			entry(0, "capture");
-			return "-1";
-		case 4: //takeOutCard
-			if (args.length == 2) {
-				Card[] folder = findFolderByName(args[1]);
-				Integer index = 0;
-				try {
-					index = Integer.valueOf(args[0]);
-				} catch (NumberFormatException e) {
-					//do nothing...
-				}
-				if (index >= 1 && index <= 5) {
-					textOutput.appendText("Retrieving CARD at index " + args[0] + " in folder " + args[1] + "...");
-					Card card = takeOutCard(index - 1, folder);
-					textOutput.appendText("success.\n");
-					save();
-					drawToDisplay();
-					//return a non-empty CARD to hand, but its not an error if it was empty.
-					if (card.getInUse()) Sylladex.addToOpenHand(Collections.singletonList(card));
-					return "0";
-				}
-				textOutput.appendText("ERROR: " + args[0] + " is not a valid index.\n");
-			}
-			entry(0, "takeOutCard");
-			return "-1";
-		case 5: //captureByFolder
-			if (args.length == 2) {
-				Card[] folder = findFolderByName(args[1]);
-				textOutput.appendText("Capturing " + args[0] + " and placing into folder " + args[1] + "...");
-				if(! captureByFolder(args[0], folder)) return "-1";
-				textOutput.appendText("success.\n");
-				save();
-				drawToDisplay();
-				return "0";
-			}
-			entry(0, "captureByFolder");
-			return "-1";
-		case 6: //takeOutCardByName
-			if (args.length == 1) {
-				textOutput.appendText("Retrieving " + args[0] + "...");
-				Card card = takeOutCardByName(args[0]);
-				if (card.getInUse()) { 
-					Sylladex.addToOpenHand(Collections.singletonList(card));
-					textOutput.appendText("success.\n");
-					save();
-					drawToDisplay();
-				}
-				else textOutput.appendText("CARD " + args[0] + " either doesn't exist or match failed.\n");
-				return "0";
-			}
-			entry(0, "takeOutCardByName");
-			return "-1";
-		default: //[help <commandName>] [<isReturnString(optional)]>
-			//attempt to parse command name and select that help description. `help load` should display info about all modes.
-			//if a "1" is present as the second argument after the commandName then return the description as a string instead of
-			//	printing to output. if 1 is not present, then simply print to textOutput.
-			//if no commandName matches then print "command provided was not understood."
-			
-			//test if this was a purposeful matched help case (case == 0)
-			if (functionCode == 0) {
-				//case 1: help is called with both a command and then a "1"
-				//case 2: help is called with a single command, invoked from either the modus or sylladex
-				//case 3: help is called with a command and possibly additional info 
-				
-				int returnStringFlag = 0; //flag to distinguish from pure case 1 and 2
-				
-				//isolate the first word of the args string, expected to be the command
-				String[] splitArgs = args[0].toLowerCase().split(" ", 2);
-				String commandName = splitArgs[0];
-				
-				String result;
-				//determine the cases
-				if (args.length == 2 && args[1].equals("1")) { //case 1
-					returnStringFlag = 1;
-				} 
-				if (splitArgs.length > 1) { //case 3
-					textOutput.appendText("help command invoked. disregarding additional args.\n");
-				}
-				switch (commandName) { //case 2
-				case "save":
-					result = "syntax: save\n\u2022 saves the current inventory to the sylladex's deck. "
-							+ "This command is called at the end of every other command except load.";
-					break;
-				case "load":
-					result = "syntax: load <mode>\n\u2022 loads the inventory from the sylladex, which may differ."
-							+ "\n\u2022 mode 0 will simply reset the inventory."
-							+ "\n\u2022 mode 1 will auto load the inventory, based on CARD positions in the deck."
-							+ "\n\u2022 mode 2 will manually load the inv. you will choose where items go."
-							+ "\n\u2022 mode 3 will fast load the inventory. disregards saved CARD positions.";
-					break;
-				case "capture":
-					result = "syntax: capture <item>\n\u2022 captchalogues the item. the item can have "
-							+ "spaces when you type its name. puts in first available spot.";
-					break;
-				case "takeoutcard":
-					result = "syntax: takeOutCard <index>, <folder>\n\u2022 takes out the CARD at "
-							+ "the index within the folder. index is from 1 to 5.";
-					break;
-				case "capturebyfolder":
-					result = "syntax: captureByFolder <item>, <folder>\n\u2022 captchalogues the item. the item can have "
-							+ "spaces when you type its name. puts in the specified folder.";
-					break;
-				case "takeoutcardbyname":
-					result = "syntax: takeOutCardByName <item>\n\u2022 attempts to take out a CARD based on the given "
-							+ "item name you gave. item can have spaces in its name.";
-					break;
-				default: 
-					result = "syntax: help <command>\n\u2022 provides help information about the "
-							+ "given command. syntax is the form you input a complete command. "
-							+ "if a command has multiple arguments they need to be seperated by a comma.";
-				}
-				
-				if (returnStringFlag == 1) {
-					return result;
-				} 
-				System.out.println("Providing modus command help on: " + commandName);
-				textOutput.appendText(result + "\n");
-				return "0";
-			}
-			textOutput.appendText("command provided not understood.\n");
-			break;
-		}
-		return "0";
+					textOutput.appendText("ERROR-\n" + this.METADATA.COMMAND_MAP.desc("takeOutCard") + "\n");
+				}, "syntax: takeOutCard <index>, <folder>\n\u2022 takes out the CARD at "
+					+ "the index within the folder. index is from 1 to 5.")
+		);
+		
+		commandMap.put("captureByFolder", 
+				new Pair<Consumer<String[]>, String>((args) -> {
+					TextArea textOutput = Sylladex.getTextOutput();
+					if (args.length == 2) {
+						Card[] folder = findFolderByName(args[1]);
+						textOutput.appendText("Capturing " + args[0] + " and placing into folder " + args[1] + "...");
+						if(! captureByFolder(args[0], folder)) {
+							textOutput.appendText("ERROR: captured card invalid.\n");
+							return;
+						}
+						textOutput.appendText("success.\n");
+						save();
+						drawToDisplay();
+						return;
+					}
+					textOutput.appendText("ERROR-\n" + this.METADATA.COMMAND_MAP.desc("captureByFolder") + "\n");
+				}, "syntax: captureByFolder <item>, <folder>\n\u2022 captchalogues the item. the item can have "
+					+ "spaces when you type its name. puts in the specified folder.")
+		);
+		
+		commandMap.put("takeOutCardByName", 
+				new Pair<Consumer<String[]>, String>((args) -> {
+					TextArea textOutput = Sylladex.getTextOutput();
+					if (args.length == 1) {
+						textOutput.appendText("Retrieving " + args[0] + "...");
+						Card card = takeOutCardByName(args[0]);
+						if (card.getInUse()) { 
+							Sylladex.addToOpenHand(Collections.singletonList(card));
+							textOutput.appendText("success.\n");
+							save();
+							drawToDisplay();
+						}
+						else textOutput.appendText("CARD " + args[0] + " either doesn't exist or match failed.\n");
+						return;
+					}
+					textOutput.appendText("ERROR-\n" + this.METADATA.COMMAND_MAP.desc("takeOutCardByName") + "\n");
+				}, "syntax: takeOutCardByName <item>\n\u2022 attempts to take out a CARD based on the given "
+					+ "item name you gave. item can have spaces in its name.")
+		);
+		
+		commandMap.put("help", 
+				new Pair<Consumer<String[]>, String>((args) -> {
+					TextArea textOutput = Sylladex.getTextOutput();
+					if (args.length == 0) {
+						textOutput.appendText(this.METADATA.COMMAND_MAP.desc("help") + "\n");
+						return;
+					} else if (args.length > 1) {
+						textOutput.appendText("help command invoked. disregarding additional args.\n");
+					} 
+					//output the description of the specified command args
+					if (this.METADATA.COMMAND_MAP.get(args[0]) != null) {
+						System.out.println("Providing modus command help on: " + args[0]);
+						textOutput.appendText(this.METADATA.COMMAND_MAP.desc(args[0]) + "\n");
+					} else {
+						textOutput.appendText("command entered not understood.\n");
+					}
+				}, "syntax: help <command>\n\u2022 provides help information about the "
+					+ "given command. syntax is the form you input a complete command. "
+					+ "if a command has multiple arguments they need to be seperated by a comma."));
+		
+		commandMap.put(CommandMap.CMD_ERR,
+				new Pair<Consumer<String[]>, String>((args) -> {
+					Sylladex.getTextOutput().appendText("command entered not understood.\n");
+				}, "ERROR")
+		);
+		
+		return commandMap;
 	}
 	
+	//***************************** ACCESS **************************************
 	/**
 	 * @return the METADATA
 	 */

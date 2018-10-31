@@ -1,16 +1,11 @@
 package app.model;
 
-import java.io.File;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.LinkedHashMap;
-
 import modus.Modus;
 
 /**
- * The Metadata class holds important information about a Modus' functionality
+ * The Metadata class is a container for information about a Modus' functionality
  * 	and abilities.
- * <p> Contains the NAME (String), REFERENCE (Modus), FUNCTION_MAP (String, Integer),
+ * <p> Contains the NAME (String), REFERENCE (Modus), COMMAND_MAP (String, Integer),
  * 	and modusFile (File) of a given modus java file.
  * @author Triston Scallan
  *
@@ -25,63 +20,22 @@ public class Metadata {
 	 */
 	public final Modus REFERENCE;
 	/**
-	 * a HashMap of all the functions for the associated Modus.
-	 * 	Providing the function name (key) gives an integer (value)
-	 *  that can be used by {@link Modus#entry()} to invoke the 
-	 * 	associated function.
+	 * a mapping between a modus' command name and the associated command lambda.
 	 */
-	public final LinkedHashMap<String, Integer> FUNCTION_MAP;
-	/**
-	 * a File reference to the directory of the associated Modus class file
-	 */
-	@Deprecated
-	private File modusFile;
-	
+	public final CommandMap COMMAND_MAP;
 	/**
 	 * Constructor for the Metadata class. establishes information
 	 * 	and initialization of the constants.
-	 * @param name
-	 * @param functionMap
-	 * @param reference
+	 * @param name {@link #NAME}
+	 * @param commandMap {@link #COMMAND_MAP}
+	 * @param reference {@link #REFERENCE}
 	 */
 	public Metadata(
 			String name, 
-			LinkedHashMap<String, Integer> functionMap,
+			CommandMap commandMap,
 			Modus reference ) {
 		this.NAME = name;
-		this.FUNCTION_MAP = functionMap;
+		this.COMMAND_MAP = commandMap;
 		this.REFERENCE = reference;
-	}
-
-	/**
-	 * @return the modusFile
-	 */
-	@Deprecated
-	public File getModusPath() {
-		return modusFile;
-	}
-
-	/**
-	 * @param modusFile the modusFile to set
-	 */
-	@Deprecated
-	public void setModusPath(File modusFile) {
-		this.modusFile = modusFile;
-	}
-	
-	/**
-	 * Used to allow the ModusManager to reach the modus file and load it in from outside
-	 * of the jar file as a usable resource. Meant to facilitate in plug-and-play of modus 
-	 * files while the sylladex was running.
-	 * @return File object of a given Modus
-	 * @throws URISyntaxException
-	 */
-	@Deprecated
-	public File trackModusFile() throws URISyntaxException {
-		//change the below code to use the path of a provided "resource folder" for the user to use OR
-		//  open file chooser and select the given file directly.
-		URL urlName = getClass().getResource(this.NAME + ".java"); 
-		File result = new File(urlName.toURI());
-		return result;
 	}
 }

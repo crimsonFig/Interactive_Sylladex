@@ -43,7 +43,7 @@ import modus.*;
  */
 class ModusManager {
 	/** Tracks the current active Modus as an index of {@link #modusList}. -1 means no active Modus. */
-	private int currentModus = -1;
+	private int currentModusIndex = -1;
 	/** Tracks all available Fetch Modi for the Sylladex */
 	private List<Metadata> modusList = new ArrayList<>();
 	
@@ -128,8 +128,7 @@ class ModusManager {
 		        throw new RuntimeException(pkgname + " (" + directory + ") does not appear to be a valid package", e);
 		    }
 		}
-		
-		//TODO: attempt to validate the classes via filestream and match against whitelisted calls
+		System.out.println("ClassDiscovery: complete.");
 		//TODO: configure a Security Manager policy file and ensure that mine was loaded.
 		
 		//classNameList should now be populated, attempt to load and cast each class.
@@ -139,15 +138,19 @@ class ModusManager {
 				Object instanceObject = classObject.newInstance(); 
 				if (Modus.class.isInstance(instanceObject)) { //(this test auto checks against null too)
 					Modus clazzObject = Modus.class.cast(instanceObject);
-					if (clazzObject.getMETADATA() != null)
+					if (clazzObject.getMETADATA() != null) {
+						System.out.println("ClassLoading: classSuccess = " + className);
 						modusList.add(clazzObject.getMETADATA());
+					}
 				} 
-			} catch (InstantiationException ignore) {	
-				System.out.println(ignore.getCause().toString());
-			} catch (ClassCastException | SecurityException | IllegalAccessException | IllegalArgumentException | ClassNotFoundException | LinkageError e) {
+			} catch (Error | InstantiationException ignore) {	
+				System.out.println(Optional.ofNullable(ignore.getCause()).orElse(new Exception(className)).toString());
+			} catch (ClassCastException | SecurityException | IllegalAccessException | IllegalArgumentException | ClassNotFoundException e) {
 				e.printStackTrace();
 			} 
 		}
+		
+		System.out.println("ClassLoading: complete.");
 		
 		//if modusList is empty, warn the user
 		if (modusList.isEmpty()) {
@@ -162,31 +165,54 @@ class ModusManager {
 	
 	//************** GETTERS/SETTERS *******************/
 	/**
-	 * @return the currentModus
+	 * @return the currentModusIndex
 	 */
-	Integer getCurrentModus() {
-		return currentModus;
+	Integer getCurrentModusIndex() {
+		return currentModusIndex;
 	}
 	/**
-	 * @param currentModus the currentModus to set
+	 * @param currentModusIndex the currentModusIndex to set
 	 */
-	void setCurrentModus(Integer currentModus) {
-		this.currentModus = currentModus;
+	void setCurrentModusIndex(Integer currentModusIndex) {
+		this.currentModusIndex = currentModusIndex;
 	}
+	/**
+	 * @return the currentModusMetadata
+	 * @throws NullPointerException
+	 * @throws IndexOutOfBoundsException
+	 */
+	Metadata getCurrentModusMetadata() {
+		Metadata metadata;
+		if ((metadata = modusList.get(currentModusIndex)) != null) {
+			return metadata;
+		}
+		throw new NullPointerException();
+	}
+	/**
+	 * @param metadata the metadata to update the selection to
+	 * @throws NoSuchElementException
+	 * @throws NullPointerException
+	 */
+	void updateCurrentSelectedModus(Metadata metadata) throws NoSuchElementException, NullPointerException {
+		if (metadata == null) throw new NullPointerException();
+		int selectedModusIndex = modusList.indexOf(metadata);
+		if (selectedModusIndex == -1) throw new NoSuchElementException();
+		currentModusIndex = selectedModusIndex;
+	}
+	
 	/**
 	 * @return the modusList
 	 */
 	List<Metadata> getModusList() {
 		return modusList;
 	}
-	/**
-	 * @param modusList the modusList to set
-	 */
-	void setModusList(List<Metadata> modusList) {
-		this.modusList = modusList;
-	}
 	
 	//*************** UTILITY **************************/
+	void execModusCmd(String command, String...args) {
+		System.out.println("invoking `" + command + "` with args = " + Arrays.toString(args));
+		modusList.get(currentModusIndex).COMMAND_MAP.command(command, args);
+		
+	}
 	
 	/**
 	 * Initializes a new object of the current modus class, then effectively replaces 
@@ -194,10 +220,10 @@ class ModusManager {
 	 * @param syll The sylladex controller reference
 	 */
 	void refreshModus() {
-		Class<? extends Modus> modusClassObject = modusList.get(currentModus).REFERENCE.getClass();
+		Class<? extends Modus> modusClassObject = getCurrentModusMetadata().REFERENCE.getClass();
 		try {
 			Modus modusInstance = modusClassObject.newInstance();
-			modusList.set(currentModus, modusInstance.getMETADATA());
+			modusList.set(currentModusIndex, modusInstance.getMETADATA());
 		} catch (SecurityException | IllegalAccessException e) {
 			e.printStackTrace();
 			System.exit(-1);
