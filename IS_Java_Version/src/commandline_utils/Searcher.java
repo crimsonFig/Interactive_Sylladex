@@ -1,5 +1,7 @@
 package commandline_utils;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -14,29 +16,36 @@ public class Searcher {
 	 * The maximum number of {@value #MAX_COST} edits/mutations a string can have for fuzzy searching.
 	 */
 	public final static int MAX_COST = 3;
-	//TODO: have it except a collection instead of ONLY a list.
-	//TODO: have the fuzzysearch shortcircuit
+	
 	/**
 	 * Takes a word and searches for the closest match in the list.
 	 * <p> Uses the Levenshtein Distance algorithm to compute the edit
 	 * 	distance where a deletion or addition of a char counts as 1 and
 	 * 	a char mutation counts as 1. This comparison is case insensitive.
 	 * <p> Allows only a maximum of {@value Searcher#MAX_COST} edits, otherwise it fails.
-	 * @param wordList The list to search
 	 * @param givenWord The word to be matched
+	 * @param wordBag The collection to search
 	 * @return an Object array of format {@code [int index, String match]}. If failed,
 	 * 	returns {@code [-1,""]}.
 	 */
-	public static final Pair<Integer, String> fuzzyStringSearch(List<String> wordList, String givenWord) {
+	public static final Pair<Integer, String> fuzzyStringSearch(String givenWord, Collection<String> wordBag) {
 		String guessedWord = "";
 		int score = 999;	//the lower the score, the better
 		int index;		//index of the word in the word list.
 		int guessedIndex = 0; //index of the guessedWord
-		for(index = 0; index < wordList.size(); index++) {
-			String testWord = wordList.get(index);
-			//if a match is found, return it.
-			if (givenWord.toLowerCase().equals(testWord.toLowerCase())) return new Pair<Integer, String>(index, testWord);
+		Iterator<String> wordList = wordBag.iterator();
+		
+		for(index = 0; index < wordBag.size(); index++) {
 			
+			String testWord = wordList.next();
+			
+			//if word is null, skip. if a match is found, return it.
+			if (testWord == null) {
+				continue;
+			} else if (givenWord.toLowerCase().equals(testWord.toLowerCase())) {
+				return new Pair<Integer, String>(index, testWord);
+			}
+				
 			//create copies of the item names to prevent confusion if swapped later.
 				//also make the comparisons case insensitive.
 			String left = givenWord.toLowerCase();
@@ -107,15 +116,14 @@ public class Searcher {
 	 * 	and matches it against the current modus list of 
 	 * 	commands and the sylladex's list of commands. 
 	 * <p> functionality would be the same as invoking 
-	 * {@link Searcher#fuzzyStringSearch(List, String)} with a List of
-	 * the commands and the inputString, respectively.
+	 * {@link Searcher#fuzzyStringSearch(String, List)}.{@link Pair#getValue()} 
+	 * with a List of the commands and the inputString, respectively.
 	 * @param inputString The given command to parse
 	 * @param supplier List if commands to parse against
 	 * @return matching string result of a command
 	 */
-	public static String parseCommands(String inputString, Supplier<List<String>> supplier) {
-		List<String> list = supplier.get();
-		return Searcher.fuzzyStringSearch(list, inputString).getValue();
+	public static String parseCommands(String inputString, Supplier<Collection<String>> supplier) {
+		return Searcher.fuzzyStringSearch(inputString, supplier.get()).getValue();
 	}
 	
 }

@@ -250,7 +250,7 @@ public class TarotDeck implements Modus {
 		for (Card card : deck) { itemList.add(card.getItem()); }
 			
 		//perform a fuzzy string search
-		return Searcher.fuzzyStringSearch(itemList, givenItem).getValue();
+		return Searcher.fuzzyStringSearch(givenItem, itemList).getValue();
 	}
 	
 	/**
