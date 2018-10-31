@@ -1,8 +1,7 @@
 package modus;
 
-import java.util.LinkedHashMap;
-
 import app.model.Card;
+import app.model.CommandMap;
 import app.model.Metadata;
 
 /**
@@ -45,37 +44,9 @@ public interface Modus {
 	 *  this. 
 	 * @return a HashMap of the function name and the entry code
 	 */
-	public abstract LinkedHashMap<String, Integer> createFunctionMap();
+	public abstract CommandMap createFunctionMap();
 	
 	///// Access
-	/**
-	 * Access point for the modus. This method should act as a switch for the
-	 *  sylladex to call functions from. the objects parameter will contain any args given
-	 *  after a matching command.
-	 * <p> The default case in the switch-case should be assumed that either the "help"
-	 *  command was given or that a non-matching command was given. In all cases where
-	 *  default would be invoked, a description of a command should be given.
-	 *  The default case should follow this behavior:
-	 *  <p> - if no matching commands causes the default case to be invoked, (case == -1) 
-	 *  then send a message to output describing this situation, as well as a 
-	 *  description of the "help" command's syntax. 
-	 *  <p> - if the help command was matched, (case == 0), then assume `objects[0]` be
-	 *  a string that is meant to contain the name of a command. A description of the
-	 *  matching command's syntax and its arguments functionality, should be provided.
-	 *  <p> - if the help command was match, (case == 0), and `objects[1]` is present and
-	 *  is an integer equal to `1`, then follow the same behavior directly above but 
-	 *  return the description as a string instead of printing to output. This is because
-	 *  {@link app.controller.Sylladex#handleModusSelection Sylladex#handleModusSelection } 
-	 *  will invoke this behavior to produce description labels in the modus command list.
-	 * 
-	 * @param functionCode
-	 *            an integer associated with a function
-	 * @param args
-	 *            additional args
-	 * @return an integer as an exit code
-	 */
-	public abstract String entry(int functionCode, String... args);
-	
 	/**
 	 * @return the METADATA
 	 */
