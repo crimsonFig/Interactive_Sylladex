@@ -457,7 +457,7 @@ public class TimeBox implements Modus {
     public String findItemName(String givenName) {
         List<String> itemList = timeBox.stream()
                                        .collect(ArrayList::new, (r, e) -> r.add(e.getItem()), ArrayList::addAll);
-        return Searcher.fuzzyStringSearch(itemList, givenName).getValue();
+        return Searcher.fuzzyStringSearch(givenName, itemList).getValue();
     }
 
     /* (non-Javadoc)

@@ -93,7 +93,7 @@ public interface Modus {
 	 * is usually called by {@link #capture(String) #capture}, but can be used by
 	 * any other method.
 	 * 
-	 * @param CARD
+	 * @param card
 	 *            The Card to be added
 	 * @return True if it successfully added the CARD
 	 */

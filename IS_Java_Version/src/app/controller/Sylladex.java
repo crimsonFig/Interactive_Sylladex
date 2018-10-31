@@ -13,10 +13,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import javafx.event.ActionEvent;
@@ -31,8 +31,10 @@ import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
+import javafx.util.Pair;
 import app.model.Card;
 import app.model.CardNode;
+import app.model.CommandMap;
 import app.model.Metadata;
 import commandline_utils.*;
 
@@ -65,7 +67,8 @@ public class Sylladex extends CmdListeners implements Parser{
 	private static List<String> openHand = new ArrayList<String>();
 	private static List<Card> deck = new ArrayList<Card>();
 	private ModusManager modiMgr;
-	private static final LinkedHashSet<String> SYLL_CMD_STRING_LIST = initializeSyllCmdStringList();
+	private List<String> totalCommandList = new ArrayList<String>();
+	private final CommandMap SYLL_CMD_MAP = initSyllCmdMap();
 	private static final String SAVE_FILE_NAME = "sylladexDeck.sav";
 	private static final String OUT_PATH = "";
 	///// GUI references ////////////
@@ -180,6 +183,7 @@ public class Sylladex extends CmdListeners implements Parser{
 			hLine.setPrefWidth(200);
 			modusList.getChildren().add(hLine);
 		}
+		
 		//should attempt to prompt the user to equip a modus
 		VBox noModusBox = new VBox(150);
 		noModusBox.setAlignment(Pos.CENTER);
@@ -190,32 +194,99 @@ public class Sylladex extends CmdListeners implements Parser{
 		noModusBox.getChildren().addAll(noModusPrompt_1, noModusPrompt_2);
 		display.getChildren().add(noModusBox);
 		
-		//initialize the syllCmdList TODO: fix this and the modusCmdList to utilize the new function map
-		Iterator<String> list = SYLL_CMD_STRING_LIST.iterator();
-		while (list.hasNext()) {
-			String command = list.next();
-			if (list.hasNext()) {
-				Label label = new Label(command);
-				Separator line = new Separator();
-				syllCmdList.getChildren().addAll(label, line);
-			} else {
-				Label label = new Label(command);
-				syllCmdList.getChildren().add(label);
-			}
+		//initialize the syllCmdList
+		for (String command : SYLL_CMD_MAP.keySet()) {
+			syllCmdList.getChildren().addAll(new Label(command), new Separator());
 		}
 		
 	}
 	
-	private static LinkedHashSet<String> initializeSyllCmdStringList() {
-		LinkedHashSet<String> tSet = new LinkedHashSet<String>();
-		tSet.add("syll.saveDeck");
-		tSet.add("syll.loadDeck");
-		tSet.add("syll.deleteDeck");
-		tSet.add("syll.deleteSaveFile");
-		tSet.add("syll.refreshModus");
-		tSet.add("syll.showLooseItems");
-		tSet.add("syll.help <command name>");
-		return tSet;
+	/**
+	 * Create a CommandMap of short functions by utilizing consumer lambdas.
+	 * Also initializes the {@link #totalCommandList} variable.
+	 * @return
+	 */
+	private CommandMap initSyllCmdMap() {
+		CommandMap commandMap = new CommandMap();
+		
+		commandMap.put("syll.saveDeck", 
+				new Pair<Consumer<String[]>, String>((args) -> {
+					
+					textOutput.appendText("Saving deck to file... ");
+					try {
+						writeDeckToFile(SAVE_FILE_NAME, OUT_PATH);
+						textOutput.appendText("save sucessful at location: " + java.nio.file.Paths.get(OUT_PATH, SAVE_FILE_NAME).toString() + ".\n");
+					} catch (Exception e) {
+						textOutput.appendText("save failed.\n");
+						return;
+					}
+				}, "")
+		);
+		
+		commandMap.put("syll.loadDeck", 
+				new Pair<Consumer<String[]>, String>((args) -> {
+					textOutput.appendText("Loading deck from file... ");
+					try {
+						loadDeckFromFile(SAVE_FILE_NAME, OUT_PATH);
+						textOutput.appendText("load sucessful.\n");
+					} catch (Exception e) {
+						textOutput.appendText("load failed.\n");
+						return;
+					}
+				}, "")
+		);
+		
+		commandMap.put("syll.deleteDeck", 
+				new Pair<Consumer<String[]>, String>((args) -> {
+					textOutput.appendText("Deleting deck...");
+					deck.clear();
+					textOutput.appendText("deletion sucessful.\n");
+				}, "")
+		);
+		
+		commandMap.put("syll.deleteSaveFile", 
+				new Pair<Consumer<String[]>, String>((args) -> {
+					textOutput.appendText("Deleting save file...");
+					try {
+						Files.deleteIfExists(Paths.get(OUT_PATH + SAVE_FILE_NAME));
+						textOutput.appendText("deletion sucessful.\n");
+					} catch (IOException e) {
+						e.printStackTrace();
+						textOutput.appendText("deletion failed.\n");
+					}
+				}, "")
+		);
+		
+		commandMap.put("syll.refreshModus", 
+				new Pair<Consumer<String[]>, String>((args) -> {
+					textOutput.appendText("Refreshing the modus...");
+					modiMgr.refreshModus();
+					modiMgr.getModusList().get(modiMgr.getCurrentModusIndex()).REFERENCE.drawToDisplay();
+					textOutput.appendText("success. Consider using the modus' load command before continueing.\n ");
+				}, "")
+		);
+		
+		commandMap.put("syll.showLooseItems", 
+				new Pair<Consumer<String[]>, String>((args) -> {
+					textOutput.appendText("Items in the hand are currently: \n");
+					Iterator<String> hand = openHand.iterator();
+					while (hand.hasNext()) {
+						String item = hand.next();
+						if (hand.hasNext())
+							textOutput.appendText(item + ", ");
+						else
+							textOutput.appendText(item + ".\n");
+					}
+				}, "")
+		);
+		
+		commandMap.put("syll.help", 
+				new Pair<Consumer<String[]>, String>((args) -> {
+					//TODO: finish the help method
+				}, "")
+		);
+		
+		return commandMap;
 	}
 	
 
@@ -299,15 +370,8 @@ public class Sylladex extends CmdListeners implements Parser{
 	@Override
 	public void commandSwitch(String inputCommand, String...args) {
 		
-		//TODO: consider rearranging order to first check if its syll or modus command and then parse it separately from there.
 		//parse the raw input command against a list containing both the sylladex and modus commands
-		String command = Searcher.parseCommands(inputCommand, () -> {
-			//TODO: create this list instead in the initialization steps so that it doesn't process a new list every time.
-			List<String> tCommandList = new ArrayList<String>();
-			modiMgr.getCurrentModusMetadata().COMMAND_MAP.keySet().forEach(key -> tCommandList.add(key));
-			SYLL_CMD_STRING_LIST.forEach(string -> tCommandList.add(string));
-			return tCommandList;
-		});
+		String command = Searcher.parseCommands(inputCommand, () -> totalCommandList);
 		
 		//check if the command wasn't matched to the cmd lists. if so, notify the user by the terminal.
 		if (command.isEmpty()) {
@@ -315,66 +379,9 @@ public class Sylladex extends CmdListeners implements Parser{
 			return;
 		}
 		
-		//if true then process as sylladex command, otherwise process as modus command. TODO: convert to a function map or ENUM.
+		//if true then process as sylladex command, otherwise process as modus command.
 		if (command.startsWith("syll.")) {
-			String syllCommand = command.substring(5); //chop off the "syll." prefix
-			switch (syllCommand) {
-			case "saveDeck":
-				textOutput.appendText("Saving deck to file... ");
-				try {
-					writeDeckToFile(SAVE_FILE_NAME, OUT_PATH);
-					textOutput.appendText("save sucessful at location: " + java.nio.file.Paths.get(OUT_PATH, SAVE_FILE_NAME).toString() + ".\n");
-				} catch (Exception e) {
-					textOutput.appendText("save failed.\n");
-					return;
-				}
-				break;
-			case "loadDeck":
-				textOutput.appendText("Loading deck from file... ");
-				try {
-					loadDeckFromFile(SAVE_FILE_NAME, OUT_PATH);
-					textOutput.appendText("load sucessful.\n");
-				} catch (Exception e) {
-					textOutput.appendText("load failed.\n");
-					return;
-				}
-				break;
-			case "deleteDeck":
-				textOutput.appendText("Deleting deck...");
-				deck.clear();
-				textOutput.appendText("deletion sucessful.\n");
-				break;
-			case "deleteSaveFile":
-				textOutput.appendText("Deleting save file...");
-				try {
-					Files.deleteIfExists(Paths.get(OUT_PATH + SAVE_FILE_NAME));
-					textOutput.appendText("deletion sucessful.\n");
-				} catch (IOException e) {
-					e.printStackTrace();
-					textOutput.appendText("deletion failed.\n");
-				}
-				break;
-			case "refreshModus":
-				textOutput.appendText("Refreshing the modus...");
-				modiMgr.refreshModus();
-				modiMgr.getModusList().get(modiMgr.getCurrentModusIndex()).REFERENCE.drawToDisplay();
-				textOutput.appendText("success. Consider using the modus' load command before continueing.\n ");
-				break;
-			case "showLooseItems":
-				textOutput.appendText("Items in the hand are currently: \n");
-				Iterator<String> hand = openHand.iterator();
-				while (hand.hasNext()) {
-					String item = hand.next();
-					if (hand.hasNext())
-						textOutput.appendText(item + ", ");
-					else
-						textOutput.appendText(item + ".\n");
-				}
-				break;
-			default: //"help <command name>"
-				//TODO: finish this command
-				break;
-			}
+			SYLL_CMD_MAP.command(command, args);
 		} else {
 			modiMgr.execModusCmd(command, args);
 		}
@@ -585,8 +592,12 @@ public class Sylladex extends CmdListeners implements Parser{
 			.forEach(node -> node.setDisable(false));
 		((Button) event.getSource()).setDisable(true);
 		
-		//clear the moduCmdList and set the moduCmdList to the selected modus COMMAND_MAP
+		//clear the lists and update them to the selected modus' COMMAND_MAP
 		moduCmdList.getChildren().clear();
+		totalCommandList.clear();
+		
+		
+		totalCommandList.addAll(SYLL_CMD_MAP.keySet());
 		for(String command : modiMgr.getCurrentModusMetadata().COMMAND_MAP.keySet()) {
 			if (command == null) continue;
 			//for each function, create a node to be inserted into the moduCmdList
@@ -598,6 +609,8 @@ public class Sylladex extends CmdListeners implements Parser{
 			functionDesc.setPadding(new Insets(0, 0, 0, 5)); 
 			Separator line = new Separator();
 			moduCmdList.getChildren().addAll(commandName, functionDesc, line);
+			//add the command name to the command name list.
+			totalCommandList.add(command);
 		}
 		
 		//reset the display
