@@ -4,7 +4,8 @@ import app.model.Card;
 import app.model.CommandMap;
 import app.model.Metadata;
 
-/**
+/** TODO: reduce interface by pruning methods not to be called by other classes. instead comment desired functionality.
+ *  TODO: analyze if all modi methods can be made idempotent for the sake of functional enums
  * A "Fetch Modus" is a module that tells the sylladex how to manage it's
  * Card(s). <br>
  * This interface provides the bare minimum required for proper manipulation of
@@ -18,6 +19,7 @@ import app.model.Metadata;
  * @author Triston Scallan
  *
  */
+@ModusMetatagRunStatus
 public interface Modus {
 	/**
 	 * provides information about this modus

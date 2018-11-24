@@ -28,16 +28,13 @@ public class Main extends Application {
 			e.printStackTrace();
 		}
 	}
-	
-	/**
-	 * @param args
-	 */
+
 	public static void main(String[] args) {
 		launch(args);
 	}
 	
 	/**
-	 * @return
+	 * @return the stage
 	 */
 	public static Stage getStage() {
 		return stage; 

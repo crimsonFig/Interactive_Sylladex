@@ -30,6 +30,7 @@ import javafx.util.Pair;
  *   3. The current PentaFile can have all its information saved and loaded to a text file. <br>
  *   </dd>
  */
+@ModusMetatagRunStatus(true)
 public class PentaFile implements Modus {
 	/**
 	 * provides information about this modus

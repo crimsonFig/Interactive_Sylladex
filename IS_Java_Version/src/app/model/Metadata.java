@@ -38,4 +38,12 @@ public class Metadata {
 		this.COMMAND_MAP = commandMap;
 		this.REFERENCE = reference;
 	}
+
+    public static boolean isValid(Metadata metadata) {
+	    //reference is not null, the name equals class name, and command map is not null and valid
+        return (metadata != null &&
+                metadata.REFERENCE != null &&
+                metadata.NAME.equals(metadata.REFERENCE.getClass().getSimpleName()) &&
+                CommandMap.isValid(metadata.COMMAND_MAP));
+    }
 }

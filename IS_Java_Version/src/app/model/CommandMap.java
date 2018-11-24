@@ -1,6 +1,7 @@
 package app.model;
 
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import javafx.util.Pair;
@@ -32,5 +33,20 @@ public class CommandMap extends LinkedHashMap<String, Pair<Consumer<String[]>, S
 	 */
 	public String desc(String command) {
 		return this.get(command).getValue();
+	}
+
+	public static boolean isValid(CommandMap map) {
+	    if (map == null) return false;
+		for(Map.Entry<String, Pair<Consumer<String[]>,String>> entry : map.entrySet()) {
+			String commandName = entry.getKey();
+            Pair<Consumer<String[]>,String> commandPair = entry.getValue();
+
+            //Name is empty, command is null, or description is empty -> return false
+            if (commandName != null && commandName.isEmpty() ||
+                commandPair.getKey() == null ||
+                commandPair.getValue().isEmpty())
+                return false;
+		}
+		return true;
 	}
 }
