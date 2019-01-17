@@ -2,9 +2,11 @@ package app.model;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
+import commandline_utils.Searcher;
 import javafx.util.Pair;
+import modus.ModusBuffer;
 
 /**
  * A mapping between a modus' command name and it's associated functional 
@@ -13,7 +15,7 @@ import javafx.util.Pair;
  * @author Triston Scallan
  *
  */
-public class CommandMap extends LinkedHashMap<String, Pair<Consumer<String[]>, String>> {
+public class ModusCommandMap extends LinkedHashMap<String, Pair<BiConsumer<String[], ModusBuffer>, String>> {
 	private static final long serialVersionUID = 1L;
 	/**
 	 * constant value that determines an unmatched command
@@ -21,11 +23,12 @@ public class CommandMap extends LinkedHashMap<String, Pair<Consumer<String[]>, S
 	public static final String CMD_ERR = null;
 	
 	/**
-	 * @param command 
+	 * @param command
 	 * @param args
+	 * @param modusBuffer
 	 */
-	public void command(String command, String[] args) {
-		this.get(command).getKey().accept(args);
+	public void command(String command, String[] args, ModusBuffer modusBuffer) {
+		this.get(Searcher.caseInsensitiveKeySearch(this, command)).getKey().accept(args, modusBuffer);
 	}
 	/**
 	 * @param command 
@@ -35,11 +38,11 @@ public class CommandMap extends LinkedHashMap<String, Pair<Consumer<String[]>, S
 		return this.get(command).getValue();
 	}
 
-	public static boolean isValid(CommandMap map) {
+	public static boolean isValid(ModusCommandMap map) {
 	    if (map == null) return false;
-		for(Map.Entry<String, Pair<Consumer<String[]>,String>> entry : map.entrySet()) {
+		for(Map.Entry<String, Pair<BiConsumer<String[], ModusBuffer>, String>> entry : map.entrySet()) {
 			String commandName = entry.getKey();
-            Pair<Consumer<String[]>,String> commandPair = entry.getValue();
+            Pair<BiConsumer<String[], ModusBuffer>, String> commandPair = entry.getValue();
 
             //Name is empty, command is null, or description is empty -> return false
             if (commandName != null && commandName.isEmpty() ||

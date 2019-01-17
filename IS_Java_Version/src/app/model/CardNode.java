@@ -21,6 +21,7 @@ import javafx.scene.text.Font;
  *
  */
 public class CardNode {
+	public static final CardNode EMPTY = new CardNode(Card.EMPTY);
 	/**
 	 * 
 	 */

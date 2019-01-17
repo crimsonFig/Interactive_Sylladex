@@ -14,28 +14,28 @@ public class Metadata {
 	/**
 	 * the String name of the Modus' class name
 	 */
-	public final String NAME;
+	public final String          NAME;
 	/**
 	 * a copy of the associated Modus' reference.
 	 */
-	public final Modus REFERENCE;
+	public final Modus           REFERENCE;
 	/**
 	 * a mapping between a modus' command name and the associated command lambda.
 	 */
-	public final CommandMap COMMAND_MAP;
+	public final ModusCommandMap COMMAND_MAP;
 	/**
 	 * Constructor for the Metadata class. establishes information
 	 * 	and initialization of the constants.
 	 * @param name {@link #NAME}
-	 * @param commandMap {@link #COMMAND_MAP}
+	 * @param modusCommandMap {@link #COMMAND_MAP}
 	 * @param reference {@link #REFERENCE}
 	 */
 	public Metadata(
 			String name, 
-			CommandMap commandMap,
+			ModusCommandMap modusCommandMap,
 			Modus reference ) {
 		this.NAME = name;
-		this.COMMAND_MAP = commandMap;
+		this.COMMAND_MAP = modusCommandMap;
 		this.REFERENCE = reference;
 	}
 
@@ -44,6 +44,6 @@ public class Metadata {
         return (metadata != null &&
                 metadata.REFERENCE != null &&
                 metadata.NAME.equals(metadata.REFERENCE.getClass().getSimpleName()) &&
-                CommandMap.isValid(metadata.COMMAND_MAP));
+                ModusCommandMap.isValid(metadata.COMMAND_MAP));
     }
 }

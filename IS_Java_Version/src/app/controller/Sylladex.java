@@ -1,9 +1,6 @@
 package app.controller;
 
 import app.model.*;
-import commandline_utils.CmdListeners;
-import commandline_utils.Parser;
-import commandline_utils.Searcher;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.HPos;
@@ -16,13 +13,13 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
-import javafx.util.Pair;
 import modus.Modus;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 //NOTE: This class acts as the main controller for the MVC format.
 
@@ -41,28 +38,28 @@ import java.util.*;
  *
  * @author Triston Scallan
  */
-public class Sylladex extends CmdListeners implements Parser {
-    /**
-     * a List of item(s) that represent items that exist but aren't in a Card.
-     * <p>This field utilizes {@link Collections#synchronizedList} and may
-     * become synchronized when modified.
-     */
-    //TODO: consider refactoring static references to utilize a singleton instead?
-    private static final List<String> openHand         = new ArrayList<>();
-    private static       List<Card>   deck             = new ArrayList<>();
-    private              ModusManager modiMgr;
-    private final        List<String> totalCommandList = new ArrayList<>();
-    private final        CommandMap   SYLL_CMD_MAP     = initSyllCmdMap();
-    private static final String       SAVE_FILE_NAME   = "sylladexDeck.sav";
-    private static final String       OUT_PATH         = "";
+public class Sylladex {
+    private final        AtomicReference<String>       wrappedModusInput = new AtomicReference<>();
+    private final        AtomicReference<StackPane>    wrappedDisplay    = new AtomicReference<>();
+    private final        AtomicReference<TextArea>     wrappedTextOutput = new AtomicReference<>();
+    private final        AtomicReference<List<String>> wrappedOpenHand   = new AtomicReference<>();
+    private final        AtomicReference<List<Card>>   wrappedDeck       = new AtomicReference<>();
+    private              ModusManager                  modiMgr;
+    private final        HashMap<String, Runnable>     SYLL_CMD_MAP      = initSyllCmdMap();
+    private static final String                        SYLL_PREFIX       = "SYLL.";
+    //TODO: delegate saving and loading to a separate class
+    private static final String                        SAVE_FILE_NAME    = "sylladexDeck.sav";
+    private static final String                        OUT_PATH          = "";
+
     ///// GUI references ////////////
     @FXML
-    private              BorderPane   root;
+    private BorderPane root;
+
     //BOTTOM
     @FXML
-    private              Button       bInputButton;
+    private Button    bInputButton;
     @FXML
-    private              TextField    textInput;
+    private TextField textInput;
 
     //RIGHT
     ///tab - Commands
@@ -91,25 +88,23 @@ public class Sylladex extends CmdListeners implements Parser {
 
     //CENTER
     @FXML
-    private        StackPane display;
-    private static StackPane staticDisplay;
+    private StackPane display;
     @FXML
-    private        TextArea  textOutput;
-    private static TextArea  staticTextOutput;
+    private TextArea  textOutput;
 
     //////////////////////////////////////////////////////
 
 
     @FXML
     private void initialize() {
-        //// initialize some pane parameters
+        //// initialize pane parameters
         //cmdAcc.setExpandedPane(syllCmdPane); //set Sylladex Commands pane as defaulted open
         bRefresh.setDisable(true); //keep disabled until ModusManager can add modi generically (not explicitly)
         bInputButton.setDisable(true);
         bReset.setDisable(true);
         //submit key is not disabled if a modus is chosen and the field isn't empty.
         textInput.setOnKeyTyped((ev) -> {
-            if (textInput.getText().isEmpty() || modiMgr.getCurrentModusMetadata() == null) {
+            if (textInput.getText().isEmpty() || modiMgr.getCurrentModus() == null) {
                 bInputButton.setDisable(true);
             } else {
                 bInputButton.setDisable(false);
@@ -126,12 +121,15 @@ public class Sylladex extends CmdListeners implements Parser {
 
         });
 
-        //set the instance references to the class variables
-        staticDisplay = display;
-        staticTextOutput = textOutput;
+        //initialize wrapped objects
+        wrappedModusInput.set(null);
+        wrappedDisplay.set(display);
+        wrappedTextOutput.set(textOutput);
+        wrappedDeck.set(Collections.synchronizedList(new ArrayList<>()));
+        wrappedOpenHand.set(Collections.synchronizedList(new ArrayList<>()));
+        //initialize the ModusManager
+        modiMgr = new ModusManager(wrappedModusInput, wrappedDisplay, wrappedTextOutput, wrappedDeck, wrappedOpenHand);
 
-        //initialize a ModusManager
-        modiMgr = new ModusManager();
 
         //add modus nodes to the modusMenuList VBox in modus selection tab, using Metadata from ModiMgr#modusMenuList.
         for (Class<? extends Modus> e : modiMgr.getModusClassList()) {
@@ -179,23 +177,23 @@ public class Sylladex extends CmdListeners implements Parser {
 
         //initialize the syllCmdList
         for (String command : SYLL_CMD_MAP.keySet()) {
-            syllCmdList.getChildren().addAll(new Label(command), new Separator());
+            syllCmdList.getChildren().addAll(new Label(SYLL_PREFIX + command), new Separator());
         }
 
     }
 
     /**
-     * Create a CommandMap of short functions by utilizing consumer lambdas. Also initializes the {@link
-     * #totalCommandList} variable.
+     * Create a command map of short functions by utilizing consumer lambdas.
      *
-     * @return CommandMap of the sylladex's user callable commands
+     * @return map of the sylladex's user callable commands
      */
-    private CommandMap initSyllCmdMap() {
-        CommandMap commandMap = new CommandMap();
+    private HashMap<String, Runnable> initSyllCmdMap() {
+        HashMap<String, Runnable> commandMap = new SyllCommandMap();
 
-        commandMap.put("syll.saveDeck", new Pair<>((args) -> {
+        commandMap.put("saveDeckToFile", () -> {
             textOutput.appendText("Saving deck to file... ");
             try {
+                modiMgr.requestSave();
                 writeDeckToFile();
                 textOutput.appendText("save successful at location: " +
                                       java.nio.file.Paths.get(OUT_PATH, SAVE_FILE_NAME).toString() +
@@ -203,25 +201,24 @@ public class Sylladex extends CmdListeners implements Parser {
             } catch (Exception e) {
                 textOutput.appendText("save failed.\n");
             }
-        }, ""));
-
-        commandMap.put("syll.loadDeck", new Pair<>((args) -> {
+            //TODO: maybe add an alert (and if save declined - an exception) for overwriting an existing save file
+        });
+        commandMap.put("loadDeckFromFile", () -> {
             textOutput.appendText("Loading deck from file... ");
             try {
                 loadDeckFromFile();
                 textOutput.appendText("load successful.\n");
+                //TODO: consider if this command should request the modus to load
             } catch (Exception e) {
                 textOutput.appendText("load failed.\n");
             }
-        }, ""));
-
-        commandMap.put("syll.deleteDeck", new Pair<>((args) -> {
+        });
+        commandMap.put("deleteDeck", () -> {
             textOutput.appendText("Deleting deck...");
-            deck.clear();
+            setDeck(Collections.emptyList());
             textOutput.appendText("deletion successful.\n");
-        }, ""));
-
-        commandMap.put("syll.deleteSaveFile", new Pair<>((args) -> {
+        });
+        commandMap.put("deleteSaveFile", () -> {
             textOutput.appendText("Deleting save file...");
             try {
                 Files.deleteIfExists(Paths.get(OUT_PATH + SAVE_FILE_NAME));
@@ -230,144 +227,60 @@ public class Sylladex extends CmdListeners implements Parser {
                 e.printStackTrace();
                 textOutput.appendText("deletion failed.\n");
             }
-        }, ""));
-
-        commandMap.put("syll.refreshModus", new Pair<>((args) -> {
+        });
+        commandMap.put("resetModus", () -> {
             textOutput.appendText("Refreshing the modus...");
-            modiMgr.refreshModus();
-            modiMgr.getCurrentModusMetadata().REFERENCE.drawToDisplay();
+            modiMgr.resetModus();
+            modiMgr.requestDrawToDisplay();
             textOutput.appendText("success. Consider using the modus' load command before continuing.\n ");
-        }, ""));
-
-        commandMap.put("syll.showLooseItems", new Pair<>((args) -> {
+        });
+        commandMap.put("showLooseItems", () -> {
             textOutput.appendText("Items in the hand are currently: \n");
-            Iterator<String> hand = openHand.iterator();
-            while (hand.hasNext()) {
-                String item = hand.next();
-                if (hand.hasNext()) textOutput.appendText(item + ", ");
-                else textOutput.appendText(item + ".\n");
+            synchronized (wrappedOpenHand.get()) {
+                for (ListIterator<String> hand = wrappedOpenHand.get().listIterator(); hand.hasNext();){
+                    String item = hand.next();
+                    if (hand.hasNext()) textOutput.appendText(item + ", ");
+                    else textOutput.appendText(item + ".\n");
+                }
             }
-        }, ""));
-
-        commandMap.put("syll.help", new Pair<>((args) -> {
-            //TODO: finish the help method
-        }, ""));
+        });
 
         return commandMap;
     }
 
 
     ///// GETTERS AND SETTERS /////
-
-    // --Commented out by Inspection START (11/3/18, 2:21 AM):
-    //    /**
-    //     * @return the modiMgr
-    //     */
-    //    public ModusManager getModiMgr() {
-    //        return modiMgr;
-    //    }
-    // --Commented out by Inspection STOP (11/3/18, 2:21 AM)
-
-    // --Commented out by Inspection START (11/3/18, 2:22 AM):
-    //    /**
-    //     * @param modiMgr
-    //     *         the modiMgr to set
-    //     */
-    //    public void setModiMgr(ModusManager modiMgr) {
-    //        this.modiMgr = modiMgr;
-    //    }
-    // --Commented out by Inspection STOP (11/3/18, 2:22 AM)
-
-    /**
-     * @return the deck
-     */
-    public static List<Card> getDeck() {
-        return deck;
+    private List<Card> getDeck() {
+        return wrappedDeck.get();
     }
 
-    /**
-     * @param deck
-     *         the deck to set
-     */
-    public static void setDeck(List<Card> deck) {
-        Sylladex.deck = deck;
-    }
-
-    /**
-     * @return the display
-     */
-    public static StackPane getDisplay() {
-        return staticDisplay;
-    }
-
-    /**
-     * @return the textOutput
-     */
-    public static TextArea getTextOutput() {
-        return staticTextOutput;
-    }
-
-    /**
-     * adds a collection of Card(s) to {@link #openHand}
-     * <p>Note: This block will synchronize when in use
-     *
-     * @param tempDeck
-     *         a List of Card(s)
-     */
-    public static void addToOpenHand(List<Card> tempDeck) {
-        synchronized (openHand) {
-            for (Card card : tempDeck) {
-                openHand.add(card.getItem());
-            }
+    private void setDeck(List<Card> deck) {
+        synchronized (wrappedDeck.get()) {
+            wrappedDeck.set(deck);
         }
     }
 
-    /**
-     * If the parameter item matches an item in {@link #openHand} then remove it. Only a single match will be removed if
-     * the openHand contains duplicates.
-     *
-     * @param item
-     *         item to be removed
-     * @return true if item was removed. false otherwise.
-     */
-    @SuppressWarnings("UnusedReturnValue")
-    public static Boolean removeFromHand(String item) {
-        //TODO: use this to remove an openHand item during capture.
-        Boolean result = false;
-        for (String handItem : openHand) {
-            if (handItem.equalsIgnoreCase(item)) {
-                openHand.remove(handItem);
-                result = true;
-                break;
-            }
-        }
-        return result;
+    private List<String> getOpenHand() {
+        return wrappedOpenHand.get();
     }
 
-    ///// UTILITY /////
-    @Override
-    public void commandSwitch(String inputCommand, String... args) {
+    private void setModusInput(String modusInput) {
+        wrappedModusInput.set(modusInput);
+    }
 
-        //parse the raw input command against a list containing both the sylladex and modus commands
-        String command = Searcher.parseCommands(inputCommand, () -> totalCommandList);
-
-        //check if the command wasn't matched to the cmd lists. if so, notify the user by the terminal.
-        if (command.isEmpty()) {
-            textOutput.appendText("Command \"" + inputCommand + "\" wasn't recognized. Please try again.\n");
-            return;
+    ///// HANDLERS /////
+    private void handleSyllInput(String input) throws NoSuchElementException {
+        String command = input.trim();
+        Runnable runnableCmd = SYLL_CMD_MAP.get(command);
+        if (runnableCmd == null) {
+            throw new NoSuchElementException(String.format("given sylladex command `%s` does not exist.\n", command));
         }
-
-        //if true then process as sylladex command, otherwise process as modus command.
-        if (command.startsWith("syll.")) {
-            SYLL_CMD_MAP.command(command, args);
-        } else {
-            modiMgr.execModusCmd(command, args);
-        }
-        textOutput.appendText("\n"); //TODO: shift textOutput dialogues to have \n appear at the front instead of end
+        System.out.format("running sylladex command `%s`.\n", command);
+        runnableCmd.run();
     }
 
     /**
-     * Writes the {@link #deck} out to a binary file.
+     * Writes the deck out to a binary file.
      * <br>
      * Not thread-safe.
      */
@@ -375,6 +288,7 @@ public class Sylladex extends CmdListeners implements Parser {
         String fullOutPath = Sylladex.OUT_PATH + Sylladex.SAVE_FILE_NAME;
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(fullOutPath)))) {
             //write deck size to the front of the file,
+            List<Card> deck = getDeck();
             oos.writeInt(deck.size());
             for (Card card : deck) {
                 oos.writeObject(card);
@@ -398,7 +312,7 @@ public class Sylladex extends CmdListeners implements Parser {
     }
 
     /**
-     * Loads a binary file to extract a List of Card from. Replaces the current instance of {@link #deck} with the one
+     * Loads a binary file to extract a List of Card from. Replaces the current instance of deck with the one
      * found in the file.
      */
     private void loadDeckFromFile() throws Exception {
@@ -434,26 +348,6 @@ public class Sylladex extends CmdListeners implements Parser {
         }
     }
 
-
-    /**
-     * Creates a CardNode. Using this method is preferred over creating an instance so that the sylladex is able to
-     * regulate and observe production.
-     *
-     * @param card
-     *         A CARD
-     * @return a graphical CardNode derived from the CARD
-     */
-    public static CardNode createCardNode(Card card) {
-        return new CardNode(card);
-    }
-
-    /**
-     * Clears the display node
-     */
-    public static void clearDisplay() {
-        staticDisplay.getChildren().clear();
-    }
-
     ///// LISTENERS /////
     @FXML
     void displayClick(MouseEvent event) {
@@ -466,26 +360,19 @@ public class Sylladex extends CmdListeners implements Parser {
     @FXML
     void submit(ActionEvent event) {
         //consume the textInput field
-        String inputRawString = textInput.getText();
+        String rawInputString = textInput.getText();
         textInput.clear();
-        if (inputRawString.isEmpty()) return;
+        if (rawInputString.isEmpty()) return;
 
-        //split the raw input into ["command", "arg1 arg2 arg3..."]
-        String[] splitRawInput = inputRawString.split(" ", 2);
-        String inputCommand = splitRawInput[0].trim();
-
-        //split the args string into a list, if any, then run the commandSwitch
-        if (splitRawInput.length > 1) {
-            String[] inputArgs = splitRawInput[1].split(",");
-            for (int i = 0; i < inputArgs.length; i++) {
-                inputArgs[i] = inputArgs[i].trim();
-            }
-
-            commandSwitch(inputCommand, inputArgs);
-        } else {
-            commandSwitch(inputCommand);
+        //determine where to send input based on prefix. no prefix means its for modus.
+        if (rawInputString.toUpperCase().startsWith(SYLL_PREFIX)) {
+            handleSyllInput(rawInputString.substring(SYLL_PREFIX.length()));
         }
-
+        else {
+            if(wrappedModusInput.getAndSet(rawInputString) != null)
+                System.err.println("WARNING - Modus failed to consume the wrappedModusInput since last submit event");
+            modiMgr.handleModusInput();
+        }
     }
 
     /**
@@ -502,7 +389,7 @@ public class Sylladex extends CmdListeners implements Parser {
     private <M extends Modus> void handleModusSelection(Class<M> modusClass, ActionEvent event) {
 
         //if there was a previous modus selected, prompt if they want to save or reset their deck
-        if (modiMgr.getCurrentModusMetadata() != null) {
+        if (modiMgr.getCurrentModus() != null) {
             Alert alert = new Alert(AlertType.CONFIRMATION);
             alert.setTitle("Changing Modus Confirmation");
             alert.setHeaderText("Are you Sure?");
@@ -522,14 +409,14 @@ public class Sylladex extends CmdListeners implements Parser {
                 try {
                     writeDeckToFile();
                     textOutput.appendText("save successful.\n");
-                    Sylladex.deck.clear();
+                    getDeck().clear();
                     textOutput.appendText("Deck has been refreshed.\n\n");
                 } catch (Exception e) {
                     textOutput.appendText("Cancelling modus change.\n\n");
                     return;
                 }
             } else if (result.get() == buttonNew) {
-                Sylladex.deck.clear();
+                getDeck().clear();
                 textOutput.appendText("Deck has been refreshed without saving.\n\n");
             } else {
                 return;
@@ -538,7 +425,7 @@ public class Sylladex extends CmdListeners implements Parser {
 
         //set the new active modus
         try {
-            modiMgr.updateCurrentSelectedModus(modusClass);
+            modiMgr.updateCurrentModus(modusClass);
         } catch (IllegalArgumentException e) {
             //if the given class is invalid
             Alert alert = new Alert(AlertType.ERROR);
@@ -575,15 +462,12 @@ public class Sylladex extends CmdListeners implements Parser {
 
         //clear the lists and update them to the selected modus' COMMAND_MAP
         modusCmdList.getChildren().clear();
-        totalCommandList.clear();
-        totalCommandList.addAll(SYLL_CMD_MAP.keySet());
-        for (String command : modiMgr.getCurrentModusMetadata().COMMAND_MAP.keySet()) {
+        for (String command : modiMgr.getCurrentModus().COMMAND_MAP.keySet()) {
             if (command == null) continue;
-            else totalCommandList.add(command);
             //for each command, create a node of the command name and description to be inserted into the modusCmdList
             Label commandName = new Label(command);
             Label commandDesc = new Label();
-            commandDesc.setText(modiMgr.getCurrentModusMetadata().COMMAND_MAP.desc(command));
+            commandDesc.setText(modiMgr.getCurrentModus().COMMAND_MAP.desc(command));
             commandDesc.setWrapText(true);
             commandDesc.setPadding(new Insets(0, 0, 0, 5));
             Separator line = new Separator();
@@ -591,9 +475,9 @@ public class Sylladex extends CmdListeners implements Parser {
         }
 
         //reset the display
-        modiMgr.getCurrentModusMetadata().REFERENCE.drawToDisplay();
+        modiMgr.requestDrawToDisplay();
         //display this modus' description to screen
-        textOutput.appendText(modiMgr.getCurrentModusMetadata().REFERENCE.description());
+        textOutput.appendText(modiMgr.requestDescription());
 
         //set the view to be on the commands tab from the modusMenuList tab
         ((TabPane) cmdTab.getStyleableParent()).getSelectionModel().select(cmdTab);
