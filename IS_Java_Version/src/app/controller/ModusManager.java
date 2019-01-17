@@ -5,14 +5,17 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
 
+import app.model.Card;
 import app.model.Metadata;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.StackPane;
 import modus.*;
 
 /**
@@ -35,6 +38,7 @@ import modus.*;
  * @see modus.Modus
  */
 class ModusManager {
+    private ModusBuffer                  modusBuffer;
     /** Tracks the current active Modus as an index of {@link #modusClassList}. -1 means no active Modus. */
     private Metadata                     currentModusMetadata;
     /** Tracks all available Fetch Modi for the Sylladex */
@@ -43,7 +47,17 @@ class ModusManager {
     /**
      * Constructor
      */
-    ModusManager() {
+    ModusManager(AtomicReference<String> wrappedModusInput,
+                 AtomicReference<StackPane> wrappedDisplay,
+                 AtomicReference<TextArea> wrappedTextOutput,
+                 AtomicReference<List<Card>> wrappedDeck,
+                 AtomicReference<List<String>> wrappedOpenHand) {
+        this.modusBuffer = new ModusBuffer(wrappedModusInput,
+                                           wrappedDisplay,
+                                           wrappedTextOutput,
+                                           wrappedDeck,
+                                           wrappedOpenHand);
+
         //populate a list with the class names in the modus package
         List<String> modusNameList = createClassNameList();
 
@@ -65,32 +79,42 @@ class ModusManager {
                                                                "'.\n");
                                           }
                                           return modusClass;
-                                      })
-                                      .filter(this::validateModusFile)
-                                      .collect(Collectors.toList());
+                                      }).filter(this::validateModusFile).collect(Collectors.toList());
         System.out.println("ClassListing: complete.");
 
         //if modusClassList is empty, warn the user
         if (modusClassList.isEmpty()) {
-            Alert alert = new Alert(AlertType.WARNING);
-            alert.setTitle("No Modi Found");
-            alert.setHeaderText("Modus list empty");
-            alert.setContentText(
-                    "No modi was added to the modus list. This may be because the directory is empty or there was an issue adding modi to the list. Exiting program.");
-            alert.showAndWait();
-            System.exit(-1);
+            throw new RuntimeException("Final result of modusClassList in ModusManager constructor is empty.");
         }
     }
 
     //************** GETTERS/SETTERS *******************/
 
-
     /**
      * @return the currentModusMetadata
      */
-    Metadata getCurrentModusMetadata() {
+    Metadata getCurrentModus() {
         return currentModusMetadata;
     }
+
+    /**
+     * @param modusClass
+     *         the modus to update the selection to
+     */
+    <T extends Modus> void updateCurrentModus(Class<T> modusClass) throws IllegalAccessException, InstantiationException, IllegalArgumentException {
+        //instantiate the desired class and set it to this#currentModusMetadata
+        Modus clazzInstance = modusClass.newInstance();
+        if (!Metadata.isValid(clazzInstance.getMETADATA()))
+            throw new IllegalArgumentException("Class '" + modusClass.getSimpleName() + "' failed validation as a Modus");
+        System.out.println("ClassLoading: classSuccess = " + modusClass.getSimpleName());
+        //replace old instance so it may be GC'd
+        currentModusMetadata = clazzInstance.getMETADATA();
+
+        //reset previous modus specific data in modusBuffer
+        modusBuffer.clearModusInput();
+        modusBuffer.clearModusInputRedirector();
+    }
+
 
     /**
      * @return the modusClassList
@@ -99,56 +123,79 @@ class ModusManager {
         return modusClassList;
     }
 
-    /**
-     * @param modusClass
-     *         the modus to update the selection to
-     */
-    <T extends Modus> void updateCurrentSelectedModus(Class<T> modusClass) throws IllegalAccessException, InstantiationException, IllegalArgumentException {
-        //instantiate the desired class and set it to this#currentModusMetadata
-        Modus clazzInstance = modusClass.newInstance();
-        if (Metadata.isValid(clazzInstance.getMETADATA())) {
-            System.out.println("ClassLoading: classSuccess = " + modusClass.getSimpleName());
-            //replace old instance so it may be GC'd
-            currentModusMetadata = clazzInstance.getMETADATA();
+    //*************** UTILITY **************************/
+
+    void handleModusInput() {
+        //get inputModusRedirector from modusBuffer.
+        Optional<Consumer<ModusBuffer>> redirector = Optional.ofNullable(modusBuffer.getAndResetModusInputRedirector());
+
+        //if redirector is present then run it's method, otherwise parse input and execute command.
+        if (redirector.isPresent()) {
+            redirector.get().accept(modusBuffer);
         } else {
-            throw new IllegalArgumentException();
+            String input = modusBuffer.getAndResetModusInput();
+            //split the input into ["command", "arg1 arg2 arg3..."]
+            String[] splitInput = input.split(" ", 2);
+            String command = splitInput[0].trim();
+
+            //split the args string into a list, if any, then run the commandSwitch
+            if (splitInput.length > 1) {
+                String[] inputArgs = splitInput[1].split(",");
+                for (int i = 0; i < inputArgs.length; i++) {
+                    inputArgs[i] = inputArgs[i].trim();
+                }
+                execModusCmd(command, inputArgs);
+            } else {
+                execModusCmd(command);
+            }
         }
     }
-
-
-    //*************** UTILITY **************************/
 
     /**
      * Messages a modus command statement to the currently selected modus for execution
      *
      * @param command
-     *         a modus command associated with a CommandMap entry
+     *         a modus command associated with a ModusCommandMap entry
      * @param args
      *         the arguments to supply the command with
      */
-    void execModusCmd(String command, String... args) {
+    private void execModusCmd(String command, String... args) {
         System.out.println("invoking `" + command + "` with args = " + Arrays.toString(args));
-        currentModusMetadata.COMMAND_MAP.command(command, args);
+        currentModusMetadata.COMMAND_MAP.command(command, args, modusBuffer);
+    }
 
+    void requestSave() {
+        synchronized (modusBuffer.getDeck()) {
+            modusBuffer.getDeck().clear();
+            modusBuffer.getDeck().addAll(currentModusMetadata.REFERENCE.save());
+        }
+    }
+
+    void requestLoad() {
+        currentModusMetadata.REFERENCE.load(modusBuffer);
+    }
+
+    void requestDrawToDisplay() {
+        currentModusMetadata.REFERENCE.drawToDisplay(modusBuffer);
+    }
+
+    String requestDescription() {
+        return Optional.of(currentModusMetadata.REFERENCE.description()).orElse("");
     }
 
     /**
      * Initializes a new object of the current modus class, then effectively replaces the old object's reference.
+     *
+     * @throws RuntimeException if the modus' constructor cannot be accessed or fails
      */
-    void refreshModus() {
-        Class<? extends Modus> modusClassObject = getCurrentModusMetadata().REFERENCE.getClass();
+    void resetModus() throws RuntimeException {
         try {
-            Modus modusInstance = modusClassObject.newInstance();
-            currentModusMetadata = modusInstance.getMETADATA();
+            updateCurrentModus(getCurrentModus().REFERENCE.getClass());
         } catch (SecurityException | IllegalAccessException e) {
-            e.printStackTrace();
-            System.exit(-1);
+            throw new RuntimeException("Access to " + getCurrentModus().REFERENCE.getClass().getSimpleName() + " constructor was prevented.",
+                                       e);
         } catch (IllegalArgumentException | InstantiationException e) {
-            //These exceptions should never happen if it didn't happen in during it's first initialization
-            //I would consider this a fatal issue that needs to be addressed by debugging.
-            e.printStackTrace();
-            System.out.println("An unusual and fatal error that should never happen has occurred.");
-            System.exit(-1);
+            throw new RuntimeException(getCurrentModus().REFERENCE.getClass().getSimpleName() + " modus constructor failed.", e);
         }
     }
 

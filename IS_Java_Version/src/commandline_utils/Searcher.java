@@ -1,8 +1,6 @@
 package commandline_utils;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 
 import javafx.util.Pair;
@@ -116,7 +114,7 @@ public class Searcher {
 	 * 	and matches it against the current modus list of 
 	 * 	commands and the sylladex's list of commands. 
 	 * <p> functionality would be the same as invoking 
-	 * {@link Searcher#fuzzyStringSearch(String, List)}.{@link Pair#getValue()} 
+	 * {@link Searcher#fuzzyStringSearch}.{@link Pair#getValue}
 	 * with a List of the commands and the inputString, respectively.
 	 * @param inputString The given command to parse
 	 * @param supplier List if commands to parse against
@@ -124,6 +122,14 @@ public class Searcher {
 	 */
 	public static String parseCommands(String inputString, Supplier<Collection<String>> supplier) {
 		return Searcher.fuzzyStringSearch(inputString, supplier.get()).getValue();
+	}
+
+	public static String caseInsensitiveKeySearch(HashMap<String, ?> map, String key) {
+		return map.entrySet()
+				  .stream()
+				  .filter(entry -> entry.getKey().toUpperCase().equals(key.toUpperCase()))
+				  .map(Map.Entry::getKey)
+				  .findFirst().orElse(null);
 	}
 	
 }
