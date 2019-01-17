@@ -47,7 +47,6 @@ public class Sylladex {
     private              ModusManager                  modiMgr;
     private final        HashMap<String, Runnable>     SYLL_CMD_MAP      = initSyllCmdMap();
     private static final String                        SYLL_PREFIX       = "SYLL.";
-    //TODO: delegate saving and loading to a separate class
     private static final String                        SAVE_FILE_NAME    = "sylladexDeck.sav";
     private static final String                        OUT_PATH          = "";
 
@@ -194,23 +193,46 @@ public class Sylladex {
             textOutput.appendText("Saving deck to file... ");
             try {
                 modiMgr.requestSave();
-                writeDeckToFile();
-                textOutput.appendText("save successful at location: " +
-                                      java.nio.file.Paths.get(OUT_PATH, SAVE_FILE_NAME).toString() +
-                                      ".\n");
-            } catch (Exception e) {
+                synchronized (getDeck()) {
+                    FileController.writeDeckToFile(getDeck(), OUT_PATH + SAVE_FILE_NAME);
+                }
+                textOutput.appendText(String.format("save successful at location: %s.\n",
+                                                    java.nio.file.Paths.get(OUT_PATH, SAVE_FILE_NAME).toString()));
+            } catch (SecurityException | FileNotFoundException e) {
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Unable To Create Or Open File");
+                alert.setHeaderText("Unable to open a save file.");
+                alert.setContentText("Sylladex was unable to create save file " +
+                                     "because this program could not open the file, likely as a security issue. \n" +
+                                     "Please change directory/file permissions to allow file " +
+                                     "creation and then try again. \n");
+                alert.showAndWait();
                 textOutput.appendText("save failed.\n");
+            } catch (IOException e) {
+                e.printStackTrace();
+                textOutput.appendText("ERROR saving file - save failed. Please try again.\n");
             }
-            //TODO: maybe add an alert (and if save declined - an exception) for overwriting an existing save file
         });
         commandMap.put("loadDeckFromFile", () -> {
             textOutput.appendText("Loading deck from file... ");
             try {
-                loadDeckFromFile();
+                setDeck(FileController.loadDeckFromFile(OUT_PATH + SAVE_FILE_NAME));
                 textOutput.appendText("load successful.\n");
                 //TODO: consider if this command should request the modus to load
-            } catch (Exception e) {
+            } catch (SecurityException | FileNotFoundException e) {
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Insufficient Permission");
+                alert.setHeaderText("Unable to create save file.");
+                alert.setContentText("Sylladex was unable to read the save file " +
+                                     "because the save file had insufficient permission. \n" +
+                                     "Please change file permissions to allow file " +
+                                     "read and then try again. \n");
+                alert.showAndWait();
                 textOutput.appendText("load failed.\n");
+            } catch (ClassNotFoundException | ClassCastException e) {
+                textOutput.appendText("ERROR - found file is corrupted or invalid. load failed. \n");
+            } catch (IOException e) {
+                textOutput.appendText("ERROR loading file - load failed. Please try again.\n");
             }
         });
         commandMap.put("deleteDeck", () -> {
@@ -236,8 +258,8 @@ public class Sylladex {
         });
         commandMap.put("showLooseItems", () -> {
             textOutput.appendText("Items in the hand are currently: \n");
-            synchronized (wrappedOpenHand.get()) {
-                for (ListIterator<String> hand = wrappedOpenHand.get().listIterator(); hand.hasNext();){
+            synchronized (getOpenHand()) {
+                for (ListIterator<String> hand = getOpenHand().listIterator(); hand.hasNext();){
                     String item = hand.next();
                     if (hand.hasNext()) textOutput.appendText(item + ", ");
                     else textOutput.appendText(item + ".\n");
@@ -256,7 +278,7 @@ public class Sylladex {
 
     private void setDeck(List<Card> deck) {
         synchronized (wrappedDeck.get()) {
-            wrappedDeck.set(deck);
+            wrappedDeck.set(Collections.synchronizedList(deck));
         }
     }
 
@@ -277,75 +299,6 @@ public class Sylladex {
         }
         System.out.format("running sylladex command `%s`.\n", command);
         runnableCmd.run();
-    }
-
-    /**
-     * Writes the deck out to a binary file.
-     * <br>
-     * Not thread-safe.
-     */
-    private void writeDeckToFile() throws Exception {
-        String fullOutPath = Sylladex.OUT_PATH + Sylladex.SAVE_FILE_NAME;
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(fullOutPath)))) {
-            //write deck size to the front of the file,
-            List<Card> deck = getDeck();
-            oos.writeInt(deck.size());
-            for (Card card : deck) {
-                oos.writeObject(card);
-            }
-            //finally write a null to mark the end of the file.
-            oos.writeByte((byte) '\0');
-        } catch (NullPointerException | FileNotFoundException e) {
-            e.printStackTrace();
-            throw e;
-        } catch (SecurityException e) {
-            Alert alert = new Alert(AlertType.WARNING);
-            alert.setTitle("Insufficient Permission");
-            alert.setHeaderText("Unable to create save file.");
-            alert.setContentText("Sylladex was unable to create save file " +
-                                 "because the save directory had insufficient permission. \n" +
-                                 "Please change directory permissions to allow file" +
-                                 "creation and then try again. \n");
-            alert.showAndWait();
-            throw e;
-        }
-    }
-
-    /**
-     * Loads a binary file to extract a List of Card from. Replaces the current instance of deck with the one
-     * found in the file.
-     */
-    private void loadDeckFromFile() throws Exception {
-        String fullInPath = Sylladex.OUT_PATH + Sylladex.SAVE_FILE_NAME;
-        List<Card> tempDeck = new ArrayList<>();
-        final File file = new File(fullInPath);
-
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-            Integer numOfCards = ois.readInt();
-            for (int i = 0; i < numOfCards; i++) {
-                Object o = ois.readObject();
-                if (o instanceof Card) tempDeck.add((Card) o);
-            }
-            setDeck(tempDeck);
-        } catch (EOFException e) {
-            setDeck(tempDeck);
-        } catch (SecurityException e) {
-            Alert alert = new Alert(AlertType.WARNING);
-            alert.setTitle("Insufficient Permission");
-            alert.setHeaderText("Unable to create save file.");
-            alert.setContentText("Sylladex was unable to read the save file " +
-                                 "because the save file had insufficient permission. \n" +
-                                 "Please change file permissions to allow file " +
-                                 "read and then try again. \n");
-            alert.showAndWait();
-            throw e;
-        } catch (FileNotFoundException e) {
-            System.out.println("sylladex load failed ERROR: file not found at " + file.getPath());
-            throw e;
-        } catch (NullPointerException | IOException | ClassNotFoundException | ClassCastException e) {
-            e.printStackTrace();
-            throw e;
-        }
     }
 
     ///// LISTENERS /////
@@ -407,7 +360,7 @@ public class Sylladex {
             } else if (result.get() == buttonSave) {
                 textOutput.appendText("Saving deck to file... ");
                 try {
-                    writeDeckToFile();
+                    FileController.writeDeckToFile(getDeck(), OUT_PATH + SAVE_FILE_NAME);
                     textOutput.appendText("save successful.\n");
                     getDeck().clear();
                     textOutput.appendText("Deck has been refreshed.\n\n");
