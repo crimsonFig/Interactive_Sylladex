@@ -2,13 +2,10 @@ package modus;
 
 import app.model.Card;
 import app.model.Metadata;
-import javafx.scene.layout.StackPane;
 
 import java.util.List;
 
-/** TODO: reduce interface by pruning methods not to be called by other classes. instead comment desired functionality.
- *  	(perhaps be composed of abstract classes, which the class may provide implementation for but allow it to
- *  	signal types for it's functionality. "can do x" and such.)
+/**
  * A "Fetch Modus" is a module that tells the sylladex how to manage it's
  * Card(s). <br/>
  * This interface provides the bare minimum required for proper manipulation of
@@ -56,7 +53,7 @@ public interface Modus {
 	 * Loading from a deck may have unintended behavior when swapping modi. It is up to the specific modus to handle
 	 * reading a potentially foreign deck.
 	 *
-	 * @param mode
+	 * @param modusBuffer
 	 *         an integer, 1 for automatic loading, 2 for manual loading, 0 for a reset and no loading. 3 and beyond are
 	 *         for special loading.
 	 */

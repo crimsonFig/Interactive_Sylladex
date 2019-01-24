@@ -6,7 +6,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import app.model.*;
-import app.model.ModusCommandMap;
+import app.util.CommandMap;
+import app.util.ModusCommandMap;
 import commandline_utils.Searcher;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
@@ -60,31 +61,28 @@ public class PentaFile implements Modus {
         Arrays.fill(keyCritical, card);
     }
 
-    /* (non-Javadoc)
-     * @see modus.Modus#createFunctionMap()
-     */
     private ModusCommandMap createFunctionMap() {
-        ModusCommandMap modusCommandMap = new ModusCommandMap();
+        ModusCommandMap commandMap = new ModusCommandMap(CommandMap.Case.SENSITIVE);
 
-        modusCommandMap.put("save", new Pair<>((args, modusBuffer) -> {
+        commandMap.put("save", new Pair<>((args, modusBuffer) -> {
             synchronized (modusBuffer.getDeck()) {
                 modusBuffer.getDeck().clear();
                 modusBuffer.getDeck().addAll(save());
             }
             modusBuffer.getTextOutput().appendText("Deck was saved to sylladex.\n");
         },
-                                               "syntax: save\n\u2022 saves the current inventory to the sylladex's deck. " +
-                                               "This command is called at the end of every other command except load."));
+                                          "syntax: save\n\u2022 saves the current inventory to the sylladex's deck. " +
+                                          "This command is called at the end of every other command except load."));
 
-        modusCommandMap.put("load",
-                            new Pair<>((args, modusBuffer) -> load(modusBuffer),
-                                       "syntax: load\n\u2022 loads the inventory from the sylladex, which may differ." +
-                                       "\n\u2022 mode 0 will simply reset the inventory." +
-                                       "\n\u2022 mode 1 will auto load the inventory, based on CARD positions in the deck." +
-                                       "\n\u2022 mode 2 will manually load the inv. you will choose where items go." +
-                                       "\n\u2022 mode 3 will fast load the inventory. disregards saved CARD positions.")); //mode = 0, 1, 2, or 3
+        commandMap.put("load",
+                       new Pair<>((args, modusBuffer) -> load(modusBuffer),
+                                  "syntax: load\n\u2022 loads the inventory from the sylladex, which may differ." +
+                                  "\n\u2022 mode 0 will simply reset the inventory." +
+                                  "\n\u2022 mode 1 will auto load the inventory, based on CARD positions in the deck." +
+                                  "\n\u2022 mode 2 will manually load the inv. you will choose where items go." +
+                                  "\n\u2022 mode 3 will fast load the inventory. disregards saved CARD positions.")); //mode = 0, 1, 2, or 3
 
-        modusCommandMap.put("capture", new Pair<>((args, modusBuffer) -> {
+        commandMap.put("capture", new Pair<>((args, modusBuffer) -> {
             TextArea textOutput = modusBuffer.getTextOutput();
             if (args.length == 1) {
                 textOutput.appendText("Attempting to capture " + args[0] + "...");
@@ -102,10 +100,10 @@ public class PentaFile implements Modus {
             }
             textOutput.appendText("ERROR-\n" + this.METADATA.COMMAND_MAP.desc("capture") + "\n");
         },
-                                                  "syntax: capture <item>\n\u2022 captchalogues the item. the item can have " +
-                                                  "spaces when you type its name. puts in first available spot."));
+                                             "syntax: capture <item>\n\u2022 captchalogues the item. the item can have " +
+                                             "spaces when you type its name. puts in first available spot."));
 
-        modusCommandMap.put("takeOutCard", new Pair<>((args, modusBuffer) -> {
+        commandMap.put("takeOutCard", new Pair<>((args, modusBuffer) -> {
             TextArea textOutput = modusBuffer.getTextOutput();
             if (args.length == 2) {
                 Card[] folder = findFolderByName(args[1]);
@@ -132,10 +130,10 @@ public class PentaFile implements Modus {
             }
             textOutput.appendText("ERROR-\n" + this.METADATA.COMMAND_MAP.desc("takeOutCard") + "\n");
         },
-                                                      "syntax: takeOutCard <index>, <folder>\n\u2022 takes out the CARD at " +
-                                                      "the index within the folder. index is from 1 to 5."));
+                                                 "syntax: takeOutCard <index>, <folder>\n\u2022 takes out the CARD at " +
+                                                 "the index within the folder. index is from 1 to 5."));
 
-        modusCommandMap.put("captureByFolder", new Pair<>((args, modusBuffer) -> {
+        commandMap.put("captureByFolder", new Pair<>((args, modusBuffer) -> {
             TextArea textOutput = modusBuffer.getTextOutput();
             if (args.length == 2) {
                 Card[] folder = findFolderByName(args[1]);
@@ -154,10 +152,10 @@ public class PentaFile implements Modus {
             }
             textOutput.appendText("ERROR-\n" + this.METADATA.COMMAND_MAP.desc("captureByFolder") + "\n");
         },
-                                                          "syntax: captureByFolder <item>, <folder>\n\u2022 captchalogues the item. the item can have " +
-                                                          "spaces when you type its name. puts in the specified folder."));
+                                                     "syntax: captureByFolder <item>, <folder>\n\u2022 captchalogues the item. the item can have " +
+                                                     "spaces when you type its name. puts in the specified folder."));
 
-        modusCommandMap.put("takeOutCardByName", new Pair<>((args, modusBuffer) -> {
+        commandMap.put("takeOutCardByName", new Pair<>((args, modusBuffer) -> {
             TextArea textOutput = modusBuffer.getTextOutput();
             if (args.length == 1) {
                 textOutput.appendText("Retrieving " + args[0] + "...");
@@ -175,10 +173,10 @@ public class PentaFile implements Modus {
             }
             textOutput.appendText("ERROR-\n" + this.METADATA.COMMAND_MAP.desc("takeOutCardByName") + "\n");
         },
-                                                            "syntax: takeOutCardByName <item>\n\u2022 attempts to take out a CARD based on the given " +
-                                                            "item name you gave. item can have spaces in its name."));
+                                                       "syntax: takeOutCardByName <item>\n\u2022 attempts to take out a CARD based on the given " +
+                                                       "item name you gave. item can have spaces in its name."));
 
-        modusCommandMap.put("help", new Pair<>((args, modusBuffer) -> {
+        commandMap.put("help", new Pair<>((args, modusBuffer) -> {
             TextArea textOutput = modusBuffer.getTextOutput();
             if (args.length == 0) {
                 textOutput.appendText(this.METADATA.COMMAND_MAP.desc("help") + "\n");
@@ -194,16 +192,16 @@ public class PentaFile implements Modus {
                 textOutput.appendText("command entered not understood.\n");
             }
         },
-                                               "syntax: help <command>\n\u2022 provides help information about the " +
-                                               "given command. syntax is the form you input a complete command. " +
-                                               "if a command has multiple arguments they need to be seperated by a comma."));
+                                          "syntax: help <command>\n\u2022 provides help information about the " +
+                                          "given command. syntax is the form you input a complete command. " +
+                                          "if a command has multiple arguments they need to be seperated by a comma."));
 
-        modusCommandMap.put(ModusCommandMap.CMD_ERR,
-                            new Pair<>((args, modusBuffer) -> modusBuffer.getTextOutput()
-                                                                         .appendText("command entered not understood.\n"),
-                                       "ERROR"));
+        commandMap.put(CommandMap.CMD_ERR,
+                       new Pair<>((args, modusBuffer) -> modusBuffer.getTextOutput()
+                                                                    .appendText("command entered not understood.\n"),
+                                  "ERROR"));
 
-        return modusCommandMap;
+        return commandMap;
     }
 
     //***************************** ACCESS **************************************
