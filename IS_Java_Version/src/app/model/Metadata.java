@@ -1,5 +1,6 @@
 package app.model;
 
+import app.util.ModusCommandMap;
 import modus.Modus;
 
 /**

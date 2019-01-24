@@ -1,6 +1,8 @@
 package app.controller;
 
 import app.model.*;
+import app.util.CommandMap;
+import app.util.SyllCommandMap;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.HPos;
@@ -45,7 +47,7 @@ public class Sylladex {
     private final        AtomicReference<List<String>> wrappedOpenHand   = new AtomicReference<>();
     private final        AtomicReference<List<Card>>   wrappedDeck       = new AtomicReference<>();
     private              ModusManager                  modiMgr;
-    private final        HashMap<String, Runnable>     SYLL_CMD_MAP      = initSyllCmdMap();
+    private final        SyllCommandMap                SYLL_CMD_MAP      = initSyllCmdMap();
     private static final String                        SYLL_PREFIX       = "SYLL.";
     private static final String                        SAVE_FILE_NAME    = "sylladexDeck.sav";
     private static final String                        OUT_PATH          = "";
@@ -186,8 +188,8 @@ public class Sylladex {
      *
      * @return map of the sylladex's user callable commands
      */
-    private HashMap<String, Runnable> initSyllCmdMap() {
-        HashMap<String, Runnable> commandMap = new SyllCommandMap();
+    private SyllCommandMap initSyllCmdMap() {
+        SyllCommandMap commandMap = new SyllCommandMap(CommandMap.Case.SENSITIVE);
 
         commandMap.put("saveDeckToFile", () -> {
             textOutput.appendText("Saving deck to file... ");
@@ -298,7 +300,7 @@ public class Sylladex {
             throw new NoSuchElementException(String.format("given sylladex command `%s` does not exist.\n", command));
         }
         System.out.format("running sylladex command `%s`.\n", command);
-        runnableCmd.run();
+        SYLL_CMD_MAP.command(command);
     }
 
     ///// LISTENERS /////
