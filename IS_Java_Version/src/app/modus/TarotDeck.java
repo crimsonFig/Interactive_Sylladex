@@ -1,4 +1,4 @@
-package modus;
+package app.modus;
 
 import java.util.*;
 
@@ -12,12 +12,12 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonBar.ButtonData;
 
 /**
- * This fetch modus is based on the idea of a deck of cards. The intended usage is to insert 
+ * This fetch app.modus is based on the idea of a deck of cards. The intended usage is to insert
  * 	item filled Cards into the {@link #deck} and then to retrieve an item, you shuffle the
  * 	deck and pull a CARD from the top of the deck. The success for retrieving the <i>desired</i>
  * 	item is fully luck based. Ofcourse, one could cheat and look at each CARD at a time to 
  * 	find their desired item and pull from that index; if cheating <i>is</i> desired then see the
- * 	extension of this modus: {@link TrueSightDeck}. 
+ * 	extension of this app.modus: {@link TrueSightDeck}.
  * @author Triston Scallan
  * @see app.model Cards
  * @see TrueSightDeck 
@@ -29,7 +29,7 @@ import javafx.scene.control.ButtonBar.ButtonData;
  */
 public class TarotDeck implements Modus {
 	/**
-	 * provides information about this modus.
+	 * provides information about this app.modus.
 	 * private so that inherited classes don't clash with this
 	 */
 	protected final Metadata METADATA; 
@@ -53,7 +53,7 @@ public class TarotDeck implements Modus {
 	}
 	
 	/* (non-Javadoc)
-	 * @see modus.Modus#createFunctionMap()
+	 * @see app.modus.Modus#createFunctionMap()
 	 */
 	@Override
 	public LinkedHashMap<String, Integer> createFunctionMap() {
@@ -68,7 +68,7 @@ public class TarotDeck implements Modus {
 	
 	//***************************** ACCESS *************************************/
 	/* (non-Javadoc)
-	 * @see modus.Modus#entry()
+	 * @see app.modus.Modus#entry()
 	 */
 	@Override
 	public String entry(int functionCode, String...args) {
@@ -137,19 +137,19 @@ public class TarotDeck implements Modus {
 	
 	//**************************** SAVE & LOAD ********************************/
 	/* (non-Javadoc)
-	 * @see modus.Modus#save()
+	 * @see app.modus.Modus#save()
 	 */
 	@Override
 	public void save() {
 		Sylladex.setDeck(this.deck);
 	}
 	/* (non-Javadoc)
-	 * @see modus.Modus#load(int)
+	 * @see app.modus.Modus#load(int)
 	 */
 	@Override
 	public void load(int mode) {
 		List<Card> _deck = Sylladex.getDeck();
-		//reset the modus space. if mode 0, return after this step.
+		//reset the app.modus space. if mode 0, return after this step.
 		this.deck = new Stack<Card>();
 		////automatic loading mode
 		if (mode == 1) {
@@ -191,7 +191,7 @@ public class TarotDeck implements Modus {
 	
 	//********************************** IO ***************************************/
 	/* (non-Javadoc)
-	 * @see modus.Modus#capture(java.lang.String)
+	 * @see app.modus.Modus#capture(java.lang.String)
 	 */
 	@Override
 	public Boolean capture(String item) {
@@ -204,7 +204,7 @@ public class TarotDeck implements Modus {
 		return true;
 	}
 	/* (non-Javadoc)
-	 * @see modus.Modus#addCard(app.model.Card)
+	 * @see app.modus.Modus#addCard(app.model.Card)
 	 */
 	@Override
 	public Boolean addCard(Card card) {
@@ -212,7 +212,7 @@ public class TarotDeck implements Modus {
 		return false;
 	}
 	/* (non-Javadoc)
-	 * @see modus.Modus#takeOutCard(java.lang.Object[])
+	 * @see app.modus.Modus#takeOutCard(java.lang.Object[])
 	 */
 	@Override
 	public Card takeOutCard(Object... objects) {
@@ -222,7 +222,7 @@ public class TarotDeck implements Modus {
 	
 	//****************************** UTILITY ************************************/
 	/* (non-Javadoc)
-	 * @see modus.Modus#isFull()
+	 * @see app.modus.Modus#isFull()
 	 */
 	@Override
 	public Boolean isFull() {
@@ -234,14 +234,14 @@ public class TarotDeck implements Modus {
 		return true;
 	}
 	/* (non-Javadoc)
-	 * @see modus.Modus#isEmpty()
+	 * @see app.modus.Modus#isEmpty()
 	 */
 	@Override
 	public Boolean isEmpty() {
 		return deck.isEmpty();
 	}
 	/* (non-Javadoc)
-	 * @see modus.Modus#findItemName(java.lang.String)
+	 * @see app.modus.Modus#findItemName(java.lang.String)
 	 */
 	@Override
 	public String findItemName(String givenItem) {
@@ -303,7 +303,7 @@ public class TarotDeck implements Modus {
 	}
 
 	/* (non-Javadoc)
-	 * @see modus.Modus#drawToDisplay()
+	 * @see app.modus.Modus#drawToDisplay()
 	 */
 	@Override
 	public void drawToDisplay() {
@@ -311,7 +311,7 @@ public class TarotDeck implements Modus {
 	}
 
 	/* (non-Javadoc)
-	 * @see modus.Modus#description()
+	 * @see app.modus.Modus#description()
 	 */
 	@Override
 	public String description() {

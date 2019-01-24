@@ -1,6 +1,5 @@
-package modus;
+package app.model;
 
-import app.model.Card;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.StackPane;
 

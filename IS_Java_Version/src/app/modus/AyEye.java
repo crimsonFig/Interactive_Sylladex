@@ -1,4 +1,4 @@
-package modus;
+package app.modus;
 
 import java.util.LinkedHashMap;
 
@@ -9,48 +9,40 @@ import app.model.Metadata;
  * @author Triston Scallan
  *
  */
-public class BTree implements Modus {
-	
-	/* (non-Javadoc)
-	 * @see modus.Modus#createFunctionMap()
-	 */
-	@Override
-	public LinkedHashMap<String, Integer> createFunctionMap() {
-		return null;
-	}
+public class AyEye implements Modus {
 
 	/* (non-Javadoc)
-	 * @see modus.Modus#entry(int, java.lang.Object[])
+	 * @see app.modus.Modus#entry(int, java.lang.Object[])
 	 */
 	@Override
 	public String entry(int functionCode, String... objects) {
 		return "0";
 	}
-
+	
 	/* (non-Javadoc)
-	 * @see modus.Modus#getMETADATA()
+	 * @see app.modus.Modus#createFunctionMap()
 	 */
 	@Override
-	public Metadata getMETADATA() {
+	public LinkedHashMap<String, Integer> createFunctionMap() {
 		return null;
 	}
 	
 	/* (non-Javadoc)
-	 * @see modus.Modus#save()
+	 * @see app.modus.Modus#save()
 	 */
 	@Override
 	public void save() {
 	}
 
 	/* (non-Javadoc)
-	 * @see modus.Modus#load(int)
+	 * @see app.modus.Modus#load(int)
 	 */
 	@Override
 	public void load(int mode) throws Exception {
 	}
 
 	/* (non-Javadoc)
-	 * @see modus.Modus#capture(java.lang.String)
+	 * @see app.modus.Modus#capture(java.lang.String)
 	 */
 	@Override
 	public Boolean capture(String item) {
@@ -58,7 +50,7 @@ public class BTree implements Modus {
 	}
 
 	/* (non-Javadoc)
-	 * @see modus.Modus#addCard(app.model.Card)
+	 * @see app.modus.Modus#addCard(app.model.Card)
 	 */
 	@Override
 	public Boolean addCard(Card card) {
@@ -66,7 +58,7 @@ public class BTree implements Modus {
 	}
 
 	/* (non-Javadoc)
-	 * @see modus.Modus#takeOutCard(java.lang.Object[])
+	 * @see app.modus.Modus#takeOutCard(java.lang.Object[])
 	 */
 	@Override
 	public Card takeOutCard(Object... objects) {
@@ -74,7 +66,7 @@ public class BTree implements Modus {
 	}
 
 	/* (non-Javadoc)
-	 * @see modus.Modus#isFull()
+	 * @see app.modus.Modus#isFull()
 	 */
 	@Override
 	public Boolean isFull() {
@@ -82,7 +74,7 @@ public class BTree implements Modus {
 	}
 
 	/* (non-Javadoc)
-	 * @see modus.Modus#isEmpty()
+	 * @see app.modus.Modus#isEmpty()
 	 */
 	@Override
 	public Boolean isEmpty() {
@@ -90,7 +82,7 @@ public class BTree implements Modus {
 	}
 
 	/* (non-Javadoc)
-	 * @see modus.Modus#findItemName(java.lang.String)
+	 * @see app.modus.Modus#findItemName(java.lang.String)
 	 */
 	@Override
 	public String findItemName(String givenName) {
@@ -98,18 +90,27 @@ public class BTree implements Modus {
 	}
 
 	/* (non-Javadoc)
-	 * @see modus.Modus#drawToDisplay()
+	 * @see app.modus.Modus#drawToDisplay()
 	 */
 	@Override
 	public void drawToDisplay() {
 	}
 
 	/* (non-Javadoc)
-	 * @see modus.Modus#description()
+	 * @see app.modus.Modus#getMETADATA()
+	 */
+	@Override
+	public Metadata getMETADATA() {
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see app.modus.Modus#description()
 	 */
 	@Override
 	public String description() {
 		return null;
 	}
+
 
 }

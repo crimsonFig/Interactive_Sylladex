@@ -1,7 +1,7 @@
 package app.util;
 
 import javafx.util.Pair;
-import modus.ModusBuffer;
+import app.model.ModusBuffer;
 
 import java.util.Map;
 import java.util.function.BiConsumer;

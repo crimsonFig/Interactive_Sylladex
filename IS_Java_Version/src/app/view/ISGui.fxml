@@ -135,7 +135,7 @@
                                 <Font name="Courier" size="13.0"/>
                             </font>
                         </Button>
-                        <Label text="In case you need to soft restart the sylladex and modus, press the below button. NOTE: Will clear the current held deck."
+                        <Label text="In case you need to soft restart the sylladex and app.modus, press the below button. NOTE: Will clear the current held deck."
                                textAlignment="JUSTIFY" wrapText="true" GridPane.columnSpan="3"
                                GridPane.rowIndex="1" GridPane.rowSpan="2" GridPane.valignment="TOP">
                             <font>

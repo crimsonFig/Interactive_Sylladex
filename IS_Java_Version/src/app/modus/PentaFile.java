@@ -1,4 +1,4 @@
-package modus;
+package app.modus;
 
 import java.awt.Color;
 import java.lang.reflect.Field;
@@ -17,7 +17,7 @@ import javafx.scene.text.Font;
 import javafx.util.Pair;
 
 /**
- * This fetch modus is the PentaFile pfModus, a modus designed for use with a sylladex. Using a structure comprised of 5
+ * This fetch app.modus is the PentaFile pfModus, a app.modus designed for use with a sylladex. Using a structure comprised of 5
  * arrays containing 5 cards, and busting if a single array is overfilled. <br> This is likened to a File Cabinet. 5
  * folders that can hold 5 files each.
  *
@@ -31,7 +31,7 @@ import javafx.util.Pair;
 @ModusMetatagRunStatus(true)
 public class PentaFile implements Modus {
     /**
-     * provides information about this modus
+     * provides information about this app.modus
      */
     private final Metadata METADATA;
 
@@ -52,7 +52,7 @@ public class PentaFile implements Modus {
         //initialize the METADATA
         this.METADATA = new Metadata(this.getClass().getSimpleName(), this.createFunctionMap(), this);
 
-        //attempt to initialize the modus space
+        //attempt to initialize the app.modus space
         Card card = new Card();    //empty CARD
         Arrays.fill(weapons, card);
         Arrays.fill(survival, card);
@@ -186,7 +186,7 @@ public class PentaFile implements Modus {
             }
             //output the description of the specified command args
             if (this.METADATA.COMMAND_MAP.get(args[0]) != null) {
-                System.out.println("Providing modus command help on: " + args[0]);
+                System.out.println("Providing app.modus command help on: " + args[0]);
                 textOutput.appendText(this.METADATA.COMMAND_MAP.desc(args[0]) + "\n");
             } else {
                 textOutput.appendText("command entered not understood.\n");
@@ -215,7 +215,7 @@ public class PentaFile implements Modus {
 
     //**************************** SAVE & LOAD ********************************/
     /* (non-Javadoc)
-     * @see modus.Modus#save()
+     * @see app.modus.Modus#save()
      */
     @Override
     public List<Card> save() {
@@ -223,11 +223,11 @@ public class PentaFile implements Modus {
     }
 
     /* (non-Javadoc)
-     * @see modus.Modus#save()
+     * @see app.modus.Modus#save()
      */
     @Override
     public void load(ModusBuffer modusBuffer) {
-        // reset the modus space
+        // reset the app.modus space
         Card freshCard = Card.EMPTY;    //empty CARD
         Arrays.fill(weapons, freshCard);
         Arrays.fill(survival, freshCard);
@@ -236,7 +236,7 @@ public class PentaFile implements Modus {
         Arrays.fill(keyCritical, freshCard);
 
         Optional<String> modusInput = Optional.ofNullable(modusBuffer.getAndResetModusInput());
-        //if load was called without modus input then require input and set the redirector back here
+        //if load was called without app.modus input then require input and set the redirector back here
         if (!modusInput.isPresent()) {
             modusBuffer.getTextOutput().appendText("Please submit a loading mode number: `1`, `2`, or `3`.\n");
             modusBuffer.setModusInputRedirector(this::load);
@@ -275,9 +275,9 @@ public class PentaFile implements Modus {
             }
             if (deck.size() > 25) {
                 Alert alert = new Alert(Alert.AlertType.WARNING);
-                alert.setTitle("Manual modus deck loading");
-                alert.setHeaderText("Sylladex deck is larger than modus deck");
-                alert.setContentText("Remaining cards were ignored since they didn't fit into the modus...");
+                alert.setTitle("Manual app.modus deck loading");
+                alert.setHeaderText("Sylladex deck is larger than app.modus deck");
+                alert.setContentText("Remaining cards were ignored since they didn't fit into the app.modus...");
             }
             ///// manual loading
         } else if (mode == 2) {
@@ -286,7 +286,7 @@ public class PentaFile implements Modus {
 
                     //ask which folder to place the CARD in (or none at all)
                     Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-                    alert.setTitle("Manual modus deck loading");
+                    alert.setTitle("Manual app.modus deck loading");
                     alert.setHeaderText("Select a folder.");
                     alert.setContentText("Please select a folder to save \"" + card.getItem() + "\" into.");
 
@@ -322,7 +322,7 @@ public class PentaFile implements Modus {
             }
             ///// fast loading
         } else if (mode == 3) {
-            //Continually fill up the the modus space with cards until
+            //Continually fill up the the app.modus space with cards until
             for (Card card : deck) {
                 if (!((card.validateCard()) ? addCard(card) : addCard(new Card()))) break;
             }
@@ -359,7 +359,7 @@ public class PentaFile implements Modus {
     }
 
     /**
-     * adds the CARD to the modus through a specific folder
+     * adds the CARD to the app.modus through a specific folder
      *
      * @param item
      *         the item to be added
@@ -408,7 +408,7 @@ public class PentaFile implements Modus {
      * Uses the name of an item as a key to search for it's CARD. Because it calls {@link #findItemName(String)}, it may
      * have undesired affects if the name given is misspelled. The function will attempt to get the closest match, but
      * an exact match is not guaranteed.
-     * <p> If the modus space is empty, this function will short circuit
+     * <p> If the app.modus space is empty, this function will short circuit
      * and return an "empty" Card.
      *
      * @param itemName
@@ -534,7 +534,7 @@ public class PentaFile implements Modus {
 
         //perform a fuzzy string search
         return Searcher.fuzzyStringSearch(givenItem, itemList)
-                       .getValue(); //TODO: remove fuzzyStringSearch from modus classes
+                       .getValue(); //TODO: remove fuzzyStringSearch from app.modus classes
     }
 
     /**
@@ -553,7 +553,7 @@ public class PentaFile implements Modus {
     }
 
     /* (non-Javadoc)
-     * @see modus.Modus#drawToDisplay()
+     * @see app.modus.Modus#drawToDisplay()
      */
     @Override
     public void drawToDisplay(ModusBuffer modusBuffer) {
@@ -592,7 +592,7 @@ public class PentaFile implements Modus {
         } //assert only 5 folder names were added
         assert (folderNames.size() == 5);
 
-        //loop of 5 folders within the modus
+        //loop of 5 folders within the app.modus
         for (int i = 0; i < 5; i++) {
             //loop of 5 cards within a folder
             for (int j = 0; j < 5; j++) {
@@ -651,7 +651,7 @@ public class PentaFile implements Modus {
     }
 
     /* (non-Javadoc)
-     * @see modus.Modus#description()
+     * @see app.modus.Modus#description()
      */
     @Override
     public String description() {
@@ -659,7 +659,7 @@ public class PentaFile implements Modus {
                "It comprises 5 folders that each store exactly 5 cards. " +
                "You can store items to a specific folder or retrieve from either " +
                "just the item name or from a folder and index. \n" +
-               "the notable quirk of this modus is that if a 6th item is placed into a filled " +
+               "the notable quirk of this app.modus is that if a 6th item is placed into a filled " +
                "folder, the contents of the folder will be ejected to the sylladex and then the " +
                "6th item will be placed into the now empty folder.\n";
     }

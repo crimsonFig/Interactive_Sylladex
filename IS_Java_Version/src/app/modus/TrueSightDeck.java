@@ -1,4 +1,4 @@
-package modus;
+package app.modus;
 
 import java.util.LinkedHashMap;
 import java.util.ListIterator;
@@ -24,7 +24,7 @@ public class TrueSightDeck extends TarotDeck {
 	}
 	
 	/* (non-Javadoc)
-	 * @see modus.Modus#createFunctionMap()
+	 * @see app.modus.Modus#createFunctionMap()
 	 */
 	@Override
 	public LinkedHashMap<String, Integer> createFunctionMap() {
@@ -41,7 +41,7 @@ public class TrueSightDeck extends TarotDeck {
 	
 	//***************************** ACCESS *************************************/	
 	/* (non-Javadoc)
-	 * @see modus.Modus#entry()
+	 * @see app.modus.Modus#entry()
 	 */
 	@Override
 	public String entry(int functionCode, String...args) {
@@ -104,7 +104,7 @@ public class TrueSightDeck extends TarotDeck {
 	}
 
 	/* (non-Javadoc)
-	 * @see modus.Modus#drawToDisplay()
+	 * @see app.modus.Modus#drawToDisplay()
 	 */
 	@Override
 	public void drawToDisplay() {

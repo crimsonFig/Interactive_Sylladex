@@ -1,7 +1,8 @@
-package modus;
+package app.modus;
 
 import app.model.Card;
 import app.model.Metadata;
+import app.model.ModusBuffer;
 
 import java.util.List;
 
@@ -19,7 +20,7 @@ import java.util.List;
  * <h2>Implementation Guidelines</h2>
  * Sub-classes hould include the following:
  * <ul>
- *     Insurance of compatibility of the deck's state between modus' data structures.
+ *     Insurance of compatibility of the deck's state between app.modus' data structures.
  *     <li>A save method that converts this data structure to a card list</li>
  *     <li>A load method that reads the cards from the list into this data structure</li>
  * </ul>
@@ -30,8 +31,8 @@ import java.util.List;
 public interface Modus {
 	///// Access
 	/**
-	 * The {@link Metadata} object associated with this modus.
-	 * Contains the command map, reference to this modus object, and modus class name.
+	 * The {@link Metadata} object associated with this app.modus.
+	 * Contains the command map, reference to this app.modus object, and app.modus class name.
 	 *
 	 * @return the METADATA
 	 */
@@ -39,18 +40,18 @@ public interface Modus {
 
 	///// Save and Load
 	/**
-	 * Save the current state of the modus. <br>
-	 * Saving the modus should create a List deck of Card to be given to the
+	 * Save the current state of the app.modus. <br>
+	 * Saving the app.modus should create a List deck of Card to be given to the
 	 * sylladex for storage.
 	 *
 	 */
 	List<Card> save();
 
 	/**
-	 * Load the modus from a previous save state. <br> Load takes a deck from the sylladex and reads it into the modus'
+	 * Load the app.modus from a previous save state. <br> Load takes a deck from the sylladex and reads it into the app.modus'
 	 * data structure for holding Card(s). <br>
 	 * <br>
-	 * Loading from a deck may have unintended behavior when swapping modi. It is up to the specific modus to handle
+	 * Loading from a deck may have unintended behavior when swapping modi. It is up to the specific app.modus to handle
 	 * reading a potentially foreign deck.
 	 *
 	 * @param modusBuffer
@@ -67,7 +68,7 @@ public interface Modus {
 	void drawToDisplay(ModusBuffer modusBuffer);
 	
 	/**
-	 * Returns a string that provides a description of what the fetch modus is and what
+	 * Returns a string that provides a description of what the fetch app.modus is and what
 	 * its storage quirk is.
 	 * @return a String description.
 	 */
