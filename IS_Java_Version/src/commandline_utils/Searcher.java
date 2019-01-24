@@ -1,7 +1,6 @@
 package commandline_utils;
 
-import java.util.*;
-import java.util.function.Supplier;
+import java.util.*
 
 import javafx.util.Pair;
 
@@ -26,7 +25,8 @@ public class Searcher {
 	 * @return an Object array of format {@code [int index, String match]}. If failed,
 	 * 	returns {@code [-1,""]}.
 	 */
-	public static final Pair<Integer, String> fuzzyStringSearch(String givenWord, Collection<String> wordBag) {
+	@Deprecated
+	public static Pair<Integer, String> fuzzyStringSearch(String givenWord, Collection<String> wordBag) {
 		String guessedWord = "";
 		int score = 999;	//the lower the score, the better
 		int index;		//index of the word in the word list.
@@ -41,7 +41,7 @@ public class Searcher {
 			if (testWord == null) {
 				continue;
 			} else if (givenWord.toLowerCase().equals(testWord.toLowerCase())) {
-				return new Pair<Integer, String>(index, testWord);
+				return new Pair<>(index, testWord);
 			}
 				
 			//create copies of the item names to prevent confusion if swapped later.
@@ -106,30 +106,6 @@ public class Searcher {
 	        }
 	    }
 		//if the score is within the threshold, return info, otherwise return a fail state.
-		return (score < Searcher.MAX_COST) ? new Pair<Integer, String>(guessedIndex, guessedWord) : new Pair<Integer, String>(-1, new String());
+		return (score < Searcher.MAX_COST) ? new Pair<>(guessedIndex, guessedWord) : new Pair<>(-1, "");
 	}
-	
-	/**
-	 * Takes a raw string that is expected to be a command, 
-	 * 	and matches it against the current modus list of 
-	 * 	commands and the sylladex's list of commands. 
-	 * <p> functionality would be the same as invoking 
-	 * {@link Searcher#fuzzyStringSearch}.{@link Pair#getValue}
-	 * with a List of the commands and the inputString, respectively.
-	 * @param inputString The given command to parse
-	 * @param supplier List if commands to parse against
-	 * @return matching string result of a command
-	 */
-	public static String parseCommands(String inputString, Supplier<Collection<String>> supplier) {
-		return Searcher.fuzzyStringSearch(inputString, supplier.get()).getValue();
-	}
-
-	public static String caseInsensitiveKeySearch(HashMap<String, ?> map, String key) {
-		return map.entrySet()
-				  .stream()
-				  .filter(entry -> entry.getKey().toUpperCase().equals(key.toUpperCase()))
-				  .map(Map.Entry::getKey)
-				  .findFirst().orElse(null);
-	}
-	
 }
