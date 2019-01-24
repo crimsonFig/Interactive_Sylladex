@@ -1,8 +1,8 @@
-package modus;
+package app.modus;
 
 import java.lang.annotation.*;
 
-/** used to distinguish a modus that can be instantiated without an instantiation exception or error. */
+/** used to distinguish a app.modus that can be instantiated without an instantiation exception or error. */
 @Target( {ElementType.TYPE} )
 @Retention( RetentionPolicy.RUNTIME )
 @Inherited

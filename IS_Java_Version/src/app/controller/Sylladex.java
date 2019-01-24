@@ -15,7 +15,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
-import modus.Modus;
+import app.modus.Modus;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -103,7 +103,7 @@ public class Sylladex {
         bRefresh.setDisable(true); //keep disabled until ModusManager can add modi generically (not explicitly)
         bInputButton.setDisable(true);
         bReset.setDisable(true);
-        //submit key is not disabled if a modus is chosen and the field isn't empty.
+        //submit key is not disabled if a app.modus is chosen and the field isn't empty.
         textInput.setOnKeyTyped((ev) -> {
             if (textInput.getText().isEmpty() || modiMgr.getCurrentModus() == null) {
                 bInputButton.setDisable(true);
@@ -132,7 +132,7 @@ public class Sylladex {
         modiMgr = new ModusManager(wrappedModusInput, wrappedDisplay, wrappedTextOutput, wrappedDeck, wrappedOpenHand);
 
 
-        //add modus nodes to the modusMenuList VBox in modus selection tab, using Metadata from ModiMgr#modusMenuList.
+        //add app.modus nodes to the modusMenuList VBox in app.modus selection tab, using Metadata from ModiMgr#modusMenuList.
         for (Class<? extends Modus> e : modiMgr.getModusClassList()) {
             //create a GridPane object
             GridPane node = new GridPane();
@@ -166,10 +166,10 @@ public class Sylladex {
             modusMenuList.getChildren().add(hLine);
         }
 
-        //should attempt to prompt the user to equip a modus
+        //should attempt to prompt the user to equip a app.modus
         VBox noModusBox = new VBox(150);
         noModusBox.setAlignment(Pos.CENTER);
-        Label noModusPrompt_1 = new Label("No modus selected.");
+        Label noModusPrompt_1 = new Label("No app.modus selected.");
         Label noModusPrompt_2 = new Label("Please see the \"Modus List\" tab.");
         noModusPrompt_1.setFont(new Font("Courier", 18));
         noModusPrompt_2.setFont(new Font("Courier", 18));
@@ -220,7 +220,7 @@ public class Sylladex {
             try {
                 setDeck(FileController.loadDeckFromFile(OUT_PATH + SAVE_FILE_NAME));
                 textOutput.appendText("load successful.\n");
-                //TODO: consider if this command should request the modus to load
+                //TODO: consider if this command should request the app.modus to load
             } catch (SecurityException | FileNotFoundException e) {
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Insufficient Permission");
@@ -253,10 +253,10 @@ public class Sylladex {
             }
         });
         commandMap.put("resetModus", () -> {
-            textOutput.appendText("Refreshing the modus...");
+            textOutput.appendText("Refreshing the app.modus...");
             modiMgr.resetModus();
             modiMgr.requestDrawToDisplay();
-            textOutput.appendText("success. Consider using the modus' load command before continuing.\n ");
+            textOutput.appendText("success. Consider using the app.modus' load command before continuing.\n ");
         });
         commandMap.put("showLooseItems", () -> {
             textOutput.appendText("Items in the hand are currently: \n");
@@ -319,7 +319,7 @@ public class Sylladex {
         textInput.clear();
         if (rawInputString.isEmpty()) return;
 
-        //determine where to send input based on prefix. no prefix means its for modus.
+        //determine where to send input based on prefix. no prefix means its for app.modus.
         if (rawInputString.toUpperCase().startsWith(SYLL_PREFIX)) {
             handleSyllInput(rawInputString.substring(SYLL_PREFIX.length()));
         }
@@ -331,24 +331,24 @@ public class Sylladex {
     }
 
     /**
-     * Sets the current modus to the modus selected, updates the view to represent the modus changes, and handles logic
+     * Sets the current app.modus to the app.modus selected, updates the view to represent the app.modus changes, and handles logic
      * related to selecting and switching modi from the {@code #modusMenuList} node.
      * <p>
      * Called by a modusMenuList button with its assigned metadata argument.
      *
      * @param modusClass
-     *         the object information of a given modus
+     *         the object information of a given app.modus
      * @param event
      *         the button push event
      */
     private <M extends Modus> void handleModusSelection(Class<M> modusClass, ActionEvent event) {
 
-        //if there was a previous modus selected, prompt if they want to save or reset their deck
+        //if there was a previous app.modus selected, prompt if they want to save or reset their deck
         if (modiMgr.getCurrentModus() != null) {
             Alert alert = new Alert(AlertType.CONFIRMATION);
             alert.setTitle("Changing Modus Confirmation");
             alert.setHeaderText("Are you Sure?");
-            alert.setContentText("There is a modus currently active, would you like to " +
+            alert.setContentText("There is a app.modus currently active, would you like to " +
                                  "save your deck to file and refresh deck, only refresh to a new deck, or cancel?");
             //create buttons for alert
             ButtonType buttonSave = new ButtonType("Save");
@@ -367,7 +367,7 @@ public class Sylladex {
                     getDeck().clear();
                     textOutput.appendText("Deck has been refreshed.\n\n");
                 } catch (Exception e) {
-                    textOutput.appendText("Cancelling modus change.\n\n");
+                    textOutput.appendText("Cancelling app.modus change.\n\n");
                     return;
                 }
             } else if (result.get() == buttonNew) {
@@ -378,7 +378,7 @@ public class Sylladex {
             }
         }
 
-        //set the new active modus
+        //set the new active app.modus
         try {
             modiMgr.updateCurrentModus(modusClass);
         } catch (IllegalArgumentException e) {
@@ -403,7 +403,7 @@ public class Sylladex {
         }
         textOutput.appendText("Modus selected: " + modusClass.getSimpleName() + "\n");
 
-        //set all buttons in this list as not disabled, then disable only this modus' button.
+        //set all buttons in this list as not disabled, then disable only this app.modus' button.
         modusMenuList.getChildren()
                      .stream()
                      .filter(node -> node instanceof GridPane)
@@ -415,7 +415,7 @@ public class Sylladex {
                                                        .setDisable(false));
         ((Button) event.getSource()).setDisable(true);
 
-        //clear the lists and update them to the selected modus' COMMAND_MAP
+        //clear the lists and update them to the selected app.modus' COMMAND_MAP
         modusCmdList.getChildren().clear();
         for (String command : modiMgr.getCurrentModus().COMMAND_MAP.keySet()) {
             if (command == null) continue;
@@ -431,7 +431,7 @@ public class Sylladex {
 
         //reset the display
         modiMgr.requestDrawToDisplay();
-        //display this modus' description to screen
+        //display this app.modus' description to screen
         textOutput.appendText(modiMgr.requestDescription());
 
         //set the view to be on the commands tab from the modusMenuList tab

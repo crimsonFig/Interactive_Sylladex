@@ -1,4 +1,4 @@
-package modus;
+package app.modus;
 
 import java.util.*;
 import java.util.stream.*;
@@ -66,7 +66,7 @@ import javafx.scene.control.TextArea;
  */
 public class TimeBox implements Modus {
     /**
-     * provides information about this modus
+     * provides information about this app.modus
      */
     private final        Metadata      METADATA;
     /**
@@ -199,7 +199,7 @@ public class TimeBox implements Modus {
     }
 
     /* (non-Javadoc)
-     * @see modus.Modus#createFunctionMap()
+     * @see app.modus.Modus#createFunctionMap()
      */
     @Override
     public LinkedHashMap<String, Integer> createFunctionMap() {
@@ -215,7 +215,7 @@ public class TimeBox implements Modus {
 
     //***************************** ACCESS *************************************/
     /* (non-Javadoc)
-     * @see modus.Modus#entry(int, java.lang.Object[])
+     * @see app.modus.Modus#entry(int, java.lang.Object[])
      */
     @Override
     public String entry(int functionCode, String... args) { //TODO: finish implement
@@ -279,7 +279,7 @@ public class TimeBox implements Modus {
             //test if this was a purposeful matched help case (case == 0)
             if (functionCode == 0) {
                 //case 1: help is called with both a command and then a "1"
-                //case 2: help is called with a single command, invoked from either the modus or sylladex
+                //case 2: help is called with a single command, invoked from either the app.modus or sylladex
                 //case 3: help is called with a command and possibly additional info
 
                 int returnStringFlag = 0; //flag to distinguish from pure case 1 and 2
@@ -325,7 +325,7 @@ public class TimeBox implements Modus {
                 if (returnStringFlag == 1) {
                     return result;
                 }
-                System.out.println("Providing modus command help on: " + commandName);
+                System.out.println("Providing app.modus command help on: " + commandName);
                 textOutput.appendText(result + "\n");
                 return "0";
             }
@@ -344,7 +344,7 @@ public class TimeBox implements Modus {
 
     //**************************** SAVE & LOAD ********************************/
     /* (non-Javadoc)
-     * @see modus.Modus#save()
+     * @see app.modus.Modus#save()
      */
     @Override
     public void save() {
@@ -352,7 +352,7 @@ public class TimeBox implements Modus {
     }
 
     /* (non-Javadoc)
-     * @see modus.Modus#load(int)
+     * @see app.modus.Modus#load(int)
      */
     @Override
     public void load(int mode) {
@@ -361,7 +361,7 @@ public class TimeBox implements Modus {
 
     //********************************** IO ***************************************/
     /* (non-Javadoc)
-     * @see modus.Modus#capture(java.lang.String)
+     * @see app.modus.Modus#capture(java.lang.String)
      */
     @Override
     public Boolean capture(String item) {
@@ -373,7 +373,7 @@ public class TimeBox implements Modus {
 
 
     /* (non-Javadoc)
-     * @see modus.Modus#addCard(app.model.Card)
+     * @see app.modus.Modus#addCard(app.model.Card)
      */
     @Override
     public Boolean addCard(Card card) {
@@ -388,7 +388,7 @@ public class TimeBox implements Modus {
      * Uses the name of an item as a key to search for it's CARD. Because it calls {@link #findItemName(String)}, it may
      * have undesired affects if the name given is misspelled. The function will attempt to get the closest match, but
      * an exact match is not guaranteed.
-     * <p> If the modus space is empty, this function will short circuit
+     * <p> If the app.modus space is empty, this function will short circuit
      * and return an "empty" Card.
      */
     @Override
@@ -434,7 +434,7 @@ public class TimeBox implements Modus {
     }
 
     /* (non-Javadoc)
-     * @see modus.Modus#isFull()
+     * @see app.modus.Modus#isFull()
      */
     @Override
     public Boolean isFull() {
@@ -443,7 +443,7 @@ public class TimeBox implements Modus {
     }
 
     /* (non-Javadoc)
-     * @see modus.Modus#isEmpty()
+     * @see app.modus.Modus#isEmpty()
      */
     @Override
     public Boolean isEmpty() {
@@ -451,7 +451,7 @@ public class TimeBox implements Modus {
     }
 
     /* (non-Javadoc)
-     * @see modus.Modus#findItemName(java.lang.String)
+     * @see app.modus.Modus#findItemName(java.lang.String)
      */
     @Override
     public String findItemName(String givenName) {
@@ -461,7 +461,7 @@ public class TimeBox implements Modus {
     }
 
     /* (non-Javadoc)
-     * @see modus.Modus#drawToDisplay()
+     * @see app.modus.Modus#drawToDisplay()
      */
     @Override
     public void drawToDisplay() {
@@ -469,7 +469,7 @@ public class TimeBox implements Modus {
     }
 
     /* (non-Javadoc)
-     * @see modus.Modus#description()
+     * @see app.modus.Modus#description()
      */
     @Override
     public String description() {
