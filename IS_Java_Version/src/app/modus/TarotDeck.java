@@ -5,7 +5,7 @@ import java.util.*;
 import app.controller.Sylladex;
 import app.model.Card;
 import app.model.Metadata;
-import commandline_utils.Searcher;
+import app.model.ModusBuffer;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Alert.AlertType;
@@ -136,17 +136,16 @@ public class TarotDeck implements Modus {
 	}
 	
 	//**************************** SAVE & LOAD ********************************/
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#save()
-	 */
 	@Override
-	public void save() {
+	public List<Card> save() {
 		Sylladex.setDeck(this.deck);
 	}
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#load(int)
-	 */
+
 	@Override
+	public void load(ModusBuffer modusBuffer) {
+
+	}
+
 	public void load(int mode) {
 		List<Card> _deck = Sylladex.getDeck();
 		//reset the app.modus space. if mode 0, return after this step.
@@ -157,7 +156,7 @@ public class TarotDeck implements Modus {
 			//otherwise, iterate through the sylladex deck and push all valid cards (or empty cards if invalid)
 			if (_deck == null || _deck.isEmpty()) return;
 			for (Card card : _deck) {
-				this.deck.push(card.validateCard() ? card : new Card());
+				this.deck.push(card.isValid() ? card : new Card());
 			}
 		////manual loading mode
 		} else if (mode == 2) {
@@ -165,7 +164,7 @@ public class TarotDeck implements Modus {
 			//otherwise, iterate through the sylladex deck and push cards that the user accepts
 			if (_deck == null || _deck.isEmpty()) return;
 			for (Card card : _deck) {
-				if (!card.validateCard()) continue;
+				if (!card.isValid()) continue;
 				//ask the user about the CARD
 				Alert alert = new Alert(AlertType.CONFIRMATION);
 			        	alert.setTitle("Card Selection");
@@ -198,7 +197,7 @@ public class TarotDeck implements Modus {
 		//create CARD from item
 		Card card = new Card(item);
 		//if invalid CARD
-		if (! card.validateCard()) return false;
+		if (! card.isValid()) return false;
 		//this call will not cause the side effect as described by Note #2
 		if (! addCard(card)) return false;
 		return true;
@@ -239,18 +238,6 @@ public class TarotDeck implements Modus {
 	@Override
 	public Boolean isEmpty() {
 		return deck.isEmpty();
-	}
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#findItemName(java.lang.String)
-	 */
-	@Override
-	public String findItemName(String givenItem) {
-		//iterate through the array and scrape the item names into a list
-		List<String> itemList = new ArrayList<String>();
-		for (Card card : deck) { itemList.add(card.getItem()); }
-			
-		//perform a fuzzy string search
-		return Searcher.fuzzyStringSearch(givenItem, itemList).getValue();
 	}
 	
 	/**

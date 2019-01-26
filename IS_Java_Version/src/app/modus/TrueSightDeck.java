@@ -2,8 +2,10 @@ package app.modus;
 
 import java.util.LinkedHashMap;
 import java.util.ListIterator;
+import java.util.NoSuchElementException;
 
 import app.model.Card;
+import app.model.ModusBuffer;
 
 /**
  * @author Triston Scallan
@@ -17,7 +19,6 @@ public class TrueSightDeck extends TarotDeck {
 	//***************************** INITIALIZE ***********************************/		
 	/**	
 	 * Constructor for the TrueSightDeck
-	 * @param sylladexReference
 	 */
 	public TrueSightDeck() {
 		super();
@@ -70,44 +71,23 @@ public class TrueSightDeck extends TarotDeck {
 		return new Card();
 	}
 	
-	/**
-	 * Draws the CARD matching the given name
-	 * @param itemName the given name to find
-	 * @return the closest matching CARD, an empty CARD otherwise
-	 */
-	public Card takeOutCardByName(String itemName) {
-		String match = findItemName(itemName);
-		for (Card card : deck) {
-			if (card.getItem().equals(match)) {
-			    deck.remove(card);
-			    return card;
-            }
-		}
-		return new Card();
-	}
-	
 	//****************************** UTILITY ************************************/	
 	/**
 	 * given an item's name, finds the index location within the deck of a CARD that matches the name.
 	 * @param itemName the given name to find
 	 * @return the CARD location's index, -1 if not found
 	 */
-	public int findCardIndexByName(String itemName) {
+	private int findCardIndexByName(String itemName) {
 		int i = 0;
-		Card card = Card.EMPTY;
-		String match = findItemName(itemName);
-		for(ListIterator<Card> deckTop = this.deck.listIterator(); deckTop.hasNext(); card = deckTop.next()) {
-			if (card.getItem().equals(match)) return i;
+		for(Card card : deck) {
+			if (card.getItem().equals(itemName)) return i;
 			i++;
 		}
 		return -1;
 	}
 
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#drawToDisplay()
-	 */
 	@Override
-	public void drawToDisplay() {
+	public void drawToDisplay(ModusBuffer modusBuffer) {
 		//TODO:Finish this
 	}
 }

@@ -76,7 +76,7 @@ public class Card implements Serializable {
      *
      * @return true if valid, false otherwise
      */
-    public Boolean validateCard() {
+    public Boolean isValid() {
         return this.item.length() <= 16 && this.captchaCode.matches("^[\\w\\d]{0,7}$");
     }
 

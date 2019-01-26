@@ -5,7 +5,6 @@ import java.util.stream.*;
 
 import app.controller.Sylladex;
 import app.model.*;
-import commandline_utils.Searcher;
 import javafx.scene.control.TextArea;
 
 /**
@@ -367,7 +366,7 @@ public class TimeBox implements Modus {
     public Boolean capture(String item) {
         Card card = new Card(item);
         //if invalid CARD
-        if (!card.validateCard()) return false;
+        if (!card.isValid()) return false;
         return addCard(card);
     }
 
@@ -383,20 +382,13 @@ public class TimeBox implements Modus {
     }
 
     /**
-     * {@inheritDoc}
      * <p>parameter is `Objects{String itemname}`.
-     * Uses the name of an item as a key to search for it's CARD. Because it calls {@link #findItemName(String)}, it may
-     * have undesired affects if the name given is misspelled. The function will attempt to get the closest match, but
-     * an exact match is not guaranteed.
-     * <p> If the app.modus space is empty, this function will short circuit
-     * and return an "empty" Card.
+     * Uses the name of an item as a key to search for it's CARD.
      */
-    @Override
-    public Card takeOutCard(Object... objects) {
+    private Card takeOutCard(String itemName) {
         //if the box door is open and arg is a String, attempt to retrieve CARD
-        if (!isBoxOpen() && String.class.isInstance(objects[0])) return new Card();
-        String itemName = findItemName((String) objects[0]);
-        if (itemName.isEmpty()) return new Card();
+        if (!isBoxOpen()) throw new IllegalStateException("box is closed; cannot take out card at this time.");
+        //TODO: consider updating design with more inherent polymorphic design.
         for (Card card : timeBox) {
             //if the itemName matches, remove CARD from the box and return it
             if (card.getItem().equals(itemName)) {
@@ -448,16 +440,6 @@ public class TimeBox implements Modus {
     @Override
     public Boolean isEmpty() {
         return timelines.isEmpty() && timeBox.isEmpty();
-    }
-
-    /* (non-Javadoc)
-     * @see app.modus.Modus#findItemName(java.lang.String)
-     */
-    @Override
-    public String findItemName(String givenName) {
-        List<String> itemList = timeBox.stream()
-                                       .collect(ArrayList::new, (r, e) -> r.add(e.getItem()), ArrayList::addAll);
-        return Searcher.fuzzyStringSearch(givenName, itemList).getValue();
     }
 
     /* (non-Javadoc)
