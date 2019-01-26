@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import app.model.*;
 import app.util.CommandMap;
 import app.util.ModusCommandMap;
-import commandline_utils.Searcher;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Paint;
@@ -63,7 +62,7 @@ public class PentaFile implements Modus {
 
     private ModusCommandMap createFunctionMap() {
         ModusCommandMap commandMap = new ModusCommandMap(CommandMap.Case.SENSITIVE);
-
+        //TODO: create an exception class that lets modusManager know if an exception thrown by this class caused desired command to fail at runtime (CommandRuntimeException).
         commandMap.put("save", new Pair<>((args, modusBuffer) -> {
             synchronized (modusBuffer.getDeck()) {
                 modusBuffer.getDeck().clear();
@@ -86,8 +85,10 @@ public class PentaFile implements Modus {
             TextArea textOutput = modusBuffer.getTextOutput();
             if (args.length == 1) {
                 textOutput.appendText("Attempting to capture " + args[0] + "...");
-                if (!capture(args[0])) {
-                    textOutput.appendText("ERROR: captured card invalid.\n");
+                try {
+                    capture(args[0]);
+                } catch (IllegalArgumentException | IllegalStateException e) {
+                    textOutput.appendText(String.format("ERROR: %s\n", e.getMessage()));
                     return;
                 }
                 textOutput.appendText("success.\n");
@@ -106,27 +107,30 @@ public class PentaFile implements Modus {
         commandMap.put("takeOutCard", new Pair<>((args, modusBuffer) -> {
             TextArea textOutput = modusBuffer.getTextOutput();
             if (args.length == 2) {
-                Card[] folder = findFolderByName(args[1]);
-                Integer index = -1;
                 try {
+                    Card[] folder = findFolderByName(args[1]);
+                    Integer index;
                     index = Integer.valueOf(args[0]);
-                } catch (NumberFormatException e) {
-                    //do nothing...
-                }
-                if (index >= 1 && index <= 5) {
                     textOutput.appendText("Retrieving CARD at index " + args[0] + " in folder " + args[1] + "...");
+
                     Card card = takeOutCard(index - 1, folder);
+                    //add a non-empty card to hand, but its not an error if it was empty (i.e. client asked for EMPTY).
+                    if (card.getInUse()) modusBuffer.getOpenHand().add(card.getItem());
                     textOutput.appendText("success.\n");
+
                     synchronized (modusBuffer.getDeck()) {
                         modusBuffer.getDeck().clear();
                         modusBuffer.getDeck().addAll(save());
                     }
                     drawToDisplay(modusBuffer);
-                    //return a non-empty CARD to hand, but its not an error if it was empty.
-                    if (card.getInUse()) modusBuffer.getOpenHand().add(card.getItem());
                     return;
+                } catch (NoSuchElementException e) {
+                    textOutput.appendText("ERROR: " + args[1] + " is not a valid folder name.\n");
+                } catch (NumberFormatException e) {
+                    textOutput.appendText("ERROR: " + args[0] + " is not a valid number.\n");
+                } catch (IndexOutOfBoundsException e) {
+                    textOutput.appendText("ERROR: " + args[0] + " is not a valid index.\n");
                 }
-                textOutput.appendText("ERROR: " + args[0] + " is not a valid index.\n");
             }
             textOutput.appendText("ERROR-\n" + this.METADATA.COMMAND_MAP.desc("takeOutCard") + "\n");
         },
@@ -136,19 +140,26 @@ public class PentaFile implements Modus {
         commandMap.put("captureByFolder", new Pair<>((args, modusBuffer) -> {
             TextArea textOutput = modusBuffer.getTextOutput();
             if (args.length == 2) {
-                Card[] folder = findFolderByName(args[1]);
-                textOutput.appendText("Capturing " + args[0] + " and placing into folder " + args[1] + "...");
-                if (!captureByFolder(args[0], folder, modusBuffer)) {
-                    textOutput.appendText("ERROR: captured card invalid.\n");
+                String itemName = args[0];
+                String folderName = args[1];
+                try {
+                    Card[] folder = findFolderByName(folderName);
+
+                    textOutput.appendText("Capturing " + args[0] + " and placing into folder " + folderName + "...");
+                    captureByFolder(itemName, folder, modusBuffer);
+                    textOutput.appendText("success.\n");
+
+                    synchronized (modusBuffer.getDeck()) {
+                        modusBuffer.getDeck().clear();
+                        modusBuffer.getDeck().addAll(save());
+                    }
+                    drawToDisplay(modusBuffer);
                     return;
+                } catch (NoSuchElementException e) {
+                    textOutput.appendText("ERROR: " + folderName + " is not a valid folder name.\n");
+                } catch (IllegalArgumentException e) {
+                    textOutput.appendText("ERROR: " + e.getMessage() + "\n");
                 }
-                textOutput.appendText("success.\n");
-                synchronized (modusBuffer.getDeck()) {
-                    modusBuffer.getDeck().clear();
-                    modusBuffer.getDeck().addAll(save());
-                }
-                drawToDisplay(modusBuffer);
-                return;
             }
             textOutput.appendText("ERROR-\n" + this.METADATA.COMMAND_MAP.desc("captureByFolder") + "\n");
         },
@@ -158,17 +169,21 @@ public class PentaFile implements Modus {
         commandMap.put("takeOutCardByName", new Pair<>((args, modusBuffer) -> {
             TextArea textOutput = modusBuffer.getTextOutput();
             if (args.length == 1) {
-                textOutput.appendText("Retrieving " + args[0] + "...");
-                Card card = takeOutCardByName(args[0]);
-                if (card.getInUse()) {
+                String itemName = args[0].toUpperCase();
+                textOutput.appendText("Retrieving " + itemName + "...");
+                try {
+                    Card card = takeOutCardByName(itemName);
                     modusBuffer.getOpenHand().add(card.getItem());
                     textOutput.appendText("success.\n");
+
                     synchronized (modusBuffer.getDeck()) {
                         modusBuffer.getDeck().clear();
                         modusBuffer.getDeck().addAll(save());
                     }
                     drawToDisplay(modusBuffer);
-                } else textOutput.appendText("CARD `" + args[0] + "` either doesn't exist or match failed.\n");
+                } catch (NoSuchElementException e) {
+                    textOutput.appendText("CARD `" + itemName + "` does not exist.\n");
+                }
                 return;
             }
             textOutput.appendText("ERROR-\n" + this.METADATA.COMMAND_MAP.desc("takeOutCardByName") + "\n");
@@ -264,98 +279,96 @@ public class PentaFile implements Modus {
         List<Card> deck = modusBuffer.getDeck();
         ///// automatic loading
         if (mode == 1) {
+            Card[][] folderArray = {weapons, survival, misc, info, keyCritical};
+
             //load from the deck based as the pattern
             for (int i = 0; i < 25 && i < deck.size(); i++) {
                 Card card = deck.get(i);
-                if (i < 5) weapons[i] = card;
-                else if (i < 10) survival[i%5] = card;
-                else if (i < 15) misc[i%5] = card;
-                else if (i < 20) info[i%5] = card;
-                else keyCritical[i%5] = card;
+                folderArray[i/5][i%5] = card;
             }
             if (deck.size() > 25) {
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Manual app.modus deck loading");
                 alert.setHeaderText("Sylladex deck is larger than app.modus deck");
                 alert.setContentText("Remaining cards were ignored since they didn't fit into the app.modus...");
+                alert.show();
             }
             ///// manual loading
         } else if (mode == 2) {
             for (Card card : deck) {
-                if (card.validateCard() ? card.getInUse() : false) {    //TODO: refactor logic of when validation occurs
-
+                if (card.isValid() && card.getInUse()) {
                     //ask which folder to place the CARD in (or none at all)
                     Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
                     alert.setTitle("Manual app.modus deck loading");
                     alert.setHeaderText("Select a folder.");
                     alert.setContentText("Please select a folder to save \"" + card.getItem() + "\" into.");
 
-                    //create buttons for alert
                     ButtonType buttonF1 = new ButtonType("weapons");
                     ButtonType buttonF2 = new ButtonType("survival");
                     ButtonType buttonF3 = new ButtonType("misc");
                     ButtonType buttonF4 = new ButtonType("info");
                     ButtonType buttonF5 = new ButtonType("keyCritical");
-
                     ButtonType buttonSkip = new ButtonType("skip");
                     ButtonType buttonCancel = new ButtonType("cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
                     alert.getButtonTypes()
                          .setAll(buttonF1, buttonF2, buttonF3, buttonF4, buttonF5, buttonSkip, buttonCancel);
+
                     Optional<ButtonType> result = alert.showAndWait();
-                    //if cancel, return, otherwise change deckAction and continue
-                    Card[] folder;
-                    if (!result.isPresent()) {    //if error
+                    if (!result.isPresent()) {
                         modusBuffer.getTextOutput().appendText("Error in getting your choice. Ending load().");
                         return;
                     }
-                    if (result.get() == buttonSkip) {    //if skip then continue
-                        continue;
-                    } else if (result.get() != buttonCancel) {    //if option then fill the folder variable
-                        folder = findFolderByName(result.get().getText());
-                    } else {    //if cancel then return
+                    if (result.get() == buttonCancel) {
                         return;
+                    } else if (result.get() != buttonSkip) {    //if option then place in the folder
+                        captureByFolder(card.getItem(), findFolderByName(result.get().getText()), modusBuffer);
                     }
-
-                    //place it in the folder
-                    if (!captureByFolder(card.getItem(), folder, null)) throw new IllegalStateException();
                 }
             }
             ///// fast loading
         } else if (mode == 3) {
             //Continually fill up the the app.modus space with cards until
             for (Card card : deck) {
-                if (!((card.validateCard()) ? addCard(card) : addCard(new Card()))) break;
+                if (!((card.isValid()) ? addCard(card) : addCard(new Card()))) break;
             }
         }
     }
 
     //********************************** IO ***************************************/
-    private Boolean capture(String item) {
+    /**
+     * Creates a card object from the item and then tries {@link #addCard} with the new card if valid.
+     * @param item the item to create a card from
+     * @throws IllegalArgumentException if the item results in an invalid card
+     * @throws IllegalStateException if there is no available index in the folder to add the new card to
+     */
+    private void capture(String item) throws IllegalArgumentException, IllegalStateException {
         Card card = new Card(item);
-        //if invalid CARD
-        if (!card.validateCard()) return false;
-        //this call will not cause the side effect as described by Note #2
-        return addCard(card);
+        if (!card.isValid())
+            throw new IllegalArgumentException(String.format("item '%s' created invalid card", item));
+        if (!addCard(card))
+            throw new IllegalStateException("cannot capture at this time. no free space for item.");
     }
 
+    /**
+     * Adds a card to the first empty slot found within a folder, in order of array field.
+     *
+     * @param card the card to add
+     * @return true if the card was added to a folder, false if all folders are full
+     */
     private Boolean addCard(Card card) {
         int index;
         if ((index = findFolderSpace(weapons)) != -1) {
             weapons[index] = card;
-            return true;
         } else if ((index = findFolderSpace(survival)) != -1) {
             survival[index] = card;
-            return true;
         } else if ((index = findFolderSpace(misc)) != -1) {
             misc[index] = card;
-            return true;
         } else if ((index = findFolderSpace(info)) != -1) {
             info[index] = card;
-            return true;
         } else if ((index = findFolderSpace(survival)) != -1) {
             keyCritical[index] = card;
-            return true;
         } else return false;
+        return true;
     }
 
     /**
@@ -365,93 +378,61 @@ public class PentaFile implements Modus {
      *         the item to be added
      * @param folder
      *         the Card array to be inserted into
-     * @return {@code true} if successful, {@code false} otherwise
+     * @param modusBuffer
+     *         the modusBuffer to interface with
+     *
+     * @throws IllegalArgumentException if the item creates and invalid card
      */
-    private Boolean captureByFolder(String item,
+    private void captureByFolder(String item,
                                     Card[] folder,
-                                    ModusBuffer modusBuffer) { //TODO: Replace boolean return values for exception throwing
-        int index;
+                                    ModusBuffer modusBuffer) throws IllegalArgumentException {
         Card card = new Card(item);
-        //if invalid CARD
-        if (!card.validateCard()) return false;
+        if (!card.isValid())
+            throw new IllegalArgumentException(String.format("item '%s' created invalid card", item));
 
-        if (findFolderSpace(folder) == -1) {
+        int index = findFolderSpace(folder);
+        if (index == -1) {
             List<String> ejectedItems = explodeFolder(folder).stream().map(Card::getItem).collect(Collectors.toList());
             folder[0] = card;
-            //hand off ejectedItems to modusBuffer
             modusBuffer.getOpenHand().addAll(ejectedItems);
-            return true;
-        } else if ((index = findFolderSpace(folder)) != -1 && index < 5) {
-            folder[index] = card;
-            return true;
         } else {
-            return false;
+            folder[index] = card;
         }
     }
 
     /**
-     * <p>parameter is Objects{Integer index, Card[] folder}
+     * pops a Card object at index within the folder
+     *
+     * @param index
+     *          the index of the Card array
+     * @param folder
+     *          the folder to pop the Card object from
+     * @return the found Card object
+     * @throws IndexOutOfBoundsException if index is less than zero or greater than 4
      */
-    private Card takeOutCard(Object... objects) {
-        //
-        if (!objects[0].getClass().equals(Integer.class) || !objects[1].getClass().equals(Card[].class))
-            return new Card();
-
-        int index = (int) objects[0];
-        Card[] folder = (Card[]) objects[1];
+    private Card takeOutCard(Integer index, Card[] folder) throws IndexOutOfBoundsException {
         Card result = folder[index];
         folder[index] = new Card();
         return result;
     }
 
     /**
-     * Uses the name of an item as a key to search for it's CARD. Because it calls {@link #findItemName(String)}, it may
-     * have undesired affects if the name given is misspelled. The function will attempt to get the closest match, but
-     * an exact match is not guaranteed.
-     * <p> If the app.modus space is empty, this function will short circuit
-     * and return an "empty" Card.
+     * Returns the first card that matches the given item name.
      *
      * @param itemName
      *         the item key
      * @return a CARD matching the key
+     * @throws NoSuchElementException if no card was found
      */
-    private Card takeOutCardByName(String itemName) {
-        if (isEmpty()) return new Card();
-        String match = findItemName(itemName);
+    private Card takeOutCardByName(String itemName) throws NoSuchElementException {
         Card[] omniFolder = convertToDeck();
-        int i = 0;
-        for (Card card : omniFolder) {
-            if (card.getItem().equals(match)) {
-                int index = i%5;
-                Card[] folder = findFolderFromOmniIndex(i);
-                folder[index] = new Card();
-                return card;
-            }
-            i++;
-        }
-        return new Card();
+        return Arrays.stream(omniFolder)
+                     .filter(card -> card.getItem().equals(itemName))
+                     .findFirst()
+                     .orElseThrow(NoSuchElementException::new);
     }
 
     //****************************** UTILITY ************************************/
-
-    private Boolean isEmpty() {
-        for (Card card : weapons) {
-            if (card.getInUse()) return false;
-        }
-        for (Card card : survival) {
-            if (card.getInUse()) return false;
-        }
-        for (Card card : misc) {
-            if (card.getInUse()) return false;
-        }
-        for (Card card : info) {
-            if (card.getInUse()) return false;
-        }
-        for (Card card : keyCritical) {
-            if (card.getInUse()) return false;
-        }
-        return true;
-    }
 
     /**
      * Searches a Card array for the first empty Card and then returns the index of that empty Card. If the entire array
@@ -487,54 +468,20 @@ public class PentaFile implements Modus {
 
     /**
      * retrieves the folder Card array based on a string name given to search with.
-     * <p>identical to calling {@link commandline_utils.Searcher#fuzzyStringSearch fuzzyStringSearch} using a list of
-     * the folder names and the input, respectively.
      *
      * @param givenFolder
      *         the name of the folder to obtain
      * @return the Card array "folder" based on given folder name
      */
-    private Card[] findFolderByName(String givenFolder) {
-        List<String> folderList = new ArrayList<>();
-        folderList.add("weapons");
-        folderList.add("survival");
-        folderList.add("misc");
-        folderList.add("info");
-        folderList.add("keyCritical");
+    private Card[] findFolderByName(String givenFolder) throws NoSuchElementException {
+        HashMap<String, Card[]> folderMap = new HashMap<>();
+        folderMap.put("weapons", weapons);
+        folderMap.put("survival", survival);
+        folderMap.put("misc", misc);
+        folderMap.put("info", info);
+        folderMap.put("keyCritical", keyCritical);
 
-        int i = Searcher.fuzzyStringSearch(givenFolder, folderList).getKey();
-        if (i == -1) {
-            System.out.println("folder requested wasn't found. returning `weapons` folder as default.");
-            return weapons;
-        }
-        return ((i == 0) ? weapons : ((i == 1) ? survival : ((i == 2) ? misc : ((i == 3) ? info : keyCritical))));
-    }
-
-    /**
-     * returns a folder based off of an index that relates to a position in a omni-folder
-     *
-     * @param i
-     *         the index to use
-     * @return a Card[]
-     *
-     * @see #convertToDeck()
-     */
-    private Card[] findFolderFromOmniIndex(int i) {
-        i = i/5; //collapse the index into the 5 buckets
-        return ((i == 0) ? weapons : ((i == 1) ? survival : ((i == 2) ? misc : ((i == 3) ? info : keyCritical))));
-    }
-
-    private String findItemName(String givenItem) {
-        Card[] omniFolder = convertToDeck();
-        //iterate through the array and scrape the item names into a list
-        List<String> itemList = new ArrayList<>();
-        for (int i = 0; i < 25; i++) {
-            itemList.add(omniFolder[i].getItem());
-        }
-
-        //perform a fuzzy string search
-        return Searcher.fuzzyStringSearch(givenItem, itemList)
-                       .getValue(); //TODO: remove fuzzyStringSearch from app.modus classes
+        return Optional.ofNullable(folderMap.get(givenFolder)).orElseThrow(NoSuchElementException::new);
     }
 
     /**
