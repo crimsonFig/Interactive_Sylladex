@@ -71,11 +71,11 @@ class ModusManager {
                                               modusClass = Class.forName(className, false, Modus.class.getClassLoader())
                                                                 .asSubclass(Modus.class);
                                           } catch (ClassNotFoundException e) {
-                                              System.err.print("ModusManager construction: " +
+                                              System.err.print("ClassListing: " +
                                                                className +
                                                                " was listed as a class but no definition was found.\n");
                                           } catch (ClassCastException e) {
-                                              System.err.print("ModusManager construction: ignoring cast for '" +
+                                              System.err.print("ClassListing: ignoring found non-Modus derived class '" +
                                                                className +
                                                                "'.\n");
                                           }
@@ -215,7 +215,7 @@ class ModusManager {
         File directory = null;
         String fullPath;
         System.out.println("ClassDiscovery: Package: " + pkgname);
-        URL resource = ClassLoader.getSystemClassLoader().getResource(pkgname);
+        URL resource = ClassLoader.getSystemClassLoader().getResource(pkgname.replace('.', File.separatorChar));
         System.out.println("ClassDiscovery: Resource = " + resource);
         if (resource == null) {
             throw new RuntimeException("No resource for " + pkgname);

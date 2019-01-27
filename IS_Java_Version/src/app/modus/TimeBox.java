@@ -1,11 +1,12 @@
 package app.modus;
 
-import java.util.*;
-import java.util.stream.*;
+import app.model.Card;
+import app.model.Metadata;
+import app.model.ModusBuffer;
+import app.util.ModusCommandMap;
 
-import app.controller.Sylladex;
-import app.model.*;
-import javafx.scene.control.TextArea;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * The time box is a safe-like container with an inside that has no anchor to the current time, allowing items placed
@@ -17,7 +18,7 @@ import javafx.scene.control.TextArea;
  * @author Triston Scallan
  *         <dt> Notes: </dt>
  *         <dd>
- *         Due to the nature of the timeBox existing separate to timelines, {@link #load(int) loading} with this method
+ *         Due to the nature of the timeBox existing separate to timelines, {@link #load loading} with this method
  *         will be considered as opening the safe, putting a CARD into the safe, and then closing the safe, repeated
  *         until all cards from the save file are exhausted (with each item querying for a size of a given item). {@link
  *         #save() Saving} will strip the size and temporal data off of the items, thus loading directly after saving is
@@ -48,8 +49,8 @@ import javafx.scene.control.TextArea;
  *         convergence will continue until all accessible items are within the safe's threshold. The largeness of items
  *         will be tagged in the nodes, with the nodes always belonging to a given entity.
  *         <br>
- *         This paragraph will briefly describe the properties and nature of the temporal dimension within the safe. Each
- *         entity will exist on its own temporal timeline, so two separate entities will be independent in their
+ *         This paragraph will briefly describe the properties and nature of the temporal dimension within the safe.
+ *         Each entity will exist on its own temporal timeline, so two separate entities will be independent in their
  *         relativeTime shifts. the temporal dimension within the safe is also about the number of entities within the
  *         safe, about n * 5 hours, so that opening the safe usually results in a 1/5 chance of finding something within
  *         the safe, changing this number will change the chances. this gives n*5 hours of time for the items within to
@@ -67,24 +68,24 @@ public class TimeBox implements Modus {
     /**
      * provides information about this app.modus
      */
-    private final        Metadata      METADATA;
+    private final Metadata      METADATA;
     /**
      * Collection of all Timeline held by TimeBox. Should be a set due to duplicate timelines being a paradox.
      */
-    private              Set<Timeline> timelines       = new HashSet<>();
+    private       Set<Timeline> timelines       = new HashSet<>();
     /**
      * The total number of slots within the timeline. This would be is the "length" of the timeline, and therefore is 0
      * to this value where 0 is inclusive and the value is exclusive.
      */
-    private final static int           TIMELINE_SIZE   = 25;
+    private final Integer           TIMELINE_SIZE   = 25;
     /**
      * The safe that holds all cards that exist in the present moment while the safe is open.
      */
-    private              List<Card>    timeBox;
+    private       List<Card>    timeBox;
     /**
      * tracks whether the timeBox is "opened"(true) or "closed"(false)
      */
-    private              Boolean       boxState        = false;
+    private       Boolean       boxState        = false;
     /**
      * Represents the temporal offset the box considers itself in. This value is used in determining when a timeline is
      * in sync with the box in order for that timeline's cards to appear in the box when the box is opened. i.e. if
@@ -93,7 +94,7 @@ public class TimeBox implements Modus {
      * <p>
      * The default value is TIMELINE_SIZE/2 (a.k.a. "present time").
      */
-    private              int           boxChronalState = TIMELINE_SIZE/2;
+    private       Integer           boxChronalState = TIMELINE_SIZE/2;
 
 
     /**
@@ -112,7 +113,7 @@ public class TimeBox implements Modus {
         //the collection of items within this timeline
         private final List<Card> timelineDeck;
         //the absolute temporal slot that the collection exists on.
-        private       int        slot  = -1;
+        private       int        slot = -1;
 
         Timeline() {
             timelineDeck = new ArrayList<>();
@@ -146,9 +147,6 @@ public class TimeBox implements Modus {
         }
 
         //Make sure that a timeline set only considers the range and deck (the distinguishing keys)
-        /* (non-Javadoc)
-         * @see java.lang.Object#hashCode()
-         */
         @Override
         public int hashCode() {
             final int prime = 31;
@@ -159,9 +157,6 @@ public class TimeBox implements Modus {
             return result;
         }
 
-        /* (non-Javadoc)
-         * @see java.lang.Object#equals(java.lang.Object)
-         */
         @Override
         public boolean equals(Object obj) {
             if (this == obj) return true;
@@ -173,7 +168,7 @@ public class TimeBox implements Modus {
             if (timelineDeck == null) {
                 return other.timelineDeck == null;
             }
-			return timelineDeck.equals(other.timelineDeck);
+            return timelineDeck.equals(other.timelineDeck);
         }
 
         private TimeBox getOuterType() {
@@ -182,157 +177,42 @@ public class TimeBox implements Modus {
 
     }
 
-
     //***************************** INITIALIZE *********************************/
-
-    /**
-     * The constructor of a fetch Modus should save the reference to the sylladex so that it can functionally return a
-     * list of the Modus' functionality to the ModusManager, specifically passing modusMetadata.
-     *
-     * @param sylladex
-     *         a reference to the caller, a Sylladex
-     */
     public TimeBox() {
         //initialize the METADATA
         this.METADATA = new Metadata(this.getClass().getSimpleName(), this.createFunctionMap(), this);
     }
 
-    /* (non-Javadoc)
-     * @see app.modus.Modus#createFunctionMap()
-     */
-    @Override
-    public LinkedHashMap<String, Integer> createFunctionMap() {
-        LinkedHashMap<String, Integer> functionMap = new LinkedHashMap<>();
-        functionMap.put("save", 1);
-        functionMap.put("load #", 2); //mode = 0, 1, 2, or 3
-        functionMap.put("capture", 3);
-        functionMap.put("takeOutCard", 4);
-        functionMap.put("openBox", 5);
-        functionMap.put("closeBox", 6);
-        return functionMap;
+    private ModusCommandMap createFunctionMap() {
+        return null;
     }
 
     //***************************** ACCESS *************************************/
-    /* (non-Javadoc)
-     * @see app.modus.Modus#entry(int, java.lang.Object[])
-     */
-    @Override
-    public String entry(int functionCode, String... args) { //TODO: finish implement
-        TextArea textOutput = Sylladex.getTextOutput();
-        switch (functionCode) {
-        case 1: //save
-            save();
-            textOutput.appendText("Deck was saved to sylladex.\n");
-            break;
-        case 2: //load <mode>
-            //based on mode as objects[0], use that load mode. if doesn't match 0, 1, or 2 then invoke entry(-1, "command name") to display help to the output
-            if (args.length == 1) {
-                int mode;
-                textOutput.appendText("Loading from sylladex deck in mode " + args[0] + "...");
-                try {
-                    mode = Integer.valueOf(args[0]);
-                    if (0 <= mode && mode <= 2) {
-                        load(mode);
-                        drawToDisplay();
-                        textOutput.appendText("success.\n");
-                        return "0";
-                    }
-                } catch (NumberFormatException e) {
-                    //do nothing, cascade to fail state.
-                }
-            }
-            entry(0, "load");
-            return "-1";
-        case 3: //capture
-            if (args.length == 1) {
-                textOutput.appendText("Attempting to capture " + args[0] + "...");
-                Sylladex.removeFromHand(args[0]);
-                if (!capture(args[0])) return "-1";
-                textOutput.appendText("success.\n");
-                save();
-                drawToDisplay();
-                return "0";
-            }
-            entry(0, "capture");
-            return "-1";
-        case 4: //takeOutCard
-            if (args.length == 1) {
-                textOutput.appendText("Retrieving " + args[0] + "...");
-                Card card = takeOutCard(args[0]);
-                if (card.getInUse()) {
-                    Sylladex.addToOpenHand(Collections.singletonList(card));
-                    textOutput.appendText("success.\n");
-                    save();
-                    drawToDisplay();
-                } else textOutput.appendText("CARD " + args[0] + " either doesn't exist or match failed.\n");
-                return "0";
-            }
-            entry(0, "takeOutCard");
-            return "-1";
-        default: //[help <commandName>] [<isReturnString(optional)]>
-            //attempt to parse command name and select that help description. `help load` should display info about all modes.
-            //if a "1" is present as the second argument after the commandName then return the description as a string instead of
-            //	printing to output. if 1 is not present, then simply print to textOutput.
-            //if no commandName matches then print "command provided was not understood."
-
-            //test if this was a purposeful matched help case (case == 0)
-            if (functionCode == 0) {
-                //case 1: help is called with both a command and then a "1"
-                //case 2: help is called with a single command, invoked from either the app.modus or sylladex
-                //case 3: help is called with a command and possibly additional info
-
-                int returnStringFlag = 0; //flag to distinguish from pure case 1 and 2
-
-                //isolate the first word of the args string, expected to be the command
-                String[] splitArgs = args[0].toLowerCase().split(" ", 2);
-                String commandName = splitArgs[0];
-
-                String result;
-                //determine the cases
-                if (args.length == 2 && args[1].equals("1")) { //case 1
-                    returnStringFlag = 1;
-                }
-                if (splitArgs.length > 1) { //case 3
-                    textOutput.appendText("help command invoked. disregarding additional args.\n");
-                }
-                switch (commandName) { //case 2
-                case "save":
-                    result = "syntax: save\n\u2022 saves the current inventory to the sylladex's deck. " +
-                             "This command is called at the end of every other command except load.";
-                    break;
-                case "load":
-                    result = "syntax: load <mode>\n\u2022 loads the inventory from the sylladex, which may differ." +
-                             "\n\u2022 mode 0 will simply reset the inventory." +
-                             "\n\u2022 mode 1 will auto load the inventory, based on CARD positions in the deck." +
-                             "\n\u2022 mode 2 will manually load the inv. you will choose where items go." +
-                             "\n\u2022 mode 3 will fast load the inventory. disregards saved CARD positions.";
-                    break;
-                case "capture":
-                    result = "syntax: capture <item>\n\u2022 captchalogues the item. the item can have " +
-                             "spaces when you type its name. puts in first available spot.";
-                    break;
-                case "takeoutcard":
-                    result = "syntax: takeOutCard <index>, <folder>\n\u2022 takes out the CARD at " +
-                             "the index within the folder. index is from 1 to 5.";
-                    break;
-                default:
-                    result = "syntax: help <command>\n\u2022 provides help information about the " +
-                             "given command. syntax is the form you input a complete command. " +
-                             "if a command has multiple arguments they need to be seperated by a comma.";
-                }
-
-                if (returnStringFlag == 1) {
-                    return result;
-                }
-                System.out.println("Providing app.modus command help on: " + commandName);
-                textOutput.appendText(result + "\n");
-                return "0";
-            }
-            textOutput.appendText("command provided not understood.\n");
-            break;
-        }
-        return "0";
-    }
+    //    switch (commandName) {
+    //    case "save":
+    //        result = "syntax: save\n\u2022 saves the current inventory to the sylladex's deck. " +
+    //                 "This command is called at the end of every other command except load.";
+    //        break;
+    //    case "load":
+    //        result = "syntax: load <mode>\n\u2022 loads the inventory from the sylladex, which may differ." +
+    //                 "\n\u2022 mode 0 will simply reset the inventory." +
+    //                 "\n\u2022 mode 1 will auto load the inventory, based on CARD positions in the deck." +
+    //                 "\n\u2022 mode 2 will manually load the inv. you will choose where items go." +
+    //                 "\n\u2022 mode 3 will fast load the inventory. disregards saved CARD positions.";
+    //        break;
+    //    case "capture":
+    //        result = "syntax: capture <item>\n\u2022 captchalogues the item. the item can have " +
+    //                 "spaces when you type its name. puts in first available spot.";
+    //        break;
+    //    case "takeOutCard":
+    //        result = "syntax: takeOutCard <index>, <folder>\n\u2022 takes out the CARD at " +
+    //                 "the index within the folder. index is from 1 to 5.";
+    //        break;
+    //    default:
+    //        result = "syntax: help <command>\n\u2022 provides help information about the " +
+    //                 "given command. syntax is the form you input a complete command. " +
+    //                 "if a command has multiple arguments they need to be seperated by a comma.";
+    //    }
 
     /**
      * @return the METADATA
@@ -342,40 +222,24 @@ public class TimeBox implements Modus {
     }
 
     //**************************** SAVE & LOAD ********************************/
-    /* (non-Javadoc)
-     * @see app.modus.Modus#save()
-     */
     @Override
-    public void save() {
-        //TODO: implement
+    public List<Card> save() {
+        return null;
     }
 
-    /* (non-Javadoc)
-     * @see app.modus.Modus#load(int)
-     */
     @Override
-    public void load(int mode) {
-        //TODO: implement
+    public void load(ModusBuffer modusBuffer) {
     }
 
     //********************************** IO ***************************************/
-    /* (non-Javadoc)
-     * @see app.modus.Modus#capture(java.lang.String)
-     */
-    @Override
-    public Boolean capture(String item) {
+    private Boolean capture(String item) {
         Card card = new Card(item);
         //if invalid CARD
         if (!card.isValid()) return false;
         return addCard(card);
     }
 
-
-    /* (non-Javadoc)
-     * @see app.modus.Modus#addCard(app.model.Card)
-     */
-    @Override
-    public Boolean addCard(Card card) {
+    private Boolean addCard(Card card) {
         //if the box door is open, attempt to add CARD
         if (!isBoxOpen()) return false;
         return timeBox.add(card);
@@ -425,37 +289,16 @@ public class TimeBox implements Modus {
         timeBox = new ArrayList<>(); //set our timeBox variable to a new object reference.
     }
 
-    /* (non-Javadoc)
-     * @see app.modus.Modus#isFull()
-     */
-    @Override
-    public Boolean isFull() {
-        //currently, there is no maximum number of cards that can be stored
-        return false;
-    }
-
-    /* (non-Javadoc)
-     * @see app.modus.Modus#isEmpty()
-     */
-    @Override
     public Boolean isEmpty() {
         return timelines.isEmpty() && timeBox.isEmpty();
     }
 
-    /* (non-Javadoc)
-     * @see app.modus.Modus#drawToDisplay()
-     */
     @Override
-    public void drawToDisplay() {
-        //TODO: implement
+    public void drawToDisplay(ModusBuffer modusBuffer) {
     }
 
-    /* (non-Javadoc)
-     * @see app.modus.Modus#description()
-     */
     @Override
     public String description() {
-        //TODO: implement
         return null;
     }
 

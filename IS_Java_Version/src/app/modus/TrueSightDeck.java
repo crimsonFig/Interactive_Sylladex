@@ -6,6 +6,7 @@ import java.util.NoSuchElementException;
 
 import app.model.Card;
 import app.model.ModusBuffer;
+import app.util.ModusCommandMap;
 
 /**
  * @author Triston Scallan
@@ -14,7 +15,7 @@ import app.model.ModusBuffer;
 public class TrueSightDeck extends TarotDeck {
 
 	//inherited List<Card> deck = new Stack<Card>(); 	
-	//inherited final static int SHUFFLE_VAL;
+	//inherited int SHUFFLE_VAL;
 	
 	//***************************** INITIALIZE ***********************************/		
 	/**	
@@ -23,32 +24,14 @@ public class TrueSightDeck extends TarotDeck {
 	public TrueSightDeck() {
 		super();
 	}
-	
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#createFunctionMap()
-	 */
+
 	@Override
-	public LinkedHashMap<String, Integer> createFunctionMap() {
-		LinkedHashMap<String, Integer> functionMap = new LinkedHashMap<String, Integer>();
-		functionMap.put("save", 0);
-		functionMap.put("load #", 1); //mode = 0, 1, 2
-		functionMap.put("capture", 2);
-		functionMap.put("takeOutCard", 3);
-		functionMap.put("takeOutCardByIndex", 4);
-		functionMap.put("takeOutCardByName", 5);
-		functionMap.put("findCardIndexByName", 6);
-		return functionMap;
+	protected ModusCommandMap createFunctionMap() {
+		return null;
 	}
 	
 	//***************************** ACCESS *************************************/	
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#entry()
-	 */
-	@Override
-	public String entry(int functionCode, String...args) {
-		//TODO: finish the entry function and the drawToDisplay
-		return "0";
-	}
+
 	
 	//********************************** IO ***************************************/
 	/**
@@ -89,5 +72,10 @@ public class TrueSightDeck extends TarotDeck {
 	@Override
 	public void drawToDisplay(ModusBuffer modusBuffer) {
 		//TODO:Finish this
+	}
+
+	@Override
+	public String description() {
+		return null;
 	}
 }
