@@ -45,6 +45,7 @@ public interface Modus {
 	 * sylladex for storage.
 	 *
 	 */
+	//TODO: consider change to where saving contracts a 'save' to ModusBuffer. A list should be retrieved by `toDeck()`
 	List<Card> save();
 
 	/**

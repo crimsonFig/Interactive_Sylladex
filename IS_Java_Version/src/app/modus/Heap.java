@@ -1,9 +1,10 @@
 package app.modus;
 
-import java.util.LinkedHashMap;
+import java.util.List;
 
 import app.model.Card;
 import app.model.Metadata;
+import app.model.ModusBuffer;
 
 /**
  * @author Triston Scallan
@@ -11,105 +12,28 @@ import app.model.Metadata;
  */
 public class Heap implements Modus {
 
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#entry(int, java.lang.Object[])
-	 */
-	@Override
-	public String entry(int functionCode, String... objects) {
-		return "0";
-	}
-	
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#createFunctionMap()
-	 */
-	@Override
-	public LinkedHashMap<String, Integer> createFunctionMap() {
-		return null;
-	}
-	
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#save()
-	 */
-	@Override
-	public void save() {
-	}
+    @Override
+    public Metadata getMETADATA() {
+        return null;
+    }
 
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#load(int)
-	 */
-	@Override
-	public void load(int mode) throws Exception {
-	}
+    @Override
+    public List<Card> save() {
+        return null;
+    }
 
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#capture(java.lang.String)
-	 */
-	@Override
-	public Boolean capture(String item) {
-		return null;
-	}
+    @Override
+    public void load(ModusBuffer modusBuffer) {
 
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#addCard(app.model.Card)
-	 */
-	@Override
-	public Boolean addCard(Card card) {
-		return null;
-	}
+    }
 
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#takeOutCard(java.lang.Object[])
-	 */
-	@Override
-	public Card takeOutCard(Object... objects) {
-		return null;
-	}
+    @Override
+    public void drawToDisplay(ModusBuffer modusBuffer) {
 
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#isFull()
-	 */
-	@Override
-	public Boolean isFull() {
-		return null;
-	}
+    }
 
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#isEmpty()
-	 */
-	@Override
-	public Boolean isEmpty() {
-		return null;
-	}
-
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#findItemName(java.lang.String)
-	 */
-	@Override
-	public String findItemName(String givenName) {
-		return null;
-	}
-
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#drawToDisplay()
-	 */
-	@Override
-	public void drawToDisplay() {
-	}
-
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#getMETADATA()
-	 */
-	@Override
-	public Metadata getMETADATA() {
-		return null;
-	}
-
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#description()
-	 */
-	@Override
-	public String description() {
-		return null;
-	}
-
+    @Override
+    public String description() {
+        return null;
+    }
 }

@@ -2,14 +2,10 @@ package app.modus;
 
 import java.util.*;
 
-import app.controller.Sylladex;
 import app.model.Card;
 import app.model.Metadata;
 import app.model.ModusBuffer;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ButtonBar.ButtonData;
+import app.util.ModusCommandMap;
 
 /**
  * This fetch app.modus is based on the idea of a deck of cards. The intended usage is to insert
@@ -35,99 +31,26 @@ public class TarotDeck implements Modus {
 	protected final Metadata METADATA; 
 	/**
 	 * Describes how many times {@link #shuffleDeck()} will fully shuffle the cards when invoked.
-	 * Currently set to {@value #SHUFFLE_VAL}. 
 	 */
-	protected final static int SHUFFLE_VAL = 9;
+	protected int SHUFFLE_VAL = 9;
 	
 	/** A Stack based data structure */
-	protected Stack<Card> deck = new Stack<Card>(); //use either Stack or Deque
+	protected Stack<Card> deck = new Stack<>(); //use either Stack or Deque
 	
 	//***************************** INITIALIZE ***********************************/
 	/**
 	 * Constructor for TarotDeck class
-	 * @param sylladexReference
 	 */
 	public TarotDeck() {
 		//initialize the METADATA
 		this.METADATA = new Metadata(this.getClass().getSimpleName(), this.createFunctionMap(), this);
 	}
-	
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#createFunctionMap()
-	 */
-	@Override
-	public LinkedHashMap<String, Integer> createFunctionMap() {
-		LinkedHashMap<String, Integer> functionMap = new LinkedHashMap<String, Integer>();
-		functionMap.put("save", 0);
-		functionMap.put("load #", 1); //mode = 0, 1, 2
-		functionMap.put("capture", 2);
-		functionMap.put("takeOutCard", 3);
-		functionMap.put("shuffle", 4);
-		return functionMap;
+
+	protected ModusCommandMap createFunctionMap() {
+		return null;
 	}
 	
 	//***************************** ACCESS *************************************/
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#entry()
-	 */
-	@Override
-	public String entry(int functionCode, String...args) {
-		switch (functionCode) {
-		case 0: //save
-			save();
-			break;
-		case 1: //load <mode>
-			//based on mode as objects[0], use that load mode. if doesn't match 0, 1, 2, or 3 then invoke entry(-1, "command name") to display help to the output
-			if (args.length == 1 && args[0] instanceof String) {
-				switch ((String) args[0]) {
-				case "0":
-					load(0);
-					drawToDisplay();
-					break;
-				case "1":
-					load(1);
-					drawToDisplay();
-					break;
-				case "2":
-					load(2);
-					drawToDisplay();
-					break;
-				default:
-					entry(-1, "help load");
-					return "-1";
-				}
-			} else {
-				entry(-1, "help load");
-				return "-1";
-			}
-			break;
-		case 2: //capture <item name>
-			if (args.length == 1 && args[0] instanceof String) {
-				if(! capture((String) args[0])) return "-1";
-				save();
-				drawToDisplay();
-			} else {
-				entry(-1, "help capture");
-				return "-1";
-			}
-			break;
-		case 3: //takeOutCard
-			List<Card> tempDeck = new ArrayList<Card>();
-			Card tempCard = takeOutCard();
-			if (! tempCard.getInUse()) return "-1";
-			tempDeck.add(tempCard);
-			Sylladex.addToOpenHand(tempDeck);
-			save();
-			drawToDisplay();
-			break;
-		case 4: //shuffle
-			shuffleDeck();
-			drawToDisplay();
-			break;
-		}
-		return "0";
-	}
-
 	/**
 	 * @return the METADATA
 	 */
@@ -138,113 +61,24 @@ public class TarotDeck implements Modus {
 	//**************************** SAVE & LOAD ********************************/
 	@Override
 	public List<Card> save() {
-		Sylladex.setDeck(this.deck);
+        return null;
 	}
 
 	@Override
 	public void load(ModusBuffer modusBuffer) {
 
 	}
-
-	public void load(int mode) {
-		List<Card> _deck = Sylladex.getDeck();
-		//reset the app.modus space. if mode 0, return after this step.
-		this.deck = new Stack<Card>();
-		////automatic loading mode
-		if (mode == 1) {
-			//if sylladex's deck is invalid, skip the assignment.
-			//otherwise, iterate through the sylladex deck and push all valid cards (or empty cards if invalid)
-			if (_deck == null || _deck.isEmpty()) return;
-			for (Card card : _deck) {
-				this.deck.push(card.isValid() ? card : new Card());
-			}
-		////manual loading mode
-		} else if (mode == 2) {
-			//if sylladex's deck is invalid, skip the assignment.
-			//otherwise, iterate through the sylladex deck and push cards that the user accepts
-			if (_deck == null || _deck.isEmpty()) return;
-			for (Card card : _deck) {
-				if (!card.isValid()) continue;
-				//ask the user about the CARD
-				Alert alert = new Alert(AlertType.CONFIRMATION);
-			        	alert.setTitle("Card Selection");
-			        alert.setHeaderText("Add Card to Deck?");
-			        alert.setContentText(card.toString());	
-		        //create buttons for alert
-		        ButtonType buttonYes = new ButtonType("Yes", ButtonData.YES);
-		        ButtonType buttonNo = new ButtonType("No", ButtonData.NO);
-		        ButtonType buttonCancel = new ButtonType("Cancel", ButtonData.CANCEL_CLOSE);
-		        alert.getButtonTypes().setAll(buttonYes, buttonNo, buttonCancel);
-		        
-		        Optional<ButtonType> result = alert.showAndWait();
-		        if (result.get().getButtonData().equals(ButtonData.CANCEL_CLOSE)) {
-		        		break;
-		        } else if (result.get() == buttonYes) {
-		        		this.deck.push(card);
-		        } else {
-		        		continue;
-		        }
-			}
-		}
-	}
 	
-	//********************************** IO ***************************************/
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#capture(java.lang.String)
-	 */
-	@Override
-	public Boolean capture(String item) {
-		//create CARD from item
-		Card card = new Card(item);
-		//if invalid CARD
-		if (! card.isValid()) return false;
-		//this call will not cause the side effect as described by Note #2
-		if (! addCard(card)) return false;
-		return true;
-	}
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#addCard(app.model.Card)
-	 */
-	@Override
-	public Boolean addCard(Card card) {
-		if (this.deck.push(card) == card) return true;
-		return false;
-	}
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#takeOutCard(java.lang.Object[])
-	 */
-	@Override
-	public Card takeOutCard(Object... objects) {
-		if (this.deck == null || this.deck.isEmpty()) return new Card();
-		return this.deck.pop();
-	}
+	//******************************** IO ***************************************/
+
 	
 	//****************************** UTILITY ************************************/
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#isFull()
-	 */
-	@Override
-	public Boolean isFull() {
-		//deck structures can take as many Card(s) as memory allows
-		//so the boolean is based on if this.deck has any empty cards
-		for (Card card : deck) {
-			if (! card.getInUse() ) return false;
-		}
-		return true;
-	}
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#isEmpty()
-	 */
-	@Override
-	public Boolean isEmpty() {
-		return deck.isEmpty();
-	}
 	
 	/**
-	 * Shuffles the deck fully {@value #SHUFFLE_VAL} times.
+	 * Shuffles the deck fully {@link #SHUFFLE_VAL} times.
 	 * Creates two temporary Stack decks, respectively holding the top half and lower half of {@link #deck this.deck},
-	 * then randomly draws from either temporary deck to rebuild this.deck. 
-	 * <p> Uses {@link Stack#pop()} and {@link Stack#push(Card)} which is a synchronized action. 
+	 * then randomly draws from either temporary deck to rebuild this.deck much like one does in real world shuffling
+	 * <p> Uses {@link Stack#pop()} and {@link Stack#push} which is a synchronized action.
 	 * <p> If this.deck contains only one CARD or is empty/null, it will return without any changes made.
 	 */
 	protected void shuffleDeck() {
@@ -254,8 +88,8 @@ public class TarotDeck implements Modus {
 		//shuffle the deck
 		for (int loop = 0; loop < SHUFFLE_VAL; loop++) {
 			//split this deck into two sides, then randomly re-stack from the top of either side.
-			Stack<Card> leftSide = new Stack<Card>();
-		    Stack<Card> rightSide = new Stack<Card>();
+			Stack<Card> leftSide = new Stack<>();
+		    Stack<Card> rightSide = new Stack<>();
 		    int a = (deck.size() / 2);	//split the deck in half
 		    int b = deck.size() - a;		//give the rest to rightSide
 		    for (int i = 0; i < a + b; i++) {
@@ -289,21 +123,13 @@ public class TarotDeck implements Modus {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#drawToDisplay()
-	 */
-	@Override
-	public void drawToDisplay() {
-		//TODO: finish this
-	}
+    @Override
+    public void drawToDisplay(ModusBuffer modusBuffer) {
 
-	/* (non-Javadoc)
-	 * @see app.modus.Modus#description()
-	 */
-	@Override
-	public String description() {
-		return " ";
-	}
-	
-	//Arrays.sort(setFolder, Comparator.comparing((Card CARD) -> CARD.getItem()));
+    }
+
+    @Override
+    public String description() {
+        return null;
+    }
 }

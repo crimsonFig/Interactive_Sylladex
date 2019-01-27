@@ -39,6 +39,7 @@ public class Card implements Serializable {
      * @param item
      *         The name of the item stored
      */
+    //TODO: consider replacing with a simple Card.of(itemName) and Card.EMPTY()? type safety isn't a worry since this isn't a generic.
     public Card(String item) {
         this.item = item.toUpperCase();
         this.captchaCode = captchaHash(item);
