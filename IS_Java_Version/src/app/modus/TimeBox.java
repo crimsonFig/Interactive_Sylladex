@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  *         Due to the nature of the timeBox existing separate to timelines, {@link #load loading} with this method
  *         will be considered as opening the safe, putting a CARD into the safe, and then closing the safe, repeated
  *         until all cards from the save file are exhausted (with each item querying for a size of a given item). {@link
- *         #save() Saving} will strip the size and temporal data off of the items, thus loading directly after saving is
+ *         Modus#save(ModusBuffer) Saving} will strip the size and temporal data off of the items, thus loading directly after saving is
  *         considered as using a new safe to replace the old safe.
  *         <br>
  *         Any item placed in will have an absolute timestamp of when it was placed within, and a relative timestamp to
@@ -223,7 +223,7 @@ public class TimeBox implements Modus {
 
     //**************************** SAVE & LOAD ********************************/
     @Override
-    public List<Card> save() {
+    public List<Card> save(ModusBuffer modusBuffer) {
         return null;
     }
 
@@ -291,6 +291,11 @@ public class TimeBox implements Modus {
 
     public Boolean isEmpty() {
         return timelines.isEmpty() && timeBox.isEmpty();
+    }
+
+    @Override
+    public List<Card> toDeck() {
+        return null;
     }
 
     @Override

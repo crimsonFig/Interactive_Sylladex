@@ -7,7 +7,7 @@ import app.modus.Modus;
  * The Metadata class is a container for information about a Modus' functionality
  * 	and abilities.
  * <p> Contains the NAME (String), REFERENCE (Modus), COMMAND_MAP (String, Integer),
- * 	and modusFile (File) of a given app.modus java file.
+ * 	and modusFile (File) of a given modus java file.
  * @author Triston Scallan
  *
  */
@@ -21,7 +21,7 @@ public class Metadata {
 	 */
 	public final Modus           REFERENCE;
 	/**
-	 * a mapping between a app.modus' command name and the associated command lambda.
+	 * a mapping between a modus' command name and the associated command lambda.
 	 */
 	public final ModusCommandMap COMMAND_MAP;
 	/**
@@ -44,6 +44,7 @@ public class Metadata {
 	    //reference is not null, the name equals class name, and command map is not null and valid
         return (metadata != null &&
                 metadata.REFERENCE != null &&
+				metadata.NAME != null &&
                 metadata.NAME.equals(metadata.REFERENCE.getClass().getSimpleName()) &&
                 ModusCommandMap.isValid(metadata.COMMAND_MAP));
     }

@@ -18,7 +18,7 @@ public class Heap implements Modus {
     }
 
     @Override
-    public List<Card> save() {
+    public List<Card> save(ModusBuffer modusBuffer) {
         return null;
     }
 
@@ -34,6 +34,11 @@ public class Heap implements Modus {
 
     @Override
     public String description() {
+        return null;
+    }
+
+    @Override
+    public List<Card> toDeck() {
         return null;
     }
 }

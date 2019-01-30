@@ -25,7 +25,6 @@ class FileController {
             oos.writeByte((byte) '\0');
             oos.flush();
         }
-        //TODO: add logging for thrown exceptions then rethrow
     }
 
     /**

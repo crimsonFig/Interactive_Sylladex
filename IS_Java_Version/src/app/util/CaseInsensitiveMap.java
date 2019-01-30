@@ -86,6 +86,6 @@ class CaseInsensitiveMap<V> extends LinkedHashMap<String, V> {
      * @return a string that represents the key in a case insensitive form
      */
     private String convertKeyToCaseless(String key) {
-        return key.toUpperCase();
+        return (key == null) ? null : key.toUpperCase();
     }
 }
