@@ -1,14 +1,29 @@
 package app.util;
 
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 public class SyllCommandMap extends CommandMap<Runnable> {
     public SyllCommandMap(Case caseType) {
         super(caseType);
     }
 
-    public void command(String command) {
-        super.get(command).run();
+    /**
+     * executes the <code>Runnable</code> associated with the given command
+     * @param command the command to be used as a key
+     * @throws NoSuchCommandException if the given command is associated with null
+     */
+    public void command(String command) throws NoSuchCommandException {
+        Optional.ofNullable(get(command))
+                .orElseThrow(() -> NoSuchCommandException.forCommand(command))
+                .run();
+    }
+
+    @Override
+    public Runnable put(String key, Runnable value) {
+        Objects.requireNonNull(value, "ERROR: SyllCommandMap#put requires a non-null value");
+        return super.put(key, value);
     }
 
     public static boolean isValid(SyllCommandMap map) {
