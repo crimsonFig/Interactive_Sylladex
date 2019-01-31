@@ -1,5 +1,16 @@
 # Interactive_Sylladex
-An educational personal project to create an inventory management system based on the webcomic by Andrew Hussie, Homestuck's "sylladex". The sylladex being a story mechanic that explained how characters stored their belongings. 
+An educational personal project aiming to create an inventory management system mock-up similar to a video game inventory. The system is inspired by the "sylladex" in the webcomic 'Homestuck' by Andrew Hussie. The sylladex in the webcomic being a story mechanic that explained how characters stored their belongings.
+
+# Purpose
+This project's purpose is to help serve as an educational environement to learn and get hands on experience with the many facets of software development.
+
+specifically:
+- the various features and components of the Java language, along with what the good practices are
+- expirementing with design patterns and implementing them
+- promote design intuition by simulating and modeling real world storage structures as complex data structures
+- learn various tools such as version control, test suites, and project build tools
+
+However, functionally, this project in actual usage is more of a novel toy program as it is designed to appeal to readers of Andrew Hussie's "Homestuck" webcomic through simulating a referenced story mechanic. Akin to bringing a unqiue story mechanic into a real world interactive mock-up.
 
 # How it works
 - The `Sylladex` uses three systems to enable dynamic management of items. 
@@ -18,6 +29,7 @@ An educational personal project to create an inventory management system based o
       - each unit must only be allowed to manipulate the data held by `ModusBuffer` acting as a buffer of standardized required data for the `Modus` units that they can access when swapped out, much like a port
 
 ### In summary: 
+layer structure: view | `Sylladex` | `ModusManager` | (`ModusBuffer` & `Metadata`) | `Modus` 
 - The Interactive Sylladex works by providing a `GUI` for a user to submit commands similar to a terminal
 - a command details some operation to apply to the inventory system
 - a `Sylladex` broadcasts submitted commands and manages the low abstraction data as a "master deck"
@@ -30,20 +42,9 @@ The current project (java version) can be compiled using a java 1.8 JDK compatib
 
 The deprecated project (C version) may be compilable using included Makefile and a compatible c compiler (e.g. GCC). NOTE: this version will be soon branched and removed from the master branch in the upcoming commits.
 
-# Purpose
-This project's purpose is to help serve as an educational environement to learn and get hands on experience with the many facets of software development.
-
-specifically:
-- the various features and components of the Java language, along with what the good practices are
-- expirementing with design patterns and implementing them
-- promote design intuition by simulating and modeling real world storage structures as complex data structures
-- learn various tools such as version control, test suites, and project build tools
-
-However, functionally, this project in actual usage is more of a novel toy program as it is designed to appeal to readers of Andrew Hussie's "Homestuck" webcomic through simulating a referenced story mechanic. Akin to bringing a unqiue story mechanic into a real world interactive mock-up.
-
 # Milestone History
 ## Milestone 2 - Refactored/overhauled several key structure implementations 
-`01/30/2019` https://github.com/crimsonFig/Interactive_Sylladex/pull/1
+`01/30/2019` [Milestone Pull](https://github.com/crimsonFig/Interactive_Sylladex/pull/1)
 - The project is now at the second iteration of a working and demo-able prototype
 ### removed co-dependencies and loosen coupling wherever possible
 - class structure now uses a layered design with dependency inversion to form a one way dependency tree. 
@@ -64,3 +65,7 @@ However, functionally, this project in actual usage is more of a novel toy progr
   - focus is more on interfacing with what is promised and less on implemented procedure
 - utilized strong `exception` handling practices to make debugging information more expressive and easier to find
   - custom exceptions associated with certain levels of severity and origin for precise handling and communication
+## Milestone 1 - Created first prototype with working implementation
+`04/21/2018` [Milestone Commit](https://github.com/crimsonFig/Interactive_Sylladex/commit/f8b0dbb654ff14b16f220137340476e23c748782)
+### Minimal functional requirements implemented
+- GUI can be launched with proper interactions with the `PentaFile Modus` unit.
