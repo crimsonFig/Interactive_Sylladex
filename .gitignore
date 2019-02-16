@@ -1,22 +1,28 @@
-#outputs
-*.exe
-*.out
-*.txt
-*Test
-*.MSF
+# Java Files/Folders
+bin/
+out/
+.classpath
+dictionary.txt
 
-#non_Source_Code
-*.o
-*.map
+# user specific files or folders
+*.eml
+*.iml
+.project
+.idea/
+.settings/
 
-*.prefs
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
 
-IS_Java_Version/.project
+# Compiled class file
+*.class
 
-IS_C_Version/.project
+# Log file
+*.log
 
-*.xml
-
-IS_Java_Version/.classpath
-
-IS_C_Version/.cproject
+# Package Files
+*.jar
