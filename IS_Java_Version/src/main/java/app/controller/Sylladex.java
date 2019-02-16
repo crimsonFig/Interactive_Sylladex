@@ -316,7 +316,7 @@ public class Sylladex {
         if (rawInputString.isEmpty()) return;
 
         //determine where to send input based on prefix. no prefix means its for modus.
-        if (rawInputString.toUpperCase().startsWith(SYLL_PREFIX)) {
+        if (rawInputString.toUpperCase().startsWith(SYLL_PREFIX.toUpperCase())) {
             handleSyllInput(rawInputString.substring(SYLL_PREFIX.length()));
         } else {
             if (wrappedModusInput.getAndSet(rawInputString) != null)
