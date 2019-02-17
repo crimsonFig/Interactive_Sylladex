@@ -32,6 +32,13 @@
             <version>4.0.15-alpha</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.oracle</groupId>
+            <artifactId>javafx</artifactId>
+            <systemPath>${java.home}/lib/ext/jfxrt.jar</systemPath>
+            <version>8</version>
+            <scope>system</scope>
+        </dependency>
     </dependencies>
 
     <packaging>jar</packaging>
