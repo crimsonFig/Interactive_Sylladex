@@ -20,9 +20,9 @@ public class Main extends Application {
 	public void start(Stage primaryStage) {
 		try {
 			stage = primaryStage;
-			BorderPane root = FXMLLoader.load(getClass().getResource("view/ISGui.fxml"));
+			BorderPane root = FXMLLoader.load(getClass().getResource("/view/ISGui.fxml"));
 			Scene scene = new Scene(root,1000,700);
-			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
+			scene.getStylesheets().add(getClass().getResource("/view/application.css").toExternalForm());
 			primaryStage.setScene(scene);
 			primaryStage.setTitle("Interactive Sylladex");
 			primaryStage.show();
