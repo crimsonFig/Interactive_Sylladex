@@ -7,6 +7,8 @@
     <groupId>codes.crimson.sylladex</groupId>
     <artifactId>javafx-interactive-sylladex</artifactId>
     <version>2.0-beta</version>
+    <name>SylladexApp</name>
+
     <developers>
         <developer>
             <name>Triston Scallan</name>
@@ -22,14 +24,15 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <testfx.junit5.version>4.0.15-alpha</testfx.junit5.version>
+        <junit.jupiter.version>5.3.1</junit.jupiter.version>
     </properties>
 
     <dependencies>
-        <!-- https://mvnrepository.com/artifact/org.testfx/testfx-junit5 -->
         <dependency>
             <groupId>org.testfx</groupId>
             <artifactId>testfx-junit5</artifactId>
-            <version>4.0.15-alpha</version>
+            <version>${testfx.junit5.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -39,6 +42,12 @@
             <version>8</version>
             <scope>system</scope>
         </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <packaging>jar</packaging>
@@ -46,15 +55,7 @@
         <finalName>interactive_sylladex</finalName>
         <pluginManagement> <!-- specify plugin versions -->
             <plugins>
-                <plugin>
-                    <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.1.0</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>2.20.1</version>
-                </plugin>
-                <plugin>
+               <plugin>
                     <artifactId>maven-clean-plugin</artifactId>
                     <version>3.0.0</version>
                 </plugin>
@@ -74,6 +75,18 @@
         </pluginManagement>
 
         <plugins> <!-- Set plugin goals -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.21.0</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.junit.platform</groupId>
+                        <artifactId>junit-platform-surefire-provider</artifactId>
+                        <version>1.2.0</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.1.0</version>
