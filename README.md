@@ -1,5 +1,5 @@
 # Interactive_Sylladex
-An educational personal project aiming to create an inventory management system mock-up similar to a video game inventory. The system is inspired by the "sylladex" in the webcomic 'Homestuck' by Andrew Hussie. The sylladex in the webcomic being a story mechanic that explained how characters stored their belongings.
+An educational personal project aiming to create an inventory management system mock-up similar to a video game inventory, utilizing plugable modules that can change the storage schema at runtime. The system is inspired by the "sylladex" in the webcomic *Homestuck* by Andrew Hussie. The sylladex in the webcomic being a story mechanic that explained how characters stored their belongings in unique and different ways.
 
 # Purpose
 This project's purpose is to help serve as an educational environement to learn and get hands on experience with the many facets of software development.
@@ -17,7 +17,7 @@ However, functionally, this project in actual usage is more of a novel toy progr
   - The inventory system is composed of `Card`s where a `Card` can hold a supplied item the user "gives". 
     - The `Sylladex` holds a 'master deck' that contains the current inventory state in a standardized format of `Card`s
     - The `ModusBuffer` holds a reference to the 'master deck', which can be modify the 'master deck' but not replace it
-    - A `Modus` holds a unique data structure of `Card`s which it can save/load to the `ModusBuffer` after converting it
+    - A `Modus` describes a storage schema and holds a unique data structure of `Card`s which it can save/load to the `ModusBuffer` after converting it from a standardized format
   - The interfacing system is composed of a `ModusManager` that has a list of `Metadata` models and a `ModusBuffer` model
     - A `Metadata` model supplies information about a given `Modus` unit and enables `ModusManager` to map user-input to lambda expressions the `Modus` supplies as functionality
     - A `ModusBuffer` model supplies all the required information a `Modus` unit requires, utilizing dependency inversion
