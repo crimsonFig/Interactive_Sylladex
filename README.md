@@ -38,9 +38,8 @@ layer structure: view | `Sylladex` | `ModusManager` | (`ModusBuffer` & `Metadata
 - a `ModusBuffer` provides data state that a `Modus` unit uses, enabling easy modular swapping of `Modus` units
 
 # Build Instruction
-The current project (java version) can be compiled using a java 1.8 JDK compatible compiler (e.g javac, eclipse), using `src` as the source folder on the class path. NOTE: a maven XML file will be added shortly as a build tool for helping this regard.
-
-The deprecated project (C version) may be compilable using included Makefile and a compatible c compiler (e.g. GCC). NOTE: this version will be soon branched and removed from the master branch in the upcoming commits.
+Requires a Java 8 SDK.
+The project can be compiled, tested, and packaged by importing the project using the included Maven `pom.xml`. An executable jar file can be created by using the `package` lifecycle goal.
 
 # Milestone History
 ## Milestone 2 - Refactored/overhauled several key structure implementations 
