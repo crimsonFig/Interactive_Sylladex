@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<?import java.lang.String?>
+<HBox xmlns:fx="http://javafx.com/fxml" xmlns="http://javafx.com/javafx" fx:controller="app.ui.InputConsoleControl"
+      minHeight="-Infinity" minWidth="-Infinity"
+      prefHeight="32.0"
+      maxWidth="1000" maxHeight="1000"
+      VBox.vgrow="NEVER" stylesheets="@/view/application.css">
+    <VBox.margin>
+        <Insets bottom="4.0" left="4.0" right="4.0" top="4.0"/>
+    </VBox.margin>
+    <styleClass>
+        <String fx:value="content-spacing"/>
+        <String fx:value="container-text_input"/>
+        <String fx:value="container-console"/>
+    </styleClass>
+
+    <Label styleClass="expanding-no_shrink" text="&gt;" HBox.hgrow="NEVER" maxHeight="1000">
+        <HBox.margin>
+            <Insets/>
+        </HBox.margin>
+    </Label>
+    <TextField fx:id="textInput"
+               styleClass="expanding-no_shrink"
+               prefHeight="32.0"
+               promptText="==&gt;"
+               HBox.hgrow="SOMETIMES">
+        <HBox.margin>
+            <Insets/>
+        </HBox.margin>
+        <font>
+            <Font name="Courier" size="13.0"/>
+        </font>
+    </TextField>
+    <Button fx:id="textInputSubmitButton"
+            styleClass="expanding-no_shrink"
+            mnemonicParsing="false"
+            onAction="#submit"
+            prefWidth="80.0" maxHeight="1000"
+            text="Submit"
+            HBox.hgrow="NEVER">
+        <HBox.margin>
+            <Insets/>
+        </HBox.margin>
+        <font>
+            <Font name="Courier" size="13.0"/>
+        </font>
+    </Button>
+</HBox>

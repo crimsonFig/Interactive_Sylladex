@@ -1,12 +1,9 @@
 package app.modus;
 
-import java.awt.Color;
-import java.lang.reflect.Field;
-import java.util.*;
-import java.util.stream.Collectors;
-
 import app.model.*;
 import app.util.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Paint;
@@ -14,15 +11,19 @@ import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Font;
 import javafx.util.Pair;
 
+import java.awt.*;
+import java.lang.reflect.Field;
+import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+
 /**
- * This fetch modus is the PentaFile pfModus, a modus designed for use with a sylladex. Using a structure comprised of 5
- * arrays containing 5 cards, and busting if a single array is overfilled. <br> This is likened to a File Cabinet. 5
- * folders that can hold 5 files each.
+ * This fetch modus is the PentaFile pfModus, a modus designed for use with a sylladex. Using a structure comprised of 5 arrays containing 5
+ * cards, and busting if a single array is overfilled. <br> This is likened to a File Cabinet. 5 folders that can hold 5 files each.
  * <dt> Note: </dt>
  * <dd>
- * 1. The inventory only holds 25 cards, 5 cards in 5 folders. <br> 2. If 6 items are placed into a folder, 5 are
- * ejected and the 6th is pushed <br> 3. The current PentaFile can have all its information saved and loaded to a text
- * file. <br>
+ * 1. The inventory only holds 25 cards, 5 cards in 5 folders. <br> 2. If 6 items are placed into a folder, 5 are ejected and the 6th is
+ * pushed <br> 3. The current PentaFile can have all its information saved and loaded to a text file. <br>
  * </dd>
  *
  * @author Triston Scallan
@@ -44,8 +45,8 @@ public class PentaFile implements Modus {
     //***************************** INITIALIZE ***********************************/
 
     /**
-     * The constructor of a fetch Modus should save the reference to the sylladex so that it can functionally return a
-     * list of the Modus' functionality to the ModusManager, specifically passing modusMetadata.
+     * The constructor of a fetch Modus should save the reference to the sylladex so that it can functionally return a list of the Modus'
+     * functionality to the ModusManager, specifically passing modusMetadata.
      */
     public PentaFile() {
         //initialize the METADATA
@@ -100,12 +101,12 @@ public class PentaFile implements Modus {
             if (args.length != 2) throw IllegalSyntaxException.ofArgLength(args.length);
 
             String indexString = args[0];
-            String folderName = args[1];
+            String folderName  = args[1];
             textOutput.appendText("Retrieving CARD at index " + indexString + " in folder " + folderName + "...");
             try {
-                Integer index = Integer.valueOf(indexString);           //<< may throw NumberFormatException
-                Card[] folder = findFolderByName(folderName);           //<< may throw NoSuchElementException
-                Card card = takeOutCard(index - 1, folder);      //<< may throw IndexOutOfBoundsException
+                Integer index  = Integer.valueOf(indexString);           //<< may throw NumberFormatException
+                Card[]  folder = findFolderByName(folderName);           //<< may throw NoSuchElementException
+                Card    card   = takeOutCard(index - 1, folder);      //<< may throw IndexOutOfBoundsException
                 // -- card will be not in use if EMPTY, which a client can legally ask for but wont be added to OpenHand
                 if (card.getInUse()) modusBuffer.getOpenHand().add(card.getItem());
                 textOutput.appendText("success.\n");
@@ -119,15 +120,13 @@ public class PentaFile implements Modus {
             } catch (IndexOutOfBoundsException e) {
                 throw new CommandRuntimeException(indexString + " is not a valid index", e);
             }
-        },
-                                                 "syntax: takeOutCard <index>, <folder>\n\u2022 takes out the CARD at " +
-                                                 "the index within the folder. index is from 1 to 5."));
+        }, "syntax: takeOutCard <index>, <folder>\n\u2022 takes out the CARD at " + "the index within the folder. index is from 1 to 5."));
 
         commandMap.put("captureByFolder", new Pair<>((args, modusBuffer) -> {
             TextArea textOutput = modusBuffer.getTextOutput();
             if (args.length != 2) throw IllegalSyntaxException.ofArgLength(args.length);
 
-            String itemName = args[0];
+            String itemName   = args[0];
             String folderName = args[1];
             textOutput.appendText("Capturing " + itemName + " and placing into folder " + folderName + "...");
             try {
@@ -184,8 +183,7 @@ public class PentaFile implements Modus {
                                           "if a command has multiple arguments they need to be seperated by a comma."));
 
         commandMap.put(CommandMap.CMD_ERR,
-                       new Pair<>((args, modusBuffer) -> modusBuffer.getTextOutput()
-                                                                    .appendText("command entered not understood.\n"),
+                       new Pair<>((args, modusBuffer) -> modusBuffer.getTextOutput().appendText("command entered not understood.\n"),
                                   "ERROR"));
 
         return commandMap;
@@ -221,28 +219,26 @@ public class PentaFile implements Modus {
         Arrays.fill(info, freshCard);
         Arrays.fill(keyCritical, freshCard);
 
-        Optional<String> modusInput = Optional.ofNullable(modusBuffer.getAndResetModusInput());
+        String modusInput = modusBuffer.getAndResetModusInput().trim();
         //if load was called without modus input then require input and set the redirector back here
-        if (!modusInput.isPresent()) {
+        if (modusInput.isEmpty()) {
             modusBuffer.getTextOutput().appendText("Please submit a loading mode number: `1`, `2`, or `3`.\n");
-            modusBuffer.setModusInputRedirector(this::load);
+            modusBuffer.setInputRedirector(this::load);
             return;
         }
 
         //Otherwise, try to extract the mode argument and run loadByMode
-        String modeString = modusInput.get().trim();
         TextArea textOutput = modusBuffer.getTextOutput();
-        int mode;
-        textOutput.appendText("Loading from sylladex deck in mode `" + modeString + "`...");
+        textOutput.appendText("Loading from sylladex deck in mode `" + modusInput + "`...");
         try {
-            mode = Integer.valueOf(modeString);
+            int mode = Integer.valueOf(modusInput);
             if (0 <= mode && mode <= 3) {
                 loadByMode(mode, modusBuffer);
                 drawToDisplay(modusBuffer);
                 textOutput.appendText("success.\n");
             }
         } catch (NumberFormatException e) {
-            throw new ModusRuntimeException(modeString + " is not a number", e);
+            throw new ModusRuntimeException(modusInput + " is not a number", e);
         }
     }
 
@@ -274,15 +270,14 @@ public class PentaFile implements Modus {
                     alert.setHeaderText("Select a folder.");
                     alert.setContentText("Please select a folder to save \"" + card.getItem() + "\" into.");
 
-                    ButtonType buttonF1 = new ButtonType("weapons");
-                    ButtonType buttonF2 = new ButtonType("survival");
-                    ButtonType buttonF3 = new ButtonType("misc");
-                    ButtonType buttonF4 = new ButtonType("info");
-                    ButtonType buttonF5 = new ButtonType("keyCritical");
-                    ButtonType buttonSkip = new ButtonType("skip");
+                    ButtonType buttonF1     = new ButtonType("weapons");
+                    ButtonType buttonF2     = new ButtonType("survival");
+                    ButtonType buttonF3     = new ButtonType("misc");
+                    ButtonType buttonF4     = new ButtonType("info");
+                    ButtonType buttonF5     = new ButtonType("keyCritical");
+                    ButtonType buttonSkip   = new ButtonType("skip");
                     ButtonType buttonCancel = new ButtonType("cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
-                    alert.getButtonTypes()
-                         .setAll(buttonF1, buttonF2, buttonF3, buttonF4, buttonF5, buttonSkip, buttonCancel);
+                    alert.getButtonTypes().setAll(buttonF1, buttonF2, buttonF3, buttonF4, buttonF5, buttonSkip, buttonCancel);
 
                     Optional<ButtonType> result = alert.showAndWait();
                     if (!result.isPresent()) {
@@ -410,8 +405,8 @@ public class PentaFile implements Modus {
     //****************************** UTILITY ************************************/
 
     /**
-     * Searches a Card array for the first empty Card and then returns the index of that empty Card. If the entire array
-     * is full, then return {@code -1}.
+     * Searches a Card array for the first empty Card and then returns the index of that empty Card. If the entire array is full, then
+     * return {@code -1}.
      *
      * @param folder
      *         the Card array to search
@@ -427,8 +422,7 @@ public class PentaFile implements Modus {
     /**
      * "Pops" all the cards in a folder and places them into a temporary deck.
      * <br><br>
-     * The temporary deck should be handed off to the sylladex's "open hand" thread to be unraveled by the calling
-     * method.
+     * The temporary deck should be handed off to the sylladex's "open hand" thread to be unraveled by the calling method.
      *
      * @param folder
      *         the Card array to "explode"
@@ -478,25 +472,30 @@ public class PentaFile implements Modus {
     @Override
     public void drawToDisplay(ModusBuffer modusBuffer) {
         //variable data constants
-        StackPane display = modusBuffer.getDisplay();
-        double dWidth = display.getMaxWidth();
-        double dHeight = display.getMaxHeight();
-        CardNode cardExample = CardNode.EMPTY;
-        double scaleFactor = 0.5;
-        double X_OFFSET = cardExample.CARD_FACE.getMaxWidth() + dWidth/4; //CARD width + padding
-        double X_MARGIN = 128;
-        double Y_OFFSET = cardExample.CARD_FACE.getMaxHeight() + dHeight/4; //CARD height + padding
-        double Y_MARGIN = 4;
-        Card[] omnifolder = convertToSingleArray();
-        Paint[] folderColors = {Paint.valueOf(String.format("#%06x", Color.RED.getRGB() & 0x00FFFFFF)), Paint.valueOf(
-                String.format("#%06x", Color.ORANGE.getRGB() & 0x00FFFFFF)), Paint.valueOf(String.format("#%06x",
-                                                                                                         Color.GREEN.getRGB() &
-                                                                                                         0x00FFFFFF)), Paint.valueOf(
-                String.format("#%06x", Color.BLUE.getRGB() & 0x00FFFFFF)), Paint.valueOf(String.format("#%06x",
-                                                                                                       Color.decode(
-                                                                                                               "#A030F0")
-                                                                                                            .getRGB() &
-                                                                                                       0x00FFFFFF))};
+        StackPane display         = (StackPane) modusBuffer.getDisplay();
+        double    dWidth          = display.getWidth();
+        double    dHeight         = display.getHeight();
+        CardNode  cardExample     = CardNode.EMPTY;
+        int       N_FOLDERS       = 5;
+        int       N_CARDS         = 5;
+        double    SCALE_FACTOR    = (dHeight > 520) ? 0.5 : 0.3; // if dHeight is <520, reduce scale factor again.
+        double    NTH_CARD_OFFSET = 15;
+        double    X_TRANSLATE     = 4;  //translate to the right for left hand 'margin'; considered scale-able
+        double    Y_TRANSLATE     = 16; //translate downward for the label header; considered un-scale-able
+        double    X_OFFSET        = cardExample.CARD_FACE.getMaxWidth();
+        double    X_MARGIN        = (dWidth - ((X_OFFSET*N_FOLDERS + NTH_CARD_OFFSET*N_CARDS)*SCALE_FACTOR + X_TRANSLATE))/(N_FOLDERS - 1);
+        double    Y_OFFSET        = cardExample.CARD_FACE.getMaxHeight();
+        double    Y_MARGIN        = (dHeight - ((Y_OFFSET*N_CARDS)*SCALE_FACTOR + Y_TRANSLATE))/(N_CARDS - 1);
+        Card[]    omnifolder      = convertToSingleArray();
+        Paint[] folderColors = {Paint.valueOf(String.format("#%06x", Color.RED.getRGB() & 0x00FFFFFF)), Paint.valueOf(String.format("#%06x",
+                                                                                                                                    Color.ORANGE
+                                                                                                                                            .getRGB() &
+                                                                                                                                    0x00FFFFFF)), Paint.valueOf(
+                String.format("#%06x", Color.GREEN.getRGB() & 0x00FFFFFF)), Paint.valueOf(String.format("#%06x",
+                                                                                                        Color.BLUE.getRGB() &
+                                                                                                        0x00FFFFFF)), Paint.valueOf(String.format(
+                "#%06x",
+                Color.decode("#A030F0").getRGB() & 0x00FFFFFF))};
 
         //clear the display and then start adding nodes
         display.getChildren().clear();
@@ -516,29 +515,26 @@ public class PentaFile implements Modus {
         for (int i = 0; i < 5; i++) {
             //loop of 5 cards within a folder
             for (int j = 0; j < 5; j++) {
+                //i = folder, j = CARD
                 //set the coordinates this loop's CARD should be placed at
-                double xCardCoord = i*X_OFFSET +
-                                    i*X_MARGIN +
-                                    (j*15) +
-                                    4;    //per-folder offset + margin + per-CARD offset + scalable constant offset
-                double yCardCoord = j*Y_OFFSET + j*Y_MARGIN;                //per-CARD offset, margin
+                double xCardCoord = (i*X_OFFSET + j*NTH_CARD_OFFSET)*SCALE_FACTOR + (i*X_MARGIN);
+                double yCardCoord = (j*Y_OFFSET)*SCALE_FACTOR + (j*Y_MARGIN);
                 //create the CARD node to draw
-                CardNode node = new CardNode(omnifolder[i*5 + j]); //i = folder, j = CARD
+                CardNode node = new CardNode(omnifolder[i*N_FOLDERS + j]);
 
                 //account for the translation difference caused by scaling from the node's center
-                double widthDiff = cardExample.CARD_FACE.getMaxWidth()/2;
-                double heightDiff = cardExample.CARD_FACE.getMaxHeight()/2;
-                double apparentWidthDifference = widthDiff*scaleFactor - widthDiff;
-                double apparentHeightDifference = heightDiff*scaleFactor - heightDiff;
-                double finalCoordX = xCardCoord*scaleFactor + apparentWidthDifference;
-                double finalCoordY = yCardCoord*scaleFactor + apparentHeightDifference;
-                node.CARD_FACE.setTranslateX(finalCoordX);
-                node.CARD_FACE.setTranslateY(finalCoordY +
-                                             12); //add a non-scalable constant offset for the folder labels
-                node.setCardScaleFactor(scaleFactor);
+                double widthDiff                = cardExample.CARD_FACE.getMaxWidth()/2; //radius from node to x-planar edge
+                double heightDiff               = cardExample.CARD_FACE.getMaxHeight()/2; //radius from node to y-planar edge
+                double apparentWidthDifference  = widthDiff*SCALE_FACTOR - widthDiff;
+                double apparentHeightDifference = heightDiff*SCALE_FACTOR - heightDiff;
+                double adjustedCardCoordX       = xCardCoord + apparentWidthDifference;
+                double adjustedCardCoordY       = yCardCoord + apparentHeightDifference;
+                node.CARD_FACE.setTranslateX(adjustedCardCoordX + X_TRANSLATE);
+                node.CARD_FACE.setTranslateY(adjustedCardCoordY + Y_TRANSLATE);
+                node.setCardScaleFactor(SCALE_FACTOR);
                 //create label for the folder column
                 if (j == 0) {
-                    folderNames.get(i).setTranslateX((xCardCoord - 4)*scaleFactor);
+                    folderNames.get(i).setTranslateX(xCardCoord + X_TRANSLATE);
                     display.getChildren().add(folderNames.get(i));
                 }
 
@@ -549,6 +545,7 @@ public class PentaFile implements Modus {
                 display.getChildren().add(node.CARD_FACE);
             }
         }
+        System.out.println(display.getWidth() + " " + display.getHeight());
     }
 
     @Override

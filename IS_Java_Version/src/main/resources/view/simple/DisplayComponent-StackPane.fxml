@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.layout.*?>
+<?import java.lang.String?>
+<HBox xmlns:fx="http://javafx.com/fxml"
+      xmlns="http://javafx.com/javafx"
+      fx:controller="app.ui.DisplayControl"
+      minHeight="300" minWidth="300"
+      prefHeight="550.0" prefWidth="700.0"
+      maxHeight="800" maxWidth="1000"
+      spacing="10.0" VBox.vgrow="ALWAYS">
+    <VBox.margin>
+        <Insets bottom="4.0" left="4.0" right="4.0" top="4.0"/>
+    </VBox.margin>
+    <padding>
+        <Insets bottom="2.0" left="2.0" right="2.0" top="2.0"/>
+    </padding>
+    <styleClass>
+        <String fx:value="content-spacing"/>
+        <!--<String fx:value="container-display"/>-->
+    </styleClass>
+    <StackPane fx:id="display" alignment="TOP_LEFT"
+               minHeight="-Infinity" minWidth="-Infinity"
+               onMouseClicked="#displayClick" HBox.hgrow="ALWAYS"/>
+</HBox>

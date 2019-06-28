@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.HBox?>
+<HBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="app.ui.MenuBarControl">
+
+    <MenuBar HBox.hgrow="ALWAYS">
+        <Menu mnemonicParsing="false" text="File">
+            <MenuItem text="_Close"/>
+        </Menu>
+        <Menu mnemonicParsing="false" text="Edit">
+            <MenuItem text="_Delete"/>
+        </Menu>
+        <Menu mnemonicParsing="false" text="About">
+            <MenuItem fx:id="mAbout" text="_About"/>
+        </Menu>
+    </MenuBar>
+</HBox>

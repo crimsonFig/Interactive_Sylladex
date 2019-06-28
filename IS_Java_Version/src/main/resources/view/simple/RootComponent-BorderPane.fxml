@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.BorderPane?>
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="app.ui.BPaneRootControl"
+            fx:id="root"
+            prefHeight="700.0" prefWidth="1000.0">
+
+</BorderPane>

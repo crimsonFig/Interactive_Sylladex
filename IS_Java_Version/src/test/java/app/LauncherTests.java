@@ -11,13 +11,13 @@ import org.testfx.framework.junit5.ApplicationExtension;
 import org.testfx.framework.junit5.Start;
 
 @ExtendWith(ApplicationExtension.class)
-class MainTests {
+class LauncherTests {
     private Stage stage;
 
     @Start
     private void onStart(Stage stage) {
-        new Main().start(stage);
-        this.stage = Main.getStage();
+        new Launcher().start(stage);
+        this.stage = Launcher.getStage();
     }
 
     @Test
