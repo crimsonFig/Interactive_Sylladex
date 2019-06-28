@@ -40,7 +40,7 @@ public class CardNode {
 	private double cardScaleFactor;
 	
 	/**
-	 * @param CARD
+	 * @param card
 	 */
 	public CardNode(Card card) {
 		this.CARD = card;

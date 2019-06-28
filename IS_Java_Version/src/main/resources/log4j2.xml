@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration strict="true" status="WARN">
+    <Properties>
+        <Property name="filename">logs/application_verbose.log</Property>
+    </Properties>
+
+    <Appenders>
+        <Appender type="Console" name="STDOUT" target="SYSTEM_OUT">
+            <Layout type="PatternLayout" pattern="%d{HH:mm:ss} [%t] %highlight{%-5p %c:%L : %m%n}{STYLE=Logback}%ex{4}"/>
+        </Appender>
+        <Appender type="File" name="FILEOUT" fileName="${filename}" append="true">
+            <Layout type="PatternLayout" pattern="%d{DEFAULT} [%t] %-5p %l : %m%n%ex"/>
+        </Appender>
+    </Appenders>
+
+    <Loggers>
+        <Root level="debug">
+            <AppenderRef ref="FILEOUT"/>
+            <AppenderRef ref="STDOUT"/>
+        </Root>
+    </Loggers>
+</Configuration>

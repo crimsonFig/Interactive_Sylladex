@@ -1,4 +1,4 @@
-package app.controller;
+package app.core;
 
 import app.model.Card;
 

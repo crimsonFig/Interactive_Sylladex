@@ -1,1 +1,25 @@
 /* JavaFX CSS - Leave this comment until you have at least create one rule which uses -fx-Property */
+
+.expanding-no_shrink {
+    /*-fx-max-height: infinity;*/
+    /*-fx-max-width: infinity;*/
+    /*-fx-min-height: USE_PREF_SIZE;*/
+    /*-fx-min-width: USE_PREF_SIZE;*/
+}
+
+.content-spacing {
+    -fx-spacing: 10;
+    -fx-padding: 2;
+}
+
+.container-console {
+    -fx-alignment: bottom-left;
+}
+
+.container-text_input {
+    /*-fx-font-size: 13;*/
+}
+
+.container-text_output {
+
+}

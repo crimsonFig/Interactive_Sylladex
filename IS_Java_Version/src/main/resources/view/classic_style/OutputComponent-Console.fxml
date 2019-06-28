@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<?import java.lang.String?>
+<HBox xmlns:fx="http://javafx.com/fxml" xmlns="http://javafx.com/javafx" fx:controller="app.ui.OutputConsoleControl"
+      alignment="BOTTOM_LEFT"
+      maxHeight="300" maxWidth="1000"
+      minHeight="-Infinity" minWidth="-Infinity"
+      prefHeight="100.0"
+      spacing="10.0" VBox.vgrow="SOMETIMES">
+    <VBox.margin>
+        <Insets bottom="4.0" left="4.0" right="4.0" top="4.0"/>
+    </VBox.margin>
+    <padding>
+        <Insets bottom="2.0" left="2.0" right="2.0" top="2.0"/>
+    </padding>
+    <styleClass>
+        <String fx:value="content-spacing"/>
+        <String fx:value="container-text_output"/>
+        <String fx:value="container-console"/>
+    </styleClass>
+
+    <TextArea fx:id="textOutput" editable="false" maxHeight="1.7976931348623157E308"
+              maxWidth="1.7976931348623157E308" minHeight="100.0" minWidth="-Infinity"
+              promptText="Terminal Output..." wrapText="true" HBox.hgrow="ALWAYS">
+        <font>
+            <Font name="Courier" size="13.0"/>
+        </font>
+    </TextArea>
+</HBox>
