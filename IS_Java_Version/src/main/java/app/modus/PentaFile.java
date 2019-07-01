@@ -5,7 +5,7 @@ import app.util.*;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.*;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Font;
@@ -472,30 +472,28 @@ public class PentaFile implements Modus {
     @Override
     public void drawToDisplay(ModusBuffer modusBuffer) {
         //variable data constants
-        StackPane display         = (StackPane) modusBuffer.getDisplay();
-        double    dWidth          = display.getWidth();
-        double    dHeight         = display.getHeight();
-        CardNode  cardExample     = CardNode.EMPTY;
-        int       N_FOLDERS       = 5;
-        int       N_CARDS         = 5;
-        double    SCALE_FACTOR    = (dHeight > 520) ? 0.5 : 0.3; // if dHeight is <520, reduce scale factor again.
-        double    NTH_CARD_OFFSET = 15;
-        double    X_TRANSLATE     = 4;  //translate to the right for left hand 'margin'; considered scale-able
-        double    Y_TRANSLATE     = 16; //translate downward for the label header; considered un-scale-able
-        double    X_OFFSET        = cardExample.CARD_FACE.getMaxWidth();
-        double    X_MARGIN        = (dWidth - ((X_OFFSET*N_FOLDERS + NTH_CARD_OFFSET*N_CARDS)*SCALE_FACTOR + X_TRANSLATE))/(N_FOLDERS - 1);
-        double    Y_OFFSET        = cardExample.CARD_FACE.getMaxHeight();
-        double    Y_MARGIN        = (dHeight - ((Y_OFFSET*N_CARDS)*SCALE_FACTOR + Y_TRANSLATE))/(N_CARDS - 1);
-        Card[]    omnifolder      = convertToSingleArray();
-        Paint[] folderColors = {Paint.valueOf(String.format("#%06x", Color.RED.getRGB() & 0x00FFFFFF)), Paint.valueOf(String.format("#%06x",
-                                                                                                                                    Color.ORANGE
-                                                                                                                                            .getRGB() &
-                                                                                                                                    0x00FFFFFF)), Paint.valueOf(
-                String.format("#%06x", Color.GREEN.getRGB() & 0x00FFFFFF)), Paint.valueOf(String.format("#%06x",
-                                                                                                        Color.BLUE.getRGB() &
-                                                                                                        0x00FFFFFF)), Paint.valueOf(String.format(
-                "#%06x",
-                Color.decode("#A030F0").getRGB() & 0x00FFFFFF))};
+        Pane     display         = (Pane) modusBuffer.getDisplay();
+        double   dWidth          = display.getWidth();
+        double   dHeight         = display.getHeight();
+        CardNode cardExample     = CardNode.EMPTY;
+        int      N_FOLDERS       = 5;
+        int      N_CARDS         = 5;
+        double   SCALE_FACTOR    = (dHeight > 520) ? 0.5 : 0.3; // if dHeight is <520, reduce scale factor again.
+        double   NTH_CARD_OFFSET = 15;
+        double   X_TRANSLATE     = 4;  //translate to the right for left hand 'margin'; considered scale-able
+        double   Y_TRANSLATE     = 16; //translate downward for the label header; considered un-scale-able
+        double   X_OFFSET        = cardExample.CARD_FACE.getMaxWidth();
+        double   X_MARGIN        = (dWidth - ((X_OFFSET*N_FOLDERS + NTH_CARD_OFFSET*N_CARDS)*SCALE_FACTOR + X_TRANSLATE))/(N_FOLDERS - 1);
+        double   Y_OFFSET        = cardExample.CARD_FACE.getMaxHeight();
+        double   Y_MARGIN        = (dHeight - ((Y_OFFSET*N_CARDS)*SCALE_FACTOR + Y_TRANSLATE))/(N_CARDS - 1);
+        Card[]   omnifolder      = convertToSingleArray();
+        Paint[] folderColors = {
+                Paint.valueOf(String.format("#%06x", Color.RED.getRGB() & 0x00FFFFFF)),
+                Paint.valueOf(String.format("#%06x", Color.ORANGE.getRGB() & 0x00FFFFFF)),
+                Paint.valueOf(String.format("#%06x", Color.GREEN.getRGB() & 0x00FFFFFF)),
+                Paint.valueOf(String.format("#%06x", Color.BLUE.getRGB() & 0x00FFFFFF)),
+                Paint.valueOf(String.format("#%06x", Color.decode("#A030F0").getRGB() & 0x00FFFFFF))
+        };
 
         //clear the display and then start adding nodes
         display.getChildren().clear();
@@ -545,7 +543,6 @@ public class PentaFile implements Modus {
                 display.getChildren().add(node.CARD_FACE);
             }
         }
-        System.out.println(display.getWidth() + " " + display.getHeight());
     }
 
     @Override
