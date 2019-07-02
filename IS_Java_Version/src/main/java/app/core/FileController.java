@@ -1,21 +1,54 @@
 package app.core;
 
 import app.model.Card;
+import javafx.stage.FileChooser;
+import javafx.stage.Window;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
+@ParametersAreNonnullByDefault
 class FileController {
+    private static final Logger      LOGGER            = LogManager.getLogger(FileController.class);
+    private static final String      DEFAULT_FILE_NAME = "sylladex.deck";
+    private static final FileChooser fileChooser;
+
+    static {
+        fileChooser = new FileChooser();
+        fileChooser.setInitialDirectory(new File("").getAbsoluteFile());
+        fileChooser.setInitialFileName(DEFAULT_FILE_NAME);
+        fileChooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("sylladex deck files", "deck"));
+    }
+
     /**
      * Writes the deck out to a binary file. Will create a new file if it doesn't exist.
-     * @param deck the deck to be written out
-     * @param fullOutPath the local path to write to
-     * @throws SecurityException thrown by {@link FileOutputStream}
-     * @throws IOException thrown by {@link ObjectOutputStream}
+     *
+     * @param deck
+     *         the deck to be written out
+     * @param destination
+     *         the local file to write to
+     * @throws SecurityException
+     *         thrown by {@link FileOutputStream}
+     * @throws IOException
+     *         thrown by {@link ObjectOutputStream}
      */
-    static void writeDeckToFile(List<Card> deck, String fullOutPath) throws SecurityException, IOException {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(fullOutPath)))) {
+    static synchronized void writeDeckToFile(List<Card> deck, File destination) throws SecurityException, IOException {
+        File saveFile;
+        if (destination.isDirectory()) {
+            saveFile = new File(destination.getPath() + DEFAULT_FILE_NAME);
+        } else if (destination.isFile()) {
+            saveFile = destination;
+        } else {
+            saveFile = destination.createNewFile() ? destination : new File(DEFAULT_FILE_NAME);
+        }
+
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(saveFile))) {
             //write deck size to the front of the file,
             oos.writeInt(deck.size());
             for (Card card : deck) {
@@ -25,32 +58,47 @@ class FileController {
             oos.writeByte((byte) '\0');
             oos.flush();
         }
+        LOGGER.info("Saved deck to location: " + saveFile.getCanonicalPath());
+    }
+
+    static Optional<File> selectFileSave(Window window) {
+        return Optional.ofNullable(fileChooser.showSaveDialog(window));
+    }
+
+    static Optional<File> selectFileLoad(Window window) {
+        return Optional.ofNullable(fileChooser.showOpenDialog(window));
     }
 
     /**
      * Loads a binary file to extract a List of Card from.
-     * @param fullInPath the local path to read from
+     *
+     * @param destination
+     *         the local file to read from
      * @return a deck of Card loaded from the file
-     * @throws ClassNotFoundException thrown by {@link ObjectInputStream#readObject()}
-     * @throws ClassCastException thrown if the found class in file isn't {@link Card}
-     * @throws IOException thrown by {@link ObjectInputStream}
+     *
+     * @throws ClassNotFoundException
+     *         thrown by {@link ObjectInputStream#readObject()}
+     * @throws ClassCastException
+     *         thrown if the found class in file isn't {@link Card}
+     * @throws IOException
+     *         thrown by {@link ObjectInputStream}
      */
-    static List<Card> loadDeckFromFile(String fullInPath) throws ClassNotFoundException, ClassCastException, IOException {
+    @Nonnull
+    static List<Card> loadDeckFromFile(File destination) throws ClassNotFoundException, ClassCastException, IOException {
         List<Card> deck = new ArrayList<>();
-        final File file = new File(fullInPath);
 
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-            Integer numOfCards = ois.readInt();
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(destination))) {
+            int numOfCards = ois.readInt();
             for (int i = 0; i < numOfCards; i++) {
                 Object o = ois.readObject();
-                deck.add(Card.class.cast(o));
+                deck.add((Card) o);
             }
-            return deck;
-        } catch (EOFException e) {
-            return deck;
+        } catch (EOFException ignore) {
         } catch (FileNotFoundException e) {
-            System.err.println("sylladex load failed - ERROR: file not found at " + file.getPath());
+            LOGGER.error("sylladex load failed - ERROR: file not found at " + destination.getCanonicalPath(), e);
             throw e;
         }
+        LOGGER.info("Loaded deck from location: " + destination.getCanonicalPath());
+        return deck;
     }
 }

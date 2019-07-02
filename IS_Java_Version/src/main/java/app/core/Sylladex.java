@@ -4,6 +4,7 @@ import app.model.Card;
 import app.modus.Modus;
 import app.ui.GuiPropertyMap;
 import app.util.CommandMap;
+import app.util.RequestException;
 import app.util.SyllCommandMap;
 import javafx.beans.property.ListProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -25,6 +26,7 @@ import org.apache.logging.log4j.Logger;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -61,6 +63,7 @@ public class Sylladex {
         ModusContainer modusContainer = new ModusContainer(guiPropertyMap.submittedInputSubscriberProperty(),
                                                            guiPropertyMap.displayProperty(),
                                                            guiPropertyMap.textOutputProperty(),
+                                                           guiPropertyMap.textInputProperty(),
                                                            deckProperty,
                                                            openHandProperty);
         SYLL_CMD_MAP = initSyllCmdMap(guiPropertyMap.textOutputProperty(), modusContainer);
@@ -136,13 +139,17 @@ public class Sylladex {
             TextInputControl textOutput = textOutputProperty.getValue();
             textOutput.appendText("Saving deck to file... ");
             try {
-                modiMgr.requestSave();
-                synchronized (getDeck()) {
-                    FileController.writeDeckToFile(getDeck(), OUT_PATH + SAVE_FILE_NAME);
+                Optional<File> saveFile = FileController.selectFileSave(textOutput.getScene().getWindow());
+                if (saveFile.isPresent()) {
+                    modiMgr.requestSave();
+                    FileController.writeDeckToFile(getDeck(), saveFile.get());
+                    textOutput.appendText("Save successful.\n");
+                } else {
+                    LOGGER.info("Save cancelled.");
+                    textOutput.appendText("save cancelled.\n");
                 }
-                textOutput.appendText(String.format("save successful at location: %s.\n",
-                                                    java.nio.file.Paths.get(OUT_PATH, SAVE_FILE_NAME).toString()));
             } catch (SecurityException | FileNotFoundException e) {
+                LOGGER.error(e);
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Unable To Create Or Open File");
                 alert.setHeaderText("Unable to open a save file.");
@@ -152,18 +159,24 @@ public class Sylladex {
                                      "creation and then try again. \n");
                 alert.showAndWait();
                 textOutput.appendText("save failed.\n");
-            } catch (IOException e) {
-                e.printStackTrace();
-                textOutput.appendText("ERROR saving file - save failed. Please try again.\n");
+            } catch (IOException | RequestException e) {
+                LOGGER.error(e);
+                textOutput.appendText("ERROR saving file - could not save. Please try again in a bit.\n");
             }
         });
         commandMap.put("loadDeckFromFile", () -> {
             TextInputControl textOutput = textOutputProperty.getValue();
             textOutput.appendText("Loading deck from file... ");
             try {
-                setDeck(FileController.loadDeckFromFile(OUT_PATH + SAVE_FILE_NAME));
-                textOutput.appendText("load successful.\n");
-                //TODO: consider if this command should request the modus to load
+                Optional<File> loadFile = FileController.selectFileLoad(textOutput.getScene().getWindow());
+                if (loadFile.isPresent()) {
+                    setDeck(FileController.loadDeckFromFile(loadFile.get()));
+                    modiMgr.requestLoad();
+                    textOutput.appendText("load successful.\n");
+                } else {
+                    LOGGER.info("Load cancelled.");
+                    textOutput.appendText("load cancelled.\n");
+                }
             } catch (SecurityException | FileNotFoundException e) {
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Insufficient Permission");
@@ -220,8 +233,7 @@ public class Sylladex {
     }
 
     ///// HANDLERS /////
-    private void handleSyllInput(ObservableValue<? extends String> bean, String oldInput, @Nullable String newInput) throws
-                                                                                                                     NoSuchElementException {
+    void handleSyllInput(ObservableValue<? extends String> bean, String oldInput, @Nullable String newInput) throws NoSuchElementException {
         LOGGER.traceEntry("handleSyllInput(bean={}, oldInput={}, newInput={}", bean, oldInput, newInput);
 
         if (newInput == null) {
@@ -240,7 +252,7 @@ public class Sylladex {
             LOGGER.error("Invalid sylladex command string supplied as input: " + command);
             return;
         }
-        LOGGER.info("running sylladex command `%s`.", command);
+        LOGGER.info("running sylladex command {}.", command);
         SYLL_CMD_MAP.command(command);
         LOGGER.traceExit();
     }
@@ -282,8 +294,14 @@ public class Sylladex {
             } else if (result.get() == buttonSave) {
                 textOutput.appendText("Saving deck to file... ");
                 try {
-                    FileController.writeDeckToFile(getDeck(), OUT_PATH + SAVE_FILE_NAME);
-                    textOutput.appendText("save successful.\n");
+                    Optional<File> saveFile = FileController.selectFileSave(textOutput.getScene().getWindow());
+                    if (saveFile.isPresent()) {
+                        FileController.writeDeckToFile(getDeck(), saveFile.get());
+                        textOutput.appendText("save successful.\n");
+                    } else {
+                        LOGGER.info("Save cancelled.");
+                        textOutput.appendText("save cancelled.\n");
+                    }
                     getDeck().clear();
                     textOutput.appendText("Deck has been refreshed.\n\n");
                 } catch (Exception e) {
@@ -301,22 +319,12 @@ public class Sylladex {
         //set the new active modus
         try {
             modusContainer.updateCurrentModus(modusClass);
-        } catch (IllegalArgumentException e) {
+        } catch (RuntimeException e) {
             //if the given class is invalid
             Alert alert = new Alert(AlertType.ERROR);
             alert.setTitle("Modus Selection Error!");
-            alert.setHeaderText("The selected Modus was invalid!");
-            alert.setContentText("Error in #handleModusSelection, button's assigned class did not pass validation. \n" +
-                                 "Modus selection will be aborted.");
-            alert.showAndWait();
-            return;
-        } catch (IllegalAccessException | InstantiationException e) {
-            //if the given class couldn't be instantiated.
-            e.printStackTrace();
-            Alert alert = new Alert(AlertType.ERROR);
-            alert.setTitle("Modus Selection Error!");
-            alert.setHeaderText("The selected Modus is corrupted or incomplete!");
-            alert.setContentText("Error in #handleModusSelection, button's assigned class couldn't be instantiated. \n" +
+            alert.setHeaderText("The selected Modus was unable to be used!");
+            alert.setContentText("Error in #handleModusSelection, button's assigned class could not be validly instantiated. \n" +
                                  "Modus selection will be aborted.");
             alert.showAndWait();
             return;
@@ -353,9 +361,6 @@ public class Sylladex {
         modusContainer.requestDrawToDisplay();
         //display this modus' description to screen
         textOutput.appendText(modusContainer.requestDescription());
-
-        //allow textual input
-        guiPropertyMap.getTextInput().setDisable(false);
     }
 
     ///// GETTERS AND SETTERS /////

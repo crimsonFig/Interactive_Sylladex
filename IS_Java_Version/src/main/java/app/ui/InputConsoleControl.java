@@ -1,12 +1,12 @@
 package app.ui;
 
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputControl;
 import javafx.scene.input.KeyCode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,6 +35,10 @@ public class InputConsoleControl implements TextInputComponent, LoadableFXML {
         textInputSubmitButton.setDisable(true); // this should be enabled when the text input is valid
         textInput.setDisable(true);             // this should be enabled externally when the app is ready for commands
 
+        textInput.disabledProperty().addListener((property, wasDisabled, isDisabled) -> {
+            // if disabled, clear the input text. note: chose to cast instead of capturing `textInput` to prevent cyclic reference.
+            if (isDisabled) ((TextInputControl)((ReadOnlyProperty) property).getBean()).clear();
+        });
         textInput.textProperty().addListener((bean, oldVal, newVal) -> textInputSubmitButton.setDisable(newVal.trim().isEmpty()));
         textInput.sceneProperty().addListener((bean, oldScene, newScene) -> {
             if (newScene != null) {
@@ -55,8 +59,8 @@ public class InputConsoleControl implements TextInputComponent, LoadableFXML {
     }
 
     /**
-     * @implNote by using a property with change listeners, this method gets around repeated commands by alternating between
-     * trimmed and trim+appending a space character. All property subscribers should perform text sanitation and not assume this will.
+     * @implNote by using a property with change listeners, this method gets around repeated commands by alternating between trimmed
+     *         and trim+appending a space character. All property subscribers should perform text sanitation and not assume this will.
      */
     @FXML
     void submit() {

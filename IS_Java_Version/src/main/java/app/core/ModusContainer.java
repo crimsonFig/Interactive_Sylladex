@@ -4,8 +4,8 @@ import app.model.Card;
 import app.model.Metadata;
 import app.model.ModusBuffer;
 import app.modus.Modus;
-import app.modus.ModusMetatagRunStatus;
 import app.util.*;
+import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -14,17 +14,9 @@ import javafx.scene.layout.Pane;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
+import javax.annotation.*;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.stream.Collectors;
 
 /**
  * The ModusContainer class provides support to the sylladex in managing the modi in the modus package. This enables users to take a valid
@@ -44,15 +36,16 @@ import java.util.stream.Collectors;
  * @author Triston Scallan
  * @see app.modus.Modus
  */
+@ParametersAreNonnullByDefault
 class ModusContainer {
     static final         String                          MODUS_PREFIX = "modus.";
     private static final Logger                          LOGGER       = LogManager.getLogger(ModusContainer.class);
     /** Tracks the current active Modus as an index of {@link #modusClassList}. -1 means no active Modus. */
     private final        ReadOnlyObjectWrapper<Metadata> currentModusMetadata;
     private final        StringProperty                  modusInput;
-    private              ModusBuffer                     modusBuffer;
     /** Tracks all available Fetch Modi for the Sylladex */
-    private              List<Class<? extends Modus>>    modusClassList;
+    private final        List<Class<? extends Modus>>    modusClassList;
+    private              ModusBuffer                     modusBuffer;
 
     /**
      * Constructor
@@ -63,6 +56,8 @@ class ModusContainer {
      *         the property for the current display
      * @param outputProperty
      *         the property for the current text output
+     * @param inputProperty
+     *         the property for the current text input
      * @param deckProperty
      *         the property for the master deck
      * @param openHandProperty
@@ -71,44 +66,33 @@ class ModusContainer {
     ModusContainer(ReadOnlyObjectProperty<Consumer<ChangeListener<String>>> submittedInputSubscriberProperty,
                    ReadOnlyObjectProperty<? extends Pane> displayProperty,
                    ReadOnlyObjectProperty<? extends TextInputControl> outputProperty,
+                   ReadOnlyObjectProperty<? extends TextInputControl> inputProperty,
                    ListProperty<Card> deckProperty,
                    ListProperty<String> openHandProperty) {
         this.modusInput = new SimpleStringProperty(this, "modus_input", "");
         this.modusBuffer = new ModusBuffer(modusInput, displayProperty, outputProperty, deckProperty, openHandProperty);
-        // todo: create a listener for current modus metadata - if value is set to null, handle null-pointer prevention
-        // todo: create a listener for display property. if display's height or width changes, request a re-draw.
         this.currentModusMetadata = new ReadOnlyObjectWrapper<>(this, "current_modus_metadata", null);
 
-        submittedInputSubscriberProperty.getValue().accept(this::handleModusInput);
-
-        //populate a list with the class names in the modus package
-        List<String> modusNameList = createClassNameList();
-
-        //convert class names to class objects, filter out invalid modus classes, and collect
-        modusClassList = modusNameList.stream()
-                                      //convert the names into class objects
-                                      .map(className -> {
-                                          Class<? extends Modus> modusClass = null;
-                                          try {
-                                              modusClass = Class.forName(className, false, Modus.class.getClassLoader())
-                                                                .asSubclass(Modus.class);
-                                          } catch (ClassNotFoundException e) {
-                                              System.err.print("ClassListing: " +
-                                                               className +
-                                                               " was listed as a class but no definition was found.\n");
-                                          } catch (ClassCastException e) {
-                                              System.err.print("ClassListing: ignoring found non-Modus derived class '" +
-                                                               className +
-                                                               "'.\n");
-                                          }
-                                          return modusClass;
-                                      }).filter(this::validateModusFile).collect(Collectors.toList());
-        System.out.println("ClassListing: complete.");
-
-        //if modusClassList is empty, warn the user
+        modusClassList = ModusLocator.getModiAsClassList();
+        LOGGER.info("ClassListing: complete.");
         if (modusClassList.isEmpty()) {
             throw new RuntimeException("Final result of modusClassList in ModusContainer constructor is empty.");
         }
+        try {
+            currentModusMetadata.addListener((bean, oldV, newV) -> inputProperty.getValue().setDisable(newV == null));
+            displayProperty.getValue().widthProperty().addListener((bean, oldV, newV) -> {
+                if (this.getCurrentModusMetadata() != null) {
+                    Platform.runLater(this::requestDrawToDisplay);
+                }
+            });
+            displayProperty.getValue().heightProperty().addListener((bean, oldV, newV) -> {
+                if (this.getCurrentModusMetadata() != null) Platform.runLater(this::requestDrawToDisplay);
+            });
+            submittedInputSubscriberProperty.getValue().accept(this::handleModusInput);
+        } catch (RuntimeException e) {
+            LOGGER.catching(e);
+        }
+
     }
 
     //************** GETTERS/SETTERS *******************/
@@ -116,59 +100,32 @@ class ModusContainer {
     /**
      * @return the currentModusMetadata
      */
-    @Nullable
+    @CheckForNull
     Metadata getCurrentModusMetadata() {
         return currentModusMetadata.getValue();
     }
 
+    /**
+     * @return the read only property of the current Metadata object of the current active Modus
+     */
+    @Nonnull
     public ReadOnlyObjectProperty<Metadata> currentModusMetadataProperty() {
         return currentModusMetadata.getReadOnlyProperty();
     }
 
     /**
-     * Instantiates the given <code>Modus</code> class and checks for instance validation. Will clear the
-     * <code>modusBuffer</code> input and redirector fields, even if an exception is thrown.
+     * Utilized by the UI to display modus selection as well as the ability to check against runtime types.
      *
-     * @param modusClass
-     *         the modus to update the current selection for interfacing with
-     * @throws IllegalAccessException
-     *         if the given class is unable to be accessed from this scope
-     * @throws InstantiationException
-     *         if the instantiation process fails
-     * @throws IllegalArgumentException
-     *         is the class fails Metadata validation
-     * @see Metadata#isValid(Metadata)
+     * @return the unmodifiable list of all Class objects implementing the Modus interface
      */
-    <T extends Modus> void updateCurrentModus(Class<T> modusClass) throws
-                                                                   IllegalAccessException,
-                                                                   InstantiationException,
-                                                                   IllegalArgumentException {
-        //instantiate the desired class and set it to this#currentModusMetadata
-        try {
-            Modus clazzInstance = modusClass.newInstance();
-            if (!Metadata.isValid(clazzInstance.getMETADATA()))
-                throw new IllegalArgumentException("Class '" + modusClass.getSimpleName() + "' failed validation as a Modus");
-            System.out.println("ClassLoading: classSuccess = " + modusClass.getSimpleName());
-            //replace old instance so it may be GC'd
-            currentModusMetadata.setValue(clazzInstance.getMETADATA());
-        } finally {
-            //reset previous modus specific data in modusBuffer
-            modusBuffer.clearModusInputRedirector();
-            modusInput.setValue("");
-        }
-    }
-
-
-    /**
-     * @return the modusClassList
-     */
+    @Nonnull
     List<Class<? extends Modus>> getModusClassList() {
-        return modusClassList;
+        return Collections.unmodifiableList(modusClassList);
     }
 
     //*************** UTILITY **************************/
 
-    private void handleModusInput(ObservableValue<? extends String> bean, String oldInput, @Nullable String newInput) {
+    void handleModusInput(ObservableValue<? extends String> bean, String oldInput, @Nullable String newInput) {
         LOGGER.traceEntry("handleSyllInput(bean={}, oldInput={}, newInput={}", bean, oldInput, newInput);
         if (newInput == null) {
             LOGGER.warn("New input for submitted input handler was null. " +
@@ -229,25 +186,25 @@ class ModusContainer {
      * @param args
      *         the arguments to supply the command with
      */
-    //TODO: add logging for thrown exceptions instead of printing to err or out
     private void execModusCmd(String command, String... args) {
-        System.out.println("invoking `" + command + "` with args = " + Arrays.toString(args));
+        LOGGER.traceEntry("invoking execModusCmd(command={}, args={}", command, args);
         try {
             currentModusMetadata.get().COMMAND_MAP.command(command, args, modusBuffer);
         } catch (NoSuchCommandException e) {
-            System.err.print("ModusContainer#execModusCmd: " + e + ".\n");
+            LOGGER.error(command + " is not a known command.", e);
             modusBuffer.getTextOutput().appendText("ERROR - " + e + ".\n");
         } catch (IllegalSyntaxException e) {
-            System.err.print("ModusContainer#execModusCmd: " + e + ".\n");
+            LOGGER.error("Expected args for command " + command + " was invalid: " + Arrays.toString(args), e);
             String errMsg = "ERROR - " + e + ".\n" + currentModusMetadata.get().COMMAND_MAP.desc(command) + "\n";
             modusBuffer.getTextOutput().appendText(errMsg);
         } catch (CommandRuntimeException e) {
-            e.printStackTraceLess(4);
+            LOGGER.error("Exception occurred in modus that prevented completion of command. Modus integrity unknown.", e);
             modusBuffer.getTextOutput().appendText("ERROR - " + e + ".\n");
             modusBuffer.clearModusInputRedirector();
         } catch (FatalModusException e) {
-            e.printStackTraceLess(4);
-            System.err.print("restarting modus.");
+            LOGGER.error("Fatal exception occurred in modus that prevented completion of command. " +
+                         "Modus integrity is expected to be corrupted or invalid. Sylladex may attempt to restart/recover modus.", e);
+            LOGGER.info("Restarting modus...");
             modusBuffer.getTextOutput().appendText("Resetting modus to recover from a fatal error. Please reload deck.\n");
             recoverFromModusFailure();
         }
@@ -263,9 +220,12 @@ class ModusContainer {
         getCurrentModusMetadata().REFERENCE.load(modusBuffer);
     }
 
-    void requestDrawToDisplay() throws RequestException {
-        if (getCurrentModusMetadata() == null) throw new RequestException("No modus selected");
-        getCurrentModusMetadata().REFERENCE.drawToDisplay(modusBuffer);
+    void requestDrawToDisplay() {
+        if (getCurrentModusMetadata() == null) {
+            LOGGER.error("No modus selected, unable to request a draw to display.");
+        } else {
+            getCurrentModusMetadata().REFERENCE.drawToDisplay(modusBuffer);
+        }
     }
 
     @Nonnull
@@ -275,20 +235,40 @@ class ModusContainer {
     }
 
     /**
+     * Instantiates the given <code>Modus</code> class and checks for instance validation. Will clear the
+     * <code>modusBuffer</code> input and redirector fields, even if an exception is thrown.
+     *
+     * @param modusClass
+     *         the modus to update the current selection for interfacing with
+     * @throws RuntimeException
+     *         if the class fails Metadata validation or was unable to be instantiated
+     * @see Metadata#isValid(Metadata)
+     */
+    void updateCurrentModus(Class<? extends Modus> modusClass) throws RuntimeException {
+        // reset any leftover values from the current modus object
+        modusBuffer.clearModusInputRedirector();
+        modusInput.setValue("");
+        // replace with the new modus object in the form of the metadata object reference.
+        Metadata newModusMetadata = ModusFactory.getModusMetadata(modusClass);
+        currentModusMetadata.setValue(newModusMetadata);
+    }
+
+    /**
      * Initializes a new object of the current modus class, then effectively replaces the old object's reference. Includes (transitively) a
      * side effect of resetting the modusBuffer's input and redirector fields.
      *
+     * @throws NullPointerException
+     *         If there is no current modus metadata object active
      * @throws RuntimeException
      *         if the modus' constructor cannot be accessed or fails
      */
     void resetModus() throws RuntimeException {
-        Modus modus = Objects.requireNonNull(getCurrentModusMetadata()).REFERENCE;
+        Objects.requireNonNull(getCurrentModusMetadata(), "Cannot reset modus if no modus is active.");
         try {
-            updateCurrentModus(modus.getClass());
-        } catch (SecurityException | IllegalAccessException e) {
-            throw new RuntimeException("Access to " + modus.getClass().getSimpleName() + " constructor was prevented.", e);
-        } catch (IllegalArgumentException | InstantiationException e) {
-            throw new RuntimeException(modus.getClass().getSimpleName() + " modus constructor failed.", e);
+            updateCurrentModus(getCurrentModusMetadata().REFERENCE.getClass());
+        } catch (RuntimeException e) {
+            LOGGER.throwing(e);
+            throw e;
         }
     }
 
@@ -302,104 +282,15 @@ class ModusContainer {
      * @see #updateCurrentModus(Class)
      * @see ModusBuffer#clearModusInputRedirector()
      */
-    //TODO: needs more sophisticated work to properly fix without just resetting, but this should do for now
     private void recoverFromModusFailure() {
         try {
             resetModus();
         } catch (RuntimeException e) {
-            e.printStackTrace();
+            LOGGER.error("Modus failure recovery method failed!", e);
             //catastrophic failure. unload modus and reset the view.
             currentModusMetadata.setValue(null);
             modusBuffer.getDisplay().getChildren().clear();
             modusBuffer.getTextOutput().appendText("!!!catastrophic modus error!!!\nPlease select a different modus.\n");
         }
     }
-
-    /**
-     * gets a list of all the modus class names. This is done in a modular and generalized way utilizing reflection. First it will attempt
-     * to get the name of the modus package. after acquiring the name it will then convert it into a resource to find the URL and URI path
-     * of the modus package so that it can convert it to a directory. it will then iterate through the directory and create a list of the
-     * class files contained. this will first be performed for a file system and then for a jarfile system.
-     */
-    private List<String> createClassNameList() {
-        String       pkgname       = Modus.class.getPackage().getName();
-        List<String> classNameList = new ArrayList<>();
-
-        // Get a File object for the package
-        File   directory = null;
-        String fullPath;
-        System.out.println("ClassDiscovery: Package: " + pkgname);
-        URL resource = ClassLoader.getSystemClassLoader().getResource(pkgname.replace('.', File.separatorChar));
-        System.out.println("ClassDiscovery: Resource = " + resource);
-        if (resource == null) {
-            throw new RuntimeException("No resource for " + pkgname);
-        }
-        fullPath = resource.getFile();
-        System.out.println("ClassDiscovery: FullPath = " + resource);
-
-        try {
-            directory = new File(resource.toURI());
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(pkgname +
-                                       " (" +
-                                       resource +
-                                       ") does not appear to be a valid URL / URI.  Strange, since we got it from the system...", e);
-        } catch (IllegalArgumentException ignored) {
-        }
-        System.out.println("ClassDiscovery: Directory = " + directory);
-
-        if (directory != null && directory.exists()) {
-            // Get the list of the files contained in the package
-            List<String> files = Arrays.asList(Objects.requireNonNull(directory.list()));
-            files.sort(String::compareTo);
-            for (String file : files) {
-                // we are only interested in .class files
-                if (file.endsWith(".class")) {
-                    // removes the .class extension
-                    String className = pkgname + '.' + file.substring(0, file.length() - 6);
-                    System.out.println("ClassDiscovery: className = " + className);
-                    classNameList.add(className);
-                }
-            }
-        }
-        //attempt to try it as a jarfile path instead
-        else {
-            String jarPath = fullPath.replaceFirst("[.]jar[!].*", ".jar").replaceFirst("file:", "");
-            try (JarFile jarFile = new JarFile(jarPath)) {
-                Enumeration<JarEntry> entries = jarFile.entries();
-                while (entries.hasMoreElements()) {
-                    JarEntry entry     = entries.nextElement();
-                    String   entryName = entry.getName();
-                    if (entryName.startsWith(pkgname) && entryName.length() > (pkgname.length() + "/".length())) {
-                        System.out.println("ClassDiscovery: JarEntry: " + entryName);
-                        String className = entryName.replace('/', '.').replace('\\', '.').replace(".class", "");
-                        System.out.println("ClassDiscovery: className = " + className);
-                        classNameList.add(className);
-                    }
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(pkgname + " (" + directory + ") does not appear to be a valid package", e);
-            }
-        }
-        System.out.println("ClassDiscovery: complete.");
-        return classNameList;
-    }
-
-    /**
-     * Validates a class as an instantiable subclass of Modus
-     *
-     * @param modusClass
-     *         the modus class literal to be drawn from
-     * @param <M>
-     *         a subclass of Modus
-     * @return True if modus can have a running instance created via reflection.
-     */
-    private <M extends Modus> boolean validateModusFile(Class<M> modusClass) {
-        if (modusClass == null) return false;
-        ModusMetatagRunStatus runStatusAnnot = modusClass.getAnnotation(ModusMetatagRunStatus.class);
-        //currently, checking the run status tag is sufficient for validation. add more as needed/thought of.
-        return (runStatusAnnot != null) && runStatusAnnot.value();
-    }
-
-
 }

@@ -9,7 +9,7 @@
       alignment="BOTTOM_LEFT"
       maxHeight="300" maxWidth="1000"
       minHeight="-Infinity" minWidth="-Infinity"
-      prefHeight="100.0"
+      prefHeight="130.0"
       spacing="10.0" VBox.vgrow="SOMETIMES">
     <VBox.margin>
         <Insets bottom="4.0" left="4.0" right="4.0" top="4.0"/>
