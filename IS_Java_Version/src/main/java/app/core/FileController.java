@@ -16,14 +16,15 @@ import java.util.Optional;
 @ParametersAreNonnullByDefault
 class FileController {
     private static final Logger      LOGGER            = LogManager.getLogger(FileController.class);
-    private static final String      DEFAULT_FILE_NAME = "sylladex.deck";
+    private static final String      DEFAULT_FILE_NAME = "sylladex_save_file";
+    private static final String      DEFAULT_FILE_EXT  = "deck";
     private static final FileChooser fileChooser;
 
     static {
         fileChooser = new FileChooser();
         fileChooser.setInitialDirectory(new File("").getAbsoluteFile());
-        fileChooser.setInitialFileName(DEFAULT_FILE_NAME);
-        fileChooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("sylladex deck files", "deck"));
+        fileChooser.setInitialFileName(DEFAULT_FILE_NAME + "." + DEFAULT_FILE_EXT);
+        fileChooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("sylladex deck files", DEFAULT_FILE_EXT));
     }
 
     /**
@@ -40,12 +41,14 @@ class FileController {
      */
     static synchronized void writeDeckToFile(List<Card> deck, File destination) throws SecurityException, IOException {
         File saveFile;
-        if (destination.isDirectory()) {
-            saveFile = new File(destination.getPath() + DEFAULT_FILE_NAME);
-        } else if (destination.isFile()) {
+        // enforce file extension
+        if (destination.getName().endsWith("." + DEFAULT_FILE_EXT)) {
+            if (!destination.isFile() && !destination.createNewFile()) throw LOGGER.throwing(new IOException("could not create save file"));
             saveFile = destination;
         } else {
-            saveFile = destination.createNewFile() ? destination : new File(DEFAULT_FILE_NAME);
+            saveFile = new File(destination.getPath().replaceFirst("\\.[^.]+$", "") + "." + DEFAULT_FILE_EXT);
+            if (saveFile.exists() && !saveFile.isFile())
+                throw LOGGER.throwing(new IOException(saveFile.getName() + " exists, but is not a valid file."));
         }
 
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(saveFile))) {

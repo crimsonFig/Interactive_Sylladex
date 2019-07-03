@@ -171,8 +171,8 @@ public class Sylladex {
                 Optional<File> loadFile = FileController.selectFileLoad(textOutput.getScene().getWindow());
                 if (loadFile.isPresent()) {
                     setDeck(FileController.loadDeckFromFile(loadFile.get()));
-                    modiMgr.requestLoad();
                     textOutput.appendText("load successful.\n");
+                    modiMgr.requestLoad();
                 } else {
                     LOGGER.info("Load cancelled.");
                     textOutput.appendText("load cancelled.\n");
