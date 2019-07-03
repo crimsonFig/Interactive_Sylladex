@@ -9,9 +9,7 @@ import org.apache.logging.log4j.Logger;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @ParametersAreNonnullByDefault
 class FileController {
@@ -40,7 +38,9 @@ class FileController {
      *         thrown by {@link ObjectOutputStream}
      */
     static synchronized void writeDeckToFile(List<Card> deck, File destination) throws SecurityException, IOException {
-        File saveFile;
+        // create a copy of the deck with no null references, this helps ensure deck doesn't mutate during write
+        List<Card> saveDeck = deck.stream().filter(Objects::nonNull).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        File       saveFile;
         // enforce file extension
         if (destination.getName().endsWith("." + DEFAULT_FILE_EXT)) {
             if (!destination.isFile() && !destination.createNewFile()) throw LOGGER.throwing(new IOException("could not create save file"));
@@ -53,7 +53,7 @@ class FileController {
 
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(saveFile))) {
             //write deck size to the front of the file,
-            oos.writeInt(deck.size());
+            oos.writeInt(saveDeck.size());
             for (Card card : deck) {
                 oos.writeObject(card);
             }
