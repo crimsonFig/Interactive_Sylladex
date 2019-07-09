@@ -5,54 +5,59 @@
 <?import javafx.scene.Cursor?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
-<TabPane xmlns:fx="http://javafx.com/fxml"
-         fx:controller="app.ui.SidebarControl"
-         prefWidth="307.0" stylesheets="@../application.css" tabClosingPolicy="UNAVAILABLE">
+<TabPane xmlns:fx="http://javafx.com/fxml/1" prefWidth="307.0" stylesheets="@../application.css" tabClosingPolicy="UNAVAILABLE"
+         xmlns="http://javafx.com/javafx/8.0.141" fx:controller="app.ui.SidebarControl">
     <Tab text="Modus List">
-        <VBox fx:id="modusMenuList" prefHeight="200.0" prefWidth="100.0">
+        <VBox fx:id="modusMenuList" style="-fx-background-color: eee;">
             <ToolBar prefHeight="40.0" prefWidth="200.0">
                 <Button text="Refresh"/>
             </ToolBar>
         </VBox>
     </Tab>
     <Tab fx:id="cmdTab" text="Commands">
-        <Accordion fx:id="cmdAcc" maxHeight="-Infinity">
-            <panes>
-                <TitledPane alignment="TOP_LEFT" maxHeight="-Infinity" text="Sylladex Commands">
-                    <ScrollPane fitToWidth="true" hbarPolicy="NEVER">
-                        <padding>
-                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
-                        </padding>
-                        <VBox fx:id="syllCmdList" prefWidth="100.0" spacing="5.0"/>
-                    </ScrollPane>
-                </TitledPane>
-                <TitledPane alignment="TOP_LEFT" maxHeight="-Infinity" text="Modus Commands">
-                    <ScrollPane fitToWidth="true" hbarPolicy="NEVER">
-                        <padding>
-                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
-                        </padding>
-                        <VBox fx:id="modusCmdList" prefWidth="100.0" spacing="5.0"/>
-                    </ScrollPane>
-                </TitledPane>
-                <TitledPane alignment="TOP_LEFT" maxHeight="-Infinity" text="Misc.">
-                    <ScrollPane fitToWidth="true" hbarPolicy="NEVER">
-                        <padding>
-                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
-                        </padding>
-                        <VBox fx:id="miscList" prefWidth="100.0" spacing="5.0"/>
-                    </ScrollPane>
-                </TitledPane>
-            </panes>
-        </Accordion>
+        <content>
+            <VBox style="-fx-background-color: eee;">
+                <children>
+                    <Accordion fx:id="cmdAcc" maxHeight="-Infinity">
+                        <panes>
+                            <TitledPane alignment="TOP_LEFT" maxHeight="-Infinity" text="Sylladex Commands">
+                                <ScrollPane fitToWidth="true" hbarPolicy="NEVER">
+                                    <padding>
+                                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                                    </padding>
+                                    <VBox fx:id="syllCmdList" prefWidth="100.0" spacing="5.0"/>
+                                </ScrollPane>
+                            </TitledPane>
+                            <TitledPane alignment="TOP_LEFT" maxHeight="-Infinity" text="Modus Commands">
+                                <ScrollPane fitToWidth="true" hbarPolicy="NEVER">
+                                    <padding>
+                                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                                    </padding>
+                                    <VBox fx:id="modusCmdList" prefWidth="100.0" spacing="5.0"/>
+                                </ScrollPane>
+                            </TitledPane>
+                            <TitledPane alignment="TOP_LEFT" maxHeight="-Infinity" text="Misc.">
+                                <ScrollPane fitToWidth="true" hbarPolicy="NEVER">
+                                    <padding>
+                                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                                    </padding>
+                                    <VBox fx:id="miscList" prefWidth="100.0" spacing="5.0"/>
+                                </ScrollPane>
+                            </TitledPane>
+                        </panes>
+                    </Accordion>
+                </children>
+            </VBox>
+        </content>
     </Tab>
     <Tab text="Help">
-        <VBox prefHeight="200.0" prefWidth="100.0">
+        <VBox prefHeight="200.0" prefWidth="100.0" style="-fx-background-color: eee;">
             <Separator prefWidth="200.0"/>
             <GridPane>
                 <columnConstraints>
-                    <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" prefWidth="100.0" maxWidth="300"/>
-                    <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" prefWidth="100.0" maxWidth="300"/>
-                    <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" prefWidth="100.0" maxWidth="300"/>
+                    <ColumnConstraints hgrow="ALWAYS" maxWidth="300" minWidth="10.0" prefWidth="100.0"/>
+                    <ColumnConstraints hgrow="ALWAYS" maxWidth="300" minWidth="10.0" prefWidth="100.0"/>
+                    <ColumnConstraints hgrow="ALWAYS" maxWidth="300" minWidth="10.0" prefWidth="100.0"/>
                 </columnConstraints>
                 <rowConstraints>
                     <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
@@ -60,9 +65,8 @@
                     <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
                     <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
                 </rowConstraints>
-                <Button fx:id="bReset" alignment="TOP_LEFT" contentDisplay="CENTER" mnemonicParsing="false"
-                        onAction="#reset" text="Reset!!" GridPane.columnIndex="1" GridPane.halignment="CENTER"
-                        GridPane.rowIndex="3" GridPane.valignment="TOP">
+                <Button fx:id="bReset" alignment="TOP_LEFT" contentDisplay="CENTER" mnemonicParsing="false" onAction="#reset" text="Reset!!"
+                        GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="3" GridPane.valignment="TOP">
                     <cursor>
                         <Cursor fx:constant="HAND"/>
                     </cursor>
@@ -71,8 +75,8 @@
                     </font>
                 </Button>
                 <Label text="In case you need to soft restart the sylladex and app.modus, press the below button. NOTE: Will clear the current held deck."
-                       textAlignment="JUSTIFY" wrapText="true" GridPane.columnSpan="3" GridPane.rowIndex="1"
-                       GridPane.rowSpan="2" GridPane.valignment="TOP">
+                       textAlignment="JUSTIFY" wrapText="true" GridPane.columnSpan="3" GridPane.rowIndex="1" GridPane.rowSpan="2"
+                       GridPane.valignment="TOP">
                     <font>
                         <Font size="11.0"/>
                     </font>
