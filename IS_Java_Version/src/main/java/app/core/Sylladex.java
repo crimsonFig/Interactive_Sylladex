@@ -1,24 +1,22 @@
 package app.core;
 
 import app.model.Card;
-import app.modus.Modus;
 import app.ui.GuiPropertyMap;
+import app.ui.ModusSelectComponent;
 import app.util.CommandMap;
 import app.util.RequestException;
 import app.util.SyllCommandMap;
-import javafx.beans.property.ListProperty;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
-import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonBar.ButtonData;
-import javafx.scene.layout.*;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -77,9 +75,6 @@ public class Sylladex {
         noModusPromptVBox.setAlignment(Pos.CENTER);
         guiPropertyMap.getDisplay().getChildren().add(noModusPromptVBox);
 
-        //initialize the modusMenuList
-        initGuiModusList(modusContainer, guiPropertyMap);
-
         //initialize the syllCmdList
         for (String command : SYLL_CMD_MAP.keySet()) {
             guiPropertyMap.getSyllCmdListChildren().addAll(new Label(SYLL_PREFIX + command), new Separator());
@@ -87,42 +82,17 @@ public class Sylladex {
 
         //add a handler to the submitted input subscriber
         guiPropertyMap.getSubmittedInputSubscriber().accept(this::handleSyllInput);
+        //provide the handler for the modus selection
+        guiPropertyMap.modusSelectionHandlerProperty()
+                      .setValue((event) -> handleModusSelection(modusContainer,
+                                                                guiPropertyMap.textOutputProperty(),
+                                                                guiPropertyMap.modusCmdListChildrenProperty(),
+                                                                this.deckProperty,
+                                                                event));
+
+        guiPropertyMap.setAllModusMenuSelectableClassList(modusContainer.getModusClassList());
     }
 
-    ///// INITIALIZERS ////
-    private void initGuiModusList(final ModusContainer modusContainer, final GuiPropertyMap guiPropertyMap) {
-        for (Class<? extends Modus> modusClazz : modusContainer.getModusClassList()) {
-            //create a GridPane object
-            GridPane node = new GridPane();
-            //add a column and two rows
-            node.getColumnConstraints().add(new ColumnConstraints(10, 100, Region.USE_COMPUTED_SIZE, Priority.SOMETIMES, null, false));
-            node.getRowConstraints().add(new RowConstraints(10, 30, Region.USE_COMPUTED_SIZE, Priority.SOMETIMES, null, false));
-            node.getRowConstraints().add(new RowConstraints(10, 30, Region.USE_COMPUTED_SIZE, Priority.SOMETIMES, null, false));
-            node.setPrefWidth(257.0);
-            node.setPrefHeight(40.0);
-            node.setPadding(new Insets(0, 5, 5, 5));
-            //create a label in the GridPane
-            Label name = new Label(modusClazz.getSimpleName());
-            name.setFont(new Font("Courier", 13));
-            node.add(name, 0, 0);
-            //create a button in the GridPane
-            Button button = new Button("Select");
-            button.setId("modusMenuListButton");
-            button.setFont(new Font("Courier", 11));
-            // on action, initialize modusCmdList
-            button.setOnAction((event) -> handleModusSelection(modusClazz, modusContainer, guiPropertyMap, event)); //set event handler
-            GridPane.setHalignment(button, HPos.RIGHT);
-            node.add(button, 0, 1);
-
-            //add the GridPane to the modusMenuList
-            guiPropertyMap.getModusMenuListChildren().add(node);
-
-            //create and add a Separator between this and next node.
-            Separator hLine = new Separator();
-            hLine.setPrefWidth(200);
-            guiPropertyMap.getModusMenuListChildren().add(hLine);
-        }
-    }
 
     /**
      * Create a command map of short functions by utilizing consumer lambdas.
@@ -257,23 +227,21 @@ public class Sylladex {
         LOGGER.traceExit();
     }
 
-
     /**
      * Sets the current modus to the modus selected, updates the view to represent the modus changes, and handles logic related to selecting
      * and switching modi from the {@code #modusMenuList} node.
      * <p>
      * Called by a modusMenuList button with its assigned metadata argument.
      *
-     * @param modusClass
-     *         the object information of a given modus
      * @param event
      *         the button push event
      */
-    private <M extends Modus> void handleModusSelection(Class<M> modusClass,
-                                                        ModusContainer modusContainer,
-                                                        GuiPropertyMap guiPropertyMap,
-                                                        ActionEvent event) {
-        TextInputControl textOutput = guiPropertyMap.getTextOutput();
+    private static void handleModusSelection(ModusContainer modusContainer,
+                                             ReadOnlyObjectProperty<? extends TextInputControl> textOutputProperty,
+                                             ReadOnlyListProperty<Node> modusCmdListChildrenProperty,
+                                             ListProperty<Card> deckProperty,
+                                             ActionEvent event) {
+        TextInputControl textOutput = textOutputProperty.getValue();
 
         //if there was a previous modus selected, prompt if they want to save or reset their deck
         if (modusContainer.getCurrentModusMetadata() != null) {
@@ -296,27 +264,28 @@ public class Sylladex {
                 try {
                     Optional<File> saveFile = FileController.selectFileSave(textOutput.getScene().getWindow());
                     if (saveFile.isPresent()) {
-                        FileController.writeDeckToFile(getDeck(), saveFile.get());
+                        FileController.writeDeckToFile(deckProperty.getValue(), saveFile.get());
                         textOutput.appendText("save successful.\n");
                     } else {
                         LOGGER.info("Save cancelled.");
                         textOutput.appendText("save cancelled.\n");
                     }
-                    getDeck().clear();
+                    deckProperty.getValue().clear();
                     textOutput.appendText("Deck has been refreshed.\n\n");
                 } catch (Exception e) {
                     textOutput.appendText("Cancelling modus change.\n\n");
                     return;
                 }
             } else if (result.get() == buttonNew) {
-                getDeck().clear();
+                deckProperty.getValue().clear();
                 textOutput.appendText("Deck has been refreshed without saving.\n\n");
             } else {
                 return;
-            }
+            } //todo: add the option to just reload the new modus with current deck instead of refreshing deck
         }
 
         //set the new active modus
+        String modusClass = ((Node) event.getSource()).getId().substring(ModusSelectComponent.BUTTON_ID_PREFIX.length());
         try {
             modusContainer.updateCurrentModus(modusClass);
         } catch (RuntimeException e) {
@@ -329,22 +298,10 @@ public class Sylladex {
             alert.showAndWait();
             return;
         }
-        textOutput.appendText("Modus selected: " + modusClass.getSimpleName() + "\n");
-
-        //set all buttons in this list as not disabled, then disable only this modus' button.
-        guiPropertyMap.getModusMenuListChildren()
-                      .stream()
-                      .filter(GridPane.class::isInstance)
-                      .forEach(node -> ((GridPane) node).getChildren()
-                                                        .stream()
-                                                        .filter(Button.class::isInstance)
-                                                        .findFirst()
-                                                        .orElse(new Button())
-                                                        .setDisable(false));
-        ((Button) event.getSource()).setDisable(true);
+        textOutput.appendText("Modus selected: " + modusClass + "\n");
 
         //clear the lists and update them to the selected modus' COMMAND_MAP
-        guiPropertyMap.getModusCmdListChildren().clear();
+        modusCmdListChildrenProperty.getValue().clear();
         for (String command : modusContainer.getCurrentModusMetadata().COMMAND_MAP.keySet()) {
             if (command == null) continue;
             //for each command, create a node of the command name and description to be inserted into the modusCmdList
@@ -354,9 +311,8 @@ public class Sylladex {
             commandDesc.setWrapText(true);
             commandDesc.setPadding(new Insets(0, 0, 0, 5));
             Separator line = new Separator();
-            guiPropertyMap.getModusCmdListChildren().addAll(commandName, commandDesc, line);
+            modusCmdListChildrenProperty.getValue().addAll(commandName, commandDesc, line);
         }
-
         //reset the display
         modusContainer.requestDrawToDisplay();
         //display this modus' description to screen
@@ -377,5 +333,4 @@ public class Sylladex {
     private List<String> getOpenHand() {
         return openHandProperty.get();
     }
-
 }

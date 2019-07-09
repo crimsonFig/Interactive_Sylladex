@@ -5,6 +5,7 @@ import app.modus.ModusMetatagRunStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
@@ -26,22 +27,25 @@ class ModusLocator {
 
     //convert class names to class objects, filter out invalid modus classes, and collect
     @Nonnull
-    static List<Class<? extends Modus>> getModiAsClassList(List<String> classNameList) throws RuntimeException {
+    static List<Class<? extends Modus>> getModiAsClassList(List<String> classNameList) {
         if (classNameList == null || classNameList.isEmpty()) return Collections.emptyList();
         return classNameList.stream()
                             //convert the names into class objects
-                            .map(className -> {
-                                Class<? extends Modus> modusClass = null;
-                                try {
-                                    modusClass = Class.forName(className, false, Modus.class.getClassLoader())
-                                                      .asSubclass(Modus.class);
-                                } catch (ClassNotFoundException e) {
-                                    LOGGER.warn("ClassListing: {} was listed as a class but no definition was found.", className);
-                                } catch (ClassCastException e) {
-                                    LOGGER.warn("ClassListing: ignoring found non-Modus derived class `{}`.", className);
-                                }
-                                return modusClass;
-                            }).filter(ModusLocator::validateModusFile).collect(Collectors.toList());
+                            .map(ModusLocator::getModiAsClass).filter(ModusLocator::validateModusFile).collect(Collectors.toList());
+    }
+
+    @CheckForNull
+    static Class<? extends Modus> getModiAsClass(String className) {
+        Class<? extends Modus> modusClass = null;
+        try {
+            modusClass = Class.forName(className, false, Modus.class.getClassLoader())
+                              .asSubclass(Modus.class);
+        } catch (ClassNotFoundException e) {
+            LOGGER.warn("ClassListing: {} was listed as a class but no definition was found.", className);
+        } catch (ClassCastException e) {
+            LOGGER.warn("ClassListing: ignoring found non-Modus derived class `{}`.", className);
+        }
+        return modusClass;
     }
 
     /**

@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
+import java.util.NoSuchElementException;
 
 @ParametersAreNonnullByDefault
 class ModusFactory {
@@ -41,5 +42,22 @@ class ModusFactory {
         }
         LOGGER.info("ClassLoading: classSuccess = " + modusClass.getSimpleName());
         return result;
+    }
+
+    /**
+     * Factory method for instantiating a Modus object from a Class object.
+     *
+     * @param modusClassName
+     *         the name of the Modus subclassed type to instantiate
+     * @return a Metadata object containing a reference to an instance of the passed in class object
+     *
+     * @throws RuntimeException
+     *         if the given class is unable to be accessed from this scope, if the instantiation process fails due to a dependent class
+     */
+    @Nonnull
+    static Metadata getModusMetadata(String modusClassName) throws RuntimeException {
+        Class<? extends Modus> modusClass = ModusLocator.getModiAsClass(modusClassName);
+        if (modusClass == null) throw LOGGER.throwing(new NoSuchElementException("No valid modus class found: " + modusClassName));
+        return getModusMetadata(modusClass);
     }
 }

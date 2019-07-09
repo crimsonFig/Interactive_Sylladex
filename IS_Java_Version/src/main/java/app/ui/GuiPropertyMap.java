@@ -1,14 +1,18 @@
 package app.ui;
 
+import app.modus.Modus;
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.layout.Pane;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -23,11 +27,13 @@ public class GuiPropertyMap
     private final ReadOnlyObjectWrapper<TextInputControl> textInput;
     private final ReadOnlyObjectWrapper<TextInputControl> textOutput;
 
-    private final ReadOnlyObjectWrapper<Consumer<ChangeListener<String>>> submittedInputSubscriber;
+    private final ReadOnlyObjectWrapper<Consumer<ChangeListener<String>>>          submittedInputSubscriber;
+    private final ReadOnlyObjectWrapper<ObjectProperty<EventHandler<ActionEvent>>> modusSelectionHandlerProperty;
 
-    private final ReadOnlyListWrapper<Node> syllCmdListChildren;
-    private final ReadOnlyListWrapper<Node> modusCmdListChildren;
-    private final ReadOnlyListWrapper<Node> modusMenuListChildren;
+    private final ReadOnlyListWrapper<Node>                   syllCmdListChildren;
+    private final ReadOnlyListWrapper<Node>                   modusCmdListChildren;
+    private final ReadOnlyListWrapper<Class<? extends Modus>> modusMenuSelectableClassList;
+
 
     GuiPropertyMap(MenuBarComponent menuBarComponent,
                    CmdInfoComponent cmdInfoComponent,
@@ -51,22 +57,27 @@ public class GuiPropertyMap
                                                                "submitted_input_subscriber",
                                                                textInputComponent.getSubmittedInputSubscriber());
         // note!! while this is a 'read only' list property - this only prevents the list from being replaced, but we can add to this list!
-        syllCmdListChildren = new ReadOnlyListWrapper<>(this,
-                                                        "sylladex_command_list_children",
-                                                        cmdInfoComponent.getSyllCmdListChildren());
-        modusCmdListChildren = new ReadOnlyListWrapper<>(this,
-                                                         "modus_command_list_children",
-                                                         cmdInfoComponent.getModusCmdListChildren());
-        modusMenuListChildren = new ReadOnlyListWrapper<>(this,
-                                                          "modus_menu_list_children",
-                                                          modusSelectComponent.getModusMenuListChildren());
+        syllCmdListChildren = new ReadOnlyListWrapper<>(this, "sylladex_command_list_children", cmdInfoComponent.getSyllCmdListChildren());
+        modusCmdListChildren = new ReadOnlyListWrapper<>(this, "modus_command_list_children", cmdInfoComponent.getModusCmdListChildren());
+        modusMenuSelectableClassList = new ReadOnlyListWrapper<>(this,
+                                                                 "modus_menu_selectable_class_list",
+                                                                 modusSelectComponent.getModusMenuSelectableClassList());
+        modusSelectionHandlerProperty = new ReadOnlyObjectWrapper<>(this,
+                                                                    "modus_selection_handler_property",
+                                                                    modusSelectComponent.modusSelectionHandlerProperty());
     }
 
     /* Getters - Public access ************************************************************************************** */
     @Nonnull
     @Override
-    public ObservableList<Node> getModusMenuListChildren() {
-        return modusMenuListChildren.getValue();
+    public ObjectProperty<EventHandler<ActionEvent>> modusSelectionHandlerProperty() {
+        return modusSelectionHandlerProperty.getValue();
+    }
+
+    @Nonnull
+    @Override
+    public ObservableList<Class<? extends Modus>> getModusMenuSelectableClassList() {
+        return modusMenuSelectableClassList.getValue();
     }
 
     @Nonnull
@@ -106,10 +117,6 @@ public class GuiPropertyMap
     }
 
     /* Property getters - read only access for external classes to apply listeners to ******************************* */
-    public ReadOnlyListProperty<Node> modusMenuListChildrenProperty() {
-        return modusMenuListChildren.getReadOnlyProperty();
-    }
-
     public ReadOnlyListProperty<Node> syllCmdListChildrenProperty() {
         return syllCmdListChildren.getReadOnlyProperty();
     }
@@ -135,10 +142,6 @@ public class GuiPropertyMap
     }
 
     /* Setters - Package access only for GUI classes to update, external shouldn't access *************************** */
-    void setModusMenuListChildren(ObservableList<Node> nodeObservableList) {
-        this.modusMenuListChildren.setValue(nodeObservableList);
-    }
-
     void setSyllCmdListChildren(ObservableList<Node> syllCmdListChildren) {
         this.syllCmdListChildren.setValue(syllCmdListChildren);
     }
@@ -161,5 +164,12 @@ public class GuiPropertyMap
 
     void setSubmittedInputSubscriber(Consumer<ChangeListener<String>> submittedInputSubscriber) {
         this.submittedInputSubscriber.setValue(submittedInputSubscriber);
+    }
+
+    /* Setters - Public access *************************************************************************************** */
+
+    @Override
+    public void setAllModusMenuSelectableClassList(Collection<Class<? extends Modus>> modusList) {
+        modusMenuSelectableClassList.setAll(modusList);
     }
 }

@@ -254,6 +254,25 @@ class ModusContainer {
     }
 
     /**
+     * Instantiates the given <code>Modus</code> class name and checks for instance validation. Will clear the
+     * <code>modusBuffer</code> input and redirector fields, even if an exception is thrown.
+     *
+     * @param modusClass
+     *         the name of the modus class to update the current selection for interfacing with
+     * @throws RuntimeException
+     *         if the class fails Metadata validation or was unable to be instantiated
+     * @see Metadata#isValid(Metadata)
+     */
+    void updateCurrentModus(String modusClass) throws RuntimeException {
+        // reset any leftover values from the current modus object
+        modusBuffer.clearModusInputRedirector();
+        modusInput.setValue("");
+        // replace with the new modus object in the form of the metadata object reference.
+        Metadata newModusMetadata = ModusFactory.getModusMetadata(modusClass);
+        currentModusMetadata.setValue(newModusMetadata);
+    }
+
+    /**
      * Initializes a new object of the current modus class, then effectively replaces the old object's reference. Includes (transitively) a
      * side effect of resetting the modusBuffer's input and redirector fields.
      *
