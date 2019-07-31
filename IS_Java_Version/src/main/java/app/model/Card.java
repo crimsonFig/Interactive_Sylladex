@@ -1,5 +1,9 @@
 package app.model;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import javax.annotation.RegEx;
 import java.io.Serializable;
 
 /**
@@ -13,8 +17,11 @@ public class Card implements Serializable {
     /**
      * The class constant for an empty CARD.
      */
-    public static final  Card EMPTY            = new Card();
-    private static final long serialVersionUID = 1L;
+    public static final         Card   EMPTY             = new Card();
+    private static final        long   serialVersionUID  = 1L;
+    private static final        int    MAX_ITEM_LENGTH   = 16;
+    @RegEx private static final String REQ_CAPTCHA_REGEX = "^[\\w\\d]{0,7}$";
+    private static final        Logger LOGGER            = LogManager.getLogger(Card.class);
 
     ///// Variables
     /** item name, max size should be 16 */
@@ -34,14 +41,17 @@ public class Card implements Serializable {
     }
 
     /**
-     * Constructor with item
+     * Constructor with item string
      *
      * @param item
      *         The name of the item stored
+     * @throws IllegalArgumentException
+     *         if the item parameter is null or too long
      */
     //TODO: consider replacing with a simple Card.of(itemName) and Card.EMPTY()? type safety isn't a worry since this isn't a generic.
-    public Card(String item) {
-        this.item = item.toUpperCase();
+    public Card(String item) throws IllegalArgumentException {
+        if (item == null || item.trim().length() > MAX_ITEM_LENGTH) throw LOGGER.throwing(new IllegalArgumentException());
+        this.item = item.trim().toUpperCase();
         this.captchaCode = captchaHash(item);
         this.inUse = true;
     }
@@ -66,7 +76,7 @@ public class Card implements Serializable {
     /**
      * @return the inUse
      */
-    public Boolean getInUse() {
+    public Boolean isInUse() {
         return inUse;
     }
 
@@ -78,7 +88,7 @@ public class Card implements Serializable {
      * @return true if valid, false otherwise
      */
     public Boolean isValid() {
-        return this.item.length() <= 16 && this.captchaCode.matches("^[\\w\\d]{0,7}$");
+        return this.item != null && this.item.length() <= MAX_ITEM_LENGTH && this.captchaCode.matches(REQ_CAPTCHA_REGEX);
     }
 
     /**
@@ -97,13 +107,7 @@ public class Card implements Serializable {
      */
     @Override
     public String toString() {
-        return "Card details -> captured item: " +
-               item +
-               ", Captchacode: " +
-               captchaCode +
-               ", 'in use' state: " +
-               inUse +
-               ".";
+        return "Card details -> captured item: " + item + ", Captchacode: " + captchaCode + ", 'in use' state: " + inUse + ".";
     }
 
 

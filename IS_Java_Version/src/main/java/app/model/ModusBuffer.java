@@ -7,6 +7,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.layout.Pane;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -65,6 +66,7 @@ public class ModusBuffer {
         return openHandProperty.get();
     }
 
+    @Nonnull
     public String getAndResetModusInput() {
         String valueSafe = modusInputProperty.getValueSafe();
         modusInputProperty.setValue("");

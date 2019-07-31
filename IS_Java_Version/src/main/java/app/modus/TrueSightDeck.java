@@ -1,8 +1,6 @@
 package app.modus;
 
-import java.util.LinkedHashMap;
-import java.util.ListIterator;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 import app.model.Card;
 import app.model.ModusBuffer;
@@ -12,13 +10,14 @@ import app.util.ModusCommandMap;
  * @author Triston Scallan
  *
  */
+@ModusMetatagRunStatus(false)
 public class TrueSightDeck extends TarotDeck {
 
-	//inherited List<Card> deck = new Stack<Card>(); 	
+	//inherited List<Card> deck = new Stack<Card>();
 	//inherited int SHUFFLE_VAL;
-	
-	//***************************** INITIALIZE ***********************************/		
-	/**	
+
+	//***************************** INITIALIZE ***********************************/
+	/**
 	 * Constructor for the TrueSightDeck
 	 */
 	public TrueSightDeck() {
@@ -29,10 +28,10 @@ public class TrueSightDeck extends TarotDeck {
 	protected ModusCommandMap createFunctionMap() {
 		return null;
 	}
-	
-	//***************************** ACCESS *************************************/	
 
-	
+	//***************************** ACCESS *************************************/
+
+
 	//********************************** IO ***************************************/
 	/**
 	 * Draws the index'th CARD from the deck.
@@ -41,9 +40,9 @@ public class TrueSightDeck extends TarotDeck {
 	 */
 	public Card takeOutCardByIndex(int index) {
 		if (index > deck.size() - 1 || index < 0) return new Card(); //if invalid index, return an empty CARD
-		
-		Card card;
-		ListIterator<Card> deckTop = this.deck.listIterator();
+
+		Card           card;
+		Iterator<Card> deckTop = this.deck.iterator();
 		for (int i = 0; deckTop.hasNext(); i++) {
 			card = deckTop.next();
 			if (i == index) {
@@ -53,8 +52,8 @@ public class TrueSightDeck extends TarotDeck {
 		}
 		return new Card();
 	}
-	
-	//****************************** UTILITY ************************************/	
+
+	//****************************** UTILITY ************************************/
 	/**
 	 * given an item's name, finds the index location within the deck of a CARD that matches the name.
 	 * @param itemName the given name to find

@@ -56,6 +56,19 @@ public class ModusCommandMap extends CommandMap<Pair<BiConsumer<String[], ModusB
         return super.put(key, value);
     }
 
+    /**
+     * Convenience method alternative to the overridden put method.
+     * @param key a string representing a key to identify the supplied command
+     * @param command the command to be invoked
+     * @param desc the string description of the command.
+     * @return the old value associated with the key, if it exists. null otherwise.
+     */
+    public Pair<BiConsumer<String[], ModusBuffer>, String> put(String key, BiConsumer<String[], ModusBuffer> command, String desc) {
+        Objects.requireNonNull(command, "ERROR: supplied command cannot be null");
+        Objects.requireNonNull(desc, "ERROR: supplied description cannot be null");
+        return this.put(key, new Pair<>(command, desc));
+    }
+
     public static boolean isValid(ModusCommandMap map) {
         if (map == null) return false;
         for (Map.Entry<String, Pair<BiConsumer<String[], ModusBuffer>, String>> entry : map.entrySet()) {

@@ -108,7 +108,7 @@ public class PentaFile implements Modus {
                 Card[]  folder = findFolderByName(folderName);           //<< may throw NoSuchElementException
                 Card    card   = takeOutCard(index - 1, folder);      //<< may throw IndexOutOfBoundsException
                 // -- card will be not in use if EMPTY, which a client can legally ask for but wont be added to OpenHand
-                if (card.getInUse()) modusBuffer.getOpenHand().add(card.getItem());
+                if (card.isInUse()) modusBuffer.getOpenHand().add(card.getItem());
                 textOutput.appendText("success.\n");
 
                 save(modusBuffer);
@@ -152,7 +152,7 @@ public class PentaFile implements Modus {
             try {
                 Card card = takeOutCardByName(itemName);        //<< may throw NoSuchElementException
                 // -- card will be not in use if EMPTY, which a client can legally ask for but wont be added to OpenHand
-                if (card.getInUse()) modusBuffer.getOpenHand().add(card.getItem());
+                if (card.isInUse()) modusBuffer.getOpenHand().add(card.getItem());
                 textOutput.appendText("success.\n");
 
                 save(modusBuffer);
@@ -220,7 +220,7 @@ public class PentaFile implements Modus {
         Arrays.fill(keyCritical, freshCard);
 
         String modusInput = modusBuffer.getAndResetModusInput().trim();
-        //if load was called without modus input then require input and set the redirector back here
+        //if load was called without modus input then require input and set the redirector back here todo: refactor this to follow tarot deck's load pattern.
         if (modusInput.isEmpty()) {
             modusBuffer.getTextOutput().appendText("Please submit a loading mode number: `1`, `2`, or `3`.\n");
             modusBuffer.setInputRedirector(this::load);
@@ -263,7 +263,7 @@ public class PentaFile implements Modus {
             ///// manual loading
         } else if (mode == 2) {
             for (Card card : deck) {
-                if (card.isValid() && card.getInUse()) {
+                if (card.isValid() && card.isInUse()) {
                     //ask which folder to place the CARD in (or none at all)
                     Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
                     alert.setTitle("Manual modus deck loading");
@@ -309,10 +309,10 @@ public class PentaFile implements Modus {
      *         if the item results in an invalid card
      * @throws IllegalStateException
      *         if there is no available index in the folder to add the new card to
+     * @see app.model.Card#Card(String)
      */
     private void capture(String item) throws IllegalArgumentException, IllegalStateException {
         Card card = new Card(item);
-        if (!card.isValid()) throw new IllegalArgumentException(String.format("item '%s' created invalid card", item));
         if (!addCard(card)) throw new IllegalStateException("cannot capture at this time. no free space for item");
     }
 
@@ -414,7 +414,7 @@ public class PentaFile implements Modus {
      */
     private int findFolderSpace(Card[] folder) {
         for (int i = 0; i < 5; i++) {
-            if (!folder[i].getInUse()) return i;
+            if (!folder[i].isInUse()) return i;
         }
         return -1;
     }
@@ -472,7 +472,7 @@ public class PentaFile implements Modus {
     @Override
     public void drawToDisplay(ModusBuffer modusBuffer) {
         //variable data constants
-        Pane     display         = (Pane) modusBuffer.getDisplay();
+        Pane     display         = modusBuffer.getDisplay();
         double   dWidth          = display.getWidth();
         double   dHeight         = display.getHeight();
         CardNode cardExample     = CardNode.EMPTY;
